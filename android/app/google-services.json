@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "425595420007",
+    "project_id": "alpaca-mobile-2026",
+    "storage_bucket": "alpaca-mobile-2026.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:425595420007:android:5a5a2e757083790dbb83c2",
+        "android_client_info": {
+          "package_name": "com.example.alpaca_mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB7KtfMLZcI_eRgyEByvmpCAOToLmC8MsE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

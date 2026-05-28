@@ -1,0 +1,65 @@
+/// Route name constants for the ALPACA app.
+///
+/// Contains all route paths as static constants and helper methods
+/// for route classification.
+class RouteNames {
+  RouteNames._();
+
+  // Auth routes
+  static const String splash = '/splash';
+  static const String login = '/login';
+  static const String register = '/register';
+
+  // Owner routes
+  static const String ownerDashboard = '/owner/dashboard';
+  static const String ownerInventory = '/owner/inventory';
+  static const String ownerBookkeeping = '/owner/bookkeeping';
+  static const String ownerMedia = '/owner/media';
+  static const String ownerLocation = '/owner/location';
+  static const String ownerProducts = '/owner/products';
+  static const String ownerWaste = '/owner/waste';
+  static const String ownerProfile = '/owner/profile';
+
+  // Public showcase routes
+  static const String showcase = '/showcase';
+  static const String showcaseProductDetail = '/showcase/product/:id';
+  static const String showcaseMap = '/showcase/map';
+
+  /// Routes that do not require authentication.
+  static const List<String> publicRoutes = [
+    splash,
+    login,
+    register,
+    showcase,
+    showcaseMap,
+  ];
+
+  /// Routes that are restricted to owner_umkm role only.
+  static const List<String> ownerOnlyRoutes = [
+    ownerDashboard,
+    ownerInventory,
+    ownerBookkeeping,
+    ownerMedia,
+    ownerLocation,
+    ownerProducts,
+    ownerWaste,
+    ownerProfile,
+  ];
+
+  /// Checks whether the given [route] requires authentication.
+  static bool isProtected(String route) {
+    // Product detail route uses a parameter, so check prefix
+    if (route.startsWith('/showcase/product/')) return false;
+    return !publicRoutes.contains(route);
+  }
+
+  /// Checks whether the given [route] is restricted to owners.
+  static bool isOwnerOnly(String route) {
+    return ownerOnlyRoutes.contains(route) ||
+        route.startsWith('/owner/');
+  }
+
+  /// Generates the product detail path for a given [productId].
+  static String productDetail(String productId) =>
+      '/showcase/product/$productId';
+}
