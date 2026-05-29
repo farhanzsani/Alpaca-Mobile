@@ -148,7 +148,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
-                Icons.inventory_2_outlined,
+                Icons.storefront_outlined,
                 size: 80,
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
@@ -281,7 +281,7 @@ class _ProductCard extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const Spacer(),
+                    const SizedBox(height: 4),
                     Text(
                       formattedPrice,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -296,6 +296,39 @@ class _ProductCard extends StatelessWidget {
                             color:
                                 Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
+                    ),
+                    const Spacer(),
+                    // Stock info
+                    Row(
+                      children: [
+                        Icon(
+                          product.isLowStock
+                              ? Icons.warning_amber_rounded
+                              : Icons.check_circle_outline,
+                          size: 12,
+                          color: product.isLowStock
+                              ? AppColors.error
+                              : AppColors.success,
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            '${product.quantity} ${product.unit}',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: product.isLowStock
+                                  ? AppColors.error
+                                  : Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
+                              fontWeight: product.isLowStock
+                                  ? FontWeight.w600
+                                  : FontWeight.normal,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -340,6 +373,9 @@ class _ProductFormSheetState extends State<_ProductFormSheet> {
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _priceController = TextEditingController();
+  final _quantityController = TextEditingController();
+  final _minStockController = TextEditingController();
+  final _unitController = TextEditingController(text: 'pcs');
 
   final ImagePicker _imagePicker = ImagePicker();
 
@@ -357,6 +393,9 @@ class _ProductFormSheetState extends State<_ProductFormSheet> {
       _nameController.text = widget.product!.productName;
       _descriptionController.text = widget.product!.description ?? '';
       _priceController.text = widget.product!.price.toStringAsFixed(0);
+      _quantityController.text = widget.product!.quantity.toString();
+      _minStockController.text = widget.product!.minimumStock.toString();
+      _unitController.text = widget.product!.unit;
       _selectedCategory = widget.product!.category;
       _isAvailable = widget.product!.isAvailable;
     }
@@ -367,6 +406,9 @@ class _ProductFormSheetState extends State<_ProductFormSheet> {
     _nameController.dispose();
     _descriptionController.dispose();
     _priceController.dispose();
+    _quantityController.dispose();
+    _minStockController.dispose();
+    _unitController.dispose();
     super.dispose();
   }
 
@@ -444,6 +486,11 @@ class _ProductFormSheetState extends State<_ProductFormSheet> {
       ownerId: userId,
       category: _selectedCategory,
       isAvailable: _isAvailable,
+      quantity: int.tryParse(_quantityController.text.trim()) ?? 0,
+      minimumStock: int.tryParse(_minStockController.text.trim()) ?? 0,
+      unit: _unitController.text.trim().isNotEmpty
+          ? _unitController.text.trim()
+          : 'pcs',
       createdAt: widget.product?.createdAt ?? now,
       updatedAt: now,
     );
@@ -594,6 +641,73 @@ class _ProductFormSheetState extends State<_ProductFormSheet> {
                     setState(() => _isAvailable = value);
                   },
                   contentPadding: EdgeInsets.zero,
+                ),
+                const SizedBox(height: 16),
+
+                // --- Stock Info ---
+                const Divider(),
+                Text(
+                  'Informasi Stok',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+                const SizedBox(height: 12),
+
+                // Quantity
+                TextFormField(
+                  controller: _quantityController,
+                  decoration: const InputDecoration(
+                    labelText: 'Jumlah Stok',
+                    hintText: '0',
+                    prefixIcon: Icon(Icons.numbers),
+                  ),
+                  keyboardType: TextInputType.number,
+                  validator: (value) {
+                    if (value != null && value.trim().isNotEmpty) {
+                      if (int.tryParse(value.trim()) == null) {
+                        return 'Masukkan angka yang valid';
+                      }
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 12),
+
+                // Minimum stock
+                TextFormField(
+                  controller: _minStockController,
+                  decoration: const InputDecoration(
+                    labelText: 'Stok Minimum',
+                    hintText: '0',
+                    prefixIcon: Icon(Icons.warning_amber_outlined),
+                  ),
+                  keyboardType: TextInputType.number,
+                  validator: (value) {
+                    if (value != null && value.trim().isNotEmpty) {
+                      if (int.tryParse(value.trim()) == null) {
+                        return 'Masukkan angka yang valid';
+                      }
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 12),
+
+                // Unit
+                TextFormField(
+                  controller: _unitController,
+                  decoration: const InputDecoration(
+                    labelText: 'Satuan',
+                    hintText: 'pcs, kg, liter',
+                    prefixIcon: Icon(Icons.straighten_outlined),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Satuan wajib diisi';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 24),
 

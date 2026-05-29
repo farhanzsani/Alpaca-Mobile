@@ -9,8 +9,8 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import 'package:alpaca_mobile/viewmodels/auth_view_model.dart';
-import 'package:alpaca_mobile/viewmodels/inventory_view_model.dart';
 import 'package:alpaca_mobile/viewmodels/finance_view_model.dart';
+import 'package:alpaca_mobile/viewmodels/product_view_model.dart';
 import 'package:alpaca_mobile/core/routes/route_names.dart';
 
 /// Data model for dashboard feature cards.
@@ -42,13 +42,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
   /// Feature cards displayed in the dashboard grid.
   final List<_FeatureCard> _features = const [
     _FeatureCard(
-      title: 'Inventaris',
-      subtitle: 'Kelola stok barang',
-      icon: Icons.inventory_2_outlined,
-      color: Color(0xFF2E7D32),
-      route: RouteNames.ownerInventory,
-    ),
-    _FeatureCard(
       title: 'Pembukuan',
       subtitle: 'Catat pemasukan & pengeluaran',
       icon: Icons.account_balance_wallet_outlined,
@@ -71,7 +64,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     ),
     _FeatureCard(
       title: 'Produk',
-      subtitle: 'Kelola katalog produk',
+      subtitle: 'Kelola produk & stok',
       icon: Icons.storefront_outlined,
       color: Color(0xFF00838F),
       route: RouteNames.ownerProducts,
@@ -99,11 +92,11 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     final userId = authVm.currentUser?.id;
     if (userId == null) return;
 
-    final inventoryVM = context.read<InventoryViewModel>();
+    final productVM = context.read<ProductViewModel>();
     final financeVM = context.read<FinanceViewModel>();
 
     await Future.wait([
-      inventoryVM.loadItems(userId),
+      productVM.loadProducts(userId),
       financeVM.loadTransactions(userId),
     ]);
   }
@@ -111,9 +104,10 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final authViewModel = context.watch<AuthViewModel>();
-    final inventoryVM = context.watch<InventoryViewModel>();
+    final productVM = context.watch<ProductViewModel>();
     final financeVM = context.watch<FinanceViewModel>();
     final userName = authViewModel.currentUser?.displayName ?? 'Pengguna';
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: AppBar(
@@ -125,14 +119,14 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
           ),
         ),
         centerTitle: true,
-        backgroundColor: const Color(0xFF2E7D32),
-        foregroundColor: Colors.white,
+        backgroundColor: colorScheme.primary,
+        foregroundColor: colorScheme.onPrimary,
         elevation: 0,
       ),
       drawer: _buildDrawer(context, authViewModel),
       body: RefreshIndicator(
         onRefresh: _loadDashboardData,
-        color: const Color(0xFF2E7D32),
+        color: colorScheme.primary,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(16),
@@ -142,10 +136,10 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
               // Welcome message
               Text(
                 'Halo, $userName!',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF1B5E20),
+                  color: colorScheme.primary,
                 ),
               ),
               const SizedBox(height: 4),
@@ -153,21 +147,22 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                 'Kelola usaha Anda dengan mudah',
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.grey.shade600,
+                  color: colorScheme.onSurfaceVariant,
                 ),
               ),
               const SizedBox(height: 24),
 
               // Quick stats
-              _buildStatsSection(inventoryVM, financeVM),
+              _buildStatsSection(productVM, financeVM),
               const SizedBox(height: 24),
 
               // Feature grid
-              const Text(
+              Text(
                 'Menu Utama',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
+                  color: colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 12),
@@ -181,22 +176,24 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
 
   /// Builds the quick stats summary section.
   Widget _buildStatsSection(
-    InventoryViewModel inventoryVM,
+    ProductViewModel productVM,
     FinanceViewModel financeVM,
   ) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF2E7D32), Color(0xFF43A047)],
+        gradient: LinearGradient(
+          colors: [colorScheme.primary, colorScheme.primary.withValues(alpha: 0.8)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF2E7D32).withValues(alpha: 0.3),
+            color: colorScheme.primary.withValues(alpha: 0.3),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -205,12 +202,12 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Ringkasan Hari Ini',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: Colors.white,
+              color: colorScheme.onPrimary,
             ),
           ),
           const SizedBox(height: 16),
@@ -219,13 +216,13 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
               _buildStatItem(
                 icon: Icons.inventory_2,
                 label: 'Total Produk',
-                value: '${inventoryVM.items.length}',
+                value: '${productVM.products.length}',
               ),
               const SizedBox(width: 12),
               _buildStatItem(
                 icon: Icons.warning_amber_rounded,
                 label: 'Stok Rendah',
-                value: '${inventoryVM.lowStockItems.length}',
+                value: '${productVM.lowStockProducts.length}',
               ),
               const SizedBox(width: 12),
               _buildStatItem(
@@ -246,23 +243,25 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     required String label,
     required String value,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.15),
+          color: colorScheme.onPrimary.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
           children: [
-            Icon(icon, color: Colors.white, size: 24),
+            Icon(icon, color: colorScheme.onPrimary, size: 24),
             const SizedBox(height: 8),
             Text(
               value,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: colorScheme.onPrimary,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -270,9 +269,9 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
             const SizedBox(height: 4),
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 10,
-                color: Colors.white70,
+                color: colorScheme.onPrimary.withValues(alpha: 0.7),
               ),
               textAlign: TextAlign.center,
               maxLines: 1,
@@ -311,6 +310,8 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
 
   /// Builds a single feature card widget.
   Widget _buildFeatureCardWidget(BuildContext context, _FeatureCard feature) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(
@@ -340,9 +341,10 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
               const SizedBox(height: 12),
               Text(
                 feature.title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
+                  color: colorScheme.onSurface,
                 ),
                 textAlign: TextAlign.center,
                 maxLines: 1,
@@ -354,7 +356,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                   feature.subtitle!,
                   style: TextStyle(
                     fontSize: 10,
-                    color: Colors.grey.shade600,
+                    color: colorScheme.onSurfaceVariant,
                   ),
                   textAlign: TextAlign.center,
                   maxLines: 2,
@@ -371,6 +373,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
   /// Builds the navigation drawer.
   Widget _buildDrawer(BuildContext context, AuthViewModel authViewModel) {
     final user = authViewModel.currentUser;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Drawer(
       child: Column(
@@ -380,18 +383,18 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
             accountName: Text(user?.displayName ?? 'Pengguna'),
             accountEmail: Text(user?.email ?? ''),
             currentAccountPicture: CircleAvatar(
-              backgroundColor: Colors.white,
+              backgroundColor: colorScheme.onPrimary,
               child: Text(
                 (user?.displayName ?? 'U').substring(0, 1).toUpperCase(),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF2E7D32),
+                  color: colorScheme.primary,
                 ),
               ),
             ),
-            decoration: const BoxDecoration(
-              color: Color(0xFF2E7D32),
+            decoration: BoxDecoration(
+              color: colorScheme.primary,
             ),
           ),
 
@@ -415,10 +418,10 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
           // Logout
           const Divider(),
           ListTile(
-            leading: const Icon(Icons.logout, color: Colors.red),
-            title: const Text(
+            leading: Icon(Icons.logout, color: colorScheme.error),
+            title: Text(
               'Keluar',
-              style: TextStyle(color: Colors.red),
+              style: TextStyle(color: colorScheme.error),
             ),
             onTap: () async {
               Navigator.pop(context);

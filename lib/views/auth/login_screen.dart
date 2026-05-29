@@ -9,7 +9,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import 'package:alpaca_mobile/models/user_model.dart';
 import 'package:alpaca_mobile/viewmodels/auth_view_model.dart';
 import 'package:alpaca_mobile/core/routes/route_names.dart';
 import 'package:alpaca_mobile/core/validators/form_validators.dart';
@@ -47,7 +46,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
 
     if (!mounted) return;
-    _navigateAfterAuth(authViewModel);
+    _showErrorIfAny(authViewModel);
   }
 
   /// Handles Google Sign-In flow.
@@ -57,23 +56,17 @@ class _LoginScreenState extends State<LoginScreen> {
     await authViewModel.signInWithGoogle();
 
     if (!mounted) return;
-    _navigateAfterAuth(authViewModel);
+    _showErrorIfAny(authViewModel);
   }
 
-  /// Navigates to the appropriate screen after successful authentication.
-  void _navigateAfterAuth(AuthViewModel authViewModel) {
-    if (authViewModel.isAuthenticated) {
-      final role = authViewModel.currentUser?.role;
-      if (role == UserRole.ownerUmkm) {
-        context.go(RouteNames.ownerDashboard);
-      } else {
-        context.go(RouteNames.showcase);
-      }
-    } else if (authViewModel.error != null) {
+  /// Shows error snackbar if authentication failed.
+  /// Navigation on success is handled automatically by GoRouter redirect.
+  void _showErrorIfAny(AuthViewModel authViewModel) {
+    if (!authViewModel.isAuthenticated && authViewModel.error != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(authViewModel.error ?? 'Login gagal'),
-          backgroundColor: Colors.red.shade700,
+          backgroundColor: Theme.of(context).colorScheme.error,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
@@ -87,6 +80,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final authViewModel = context.watch<AuthViewModel>();
     final size = MediaQuery.of(context).size;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       body: SafeArea(
@@ -103,19 +97,19 @@ class _LoginScreenState extends State<LoginScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   // Header
-                  const Icon(
+                  Icon(
                     Icons.eco_rounded,
                     size: 56,
-                    color: Color(0xFF2E7D32),
+                    color: colorScheme.primary,
                   ),
                   const SizedBox(height: 16),
-                  const Text(
+                  Text(
                     'ALPACA',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF2E7D32),
+                      color: colorScheme.primary,
                       letterSpacing: 4,
                     ),
                   ),
@@ -125,7 +119,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14,
-                      color: Colors.grey.shade600,
+                      color: colorScheme.onSurfaceVariant,
                     ),
                   ),
                   const SizedBox(height: 48),
@@ -152,13 +146,13 @@ class _LoginScreenState extends State<LoginScreen> {
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide(
-                                color: Colors.grey.shade300,
+                                color: colorScheme.outline,
                               ),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(
-                                color: Color(0xFF2E7D32),
+                              borderSide: BorderSide(
+                                color: colorScheme.primary,
                                 width: 2,
                               ),
                             ),
@@ -195,13 +189,13 @@ class _LoginScreenState extends State<LoginScreen> {
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide(
-                                color: Colors.grey.shade300,
+                                color: colorScheme.outline,
                               ),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(
-                                color: Color(0xFF2E7D32),
+                              borderSide: BorderSide(
+                                color: colorScheme.primary,
                                 width: 2,
                               ),
                             ),
@@ -213,20 +207,20 @@ class _LoginScreenState extends State<LoginScreen> {
                         FilledButton(
                           onPressed: authViewModel.isLoading ? null : _handleLogin,
                           style: FilledButton.styleFrom(
-                            backgroundColor: const Color(0xFF2E7D32),
-                            foregroundColor: Colors.white,
+                            backgroundColor: colorScheme.primary,
+                            foregroundColor: colorScheme.onPrimary,
                             minimumSize: const Size(double.infinity, 52),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
                           child: authViewModel.isLoading
-                              ? const SizedBox(
+                              ? SizedBox(
                                   width: 24,
                                   height: 24,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2.5,
-                                    color: Colors.white,
+                                    color: colorScheme.onPrimary,
                                   ),
                                 )
                               : const Text(
@@ -245,18 +239,18 @@ class _LoginScreenState extends State<LoginScreen> {
                   // Divider
                   Row(
                     children: [
-                      Expanded(child: Divider(color: Colors.grey.shade300)),
+                      Expanded(child: Divider(color: colorScheme.outlineVariant)),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Text(
                           'atau',
                           style: TextStyle(
-                            color: Colors.grey.shade500,
+                            color: colorScheme.onSurfaceVariant,
                             fontSize: 13,
                           ),
                         ),
                       ),
-                      Expanded(child: Divider(color: Colors.grey.shade300)),
+                      Expanded(child: Divider(color: colorScheme.outlineVariant)),
                     ],
                   ),
                   const SizedBox(height: 24),
@@ -282,12 +276,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.black87,
+                      foregroundColor: colorScheme.onSurface,
                       minimumSize: const Size(double.infinity, 52),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      side: BorderSide(color: Colors.grey.shade300),
+                      side: BorderSide(color: colorScheme.outline),
                     ),
                   ),
                   const SizedBox(height: 32),
@@ -299,17 +293,17 @@ class _LoginScreenState extends State<LoginScreen> {
                       Text(
                         'Belum punya akun? ',
                         style: TextStyle(
-                          color: Colors.grey.shade600,
+                          color: colorScheme.onSurfaceVariant,
                         ),
                       ),
                       GestureDetector(
                         onTap: () {
                           context.push(RouteNames.register);
                         },
-                        child: const Text(
+                        child: Text(
                           'Daftar',
                           style: TextStyle(
-                            color: Color(0xFF2E7D32),
+                            color: colorScheme.primary,
                             fontWeight: FontWeight.w600,
                           ),
                         ),

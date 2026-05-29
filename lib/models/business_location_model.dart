@@ -52,23 +52,34 @@ class BusinessLocationModel extends Equatable {
   /// Creates a [BusinessLocationModel] from a Firestore document map.
   factory BusinessLocationModel.fromJson(Map<String, dynamic> json) {
     return BusinessLocationModel(
-      id: json['id'] as String,
-      businessName: json['businessName'] as String,
-      latitude: (json['latitude'] as num).toDouble(),
-      longitude: (json['longitude'] as num).toDouble(),
-      address: json['address'] as String,
+      id: json['id'] as String? ?? '',
+      businessName: json['businessName'] as String? ?? '',
+      latitude: (json['latitude'] as num?)?.toDouble() ?? 0,
+      longitude: (json['longitude'] as num?)?.toDouble() ?? 0,
+      address: json['address'] as String? ?? '',
       description: json['description'] as String?,
-      ownerId: json['ownerId'] as String,
+      ownerId: json['ownerId'] as String? ?? '',
       imageUrl: json['imageUrl'] as String?,
-      createdAt: (json['createdAt'] as Timestamp).toDate(),
-      updatedAt: (json['updatedAt'] as Timestamp).toDate(),
+      createdAt: _parseDateTime(json['createdAt']),
+      updatedAt: _parseDateTime(json['updatedAt']),
     );
   }
 
+  /// Safely parses a DateTime from Firestore data.
+  static DateTime _parseDateTime(dynamic value) {
+    if (value == null) return DateTime.now();
+    if (value is Timestamp) return value.toDate();
+    if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
+    if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+    return DateTime.now();
+  }
+
   /// Converts this [BusinessLocationModel] to a Firestore-compatible map.
+  /// Note: 'id' is excluded because Firestore uses the document ID separately.
+  /// 'createdAt' and 'updatedAt' are excluded because FirestoreService
+  /// adds server timestamps automatically.
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
       'businessName': businessName,
       'latitude': latitude,
       'longitude': longitude,
@@ -76,8 +87,6 @@ class BusinessLocationModel extends Equatable {
       'description': description,
       'ownerId': ownerId,
       'imageUrl': imageUrl,
-      'createdAt': Timestamp.fromDate(createdAt),
-      'updatedAt': Timestamp.fromDate(updatedAt),
     };
   }
 

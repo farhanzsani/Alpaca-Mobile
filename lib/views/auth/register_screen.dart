@@ -56,7 +56,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
 
     if (!mounted) return;
-    _navigateAfterAuth(authViewModel);
+    _showResultMessage(authViewModel);
   }
 
   /// Handles Google Sign-In flow.
@@ -66,33 +66,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
     await authViewModel.signInWithGoogle();
 
     if (!mounted) return;
-    _navigateAfterAuth(authViewModel);
+    _showResultMessage(authViewModel);
   }
 
-  /// Navigates to the appropriate screen after successful authentication.
-  void _navigateAfterAuth(AuthViewModel authViewModel) {
+  /// Shows success or error message.
+  /// Navigation on success is handled automatically by GoRouter redirect.
+  void _showResultMessage(AuthViewModel authViewModel) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     if (authViewModel.isAuthenticated) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Registrasi berhasil!'),
-          backgroundColor: Colors.green.shade700,
+          backgroundColor: colorScheme.primary,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
           ),
         ),
       );
-      final role = authViewModel.currentUser?.role;
-      if (role == UserRole.ownerUmkm) {
-        context.go(RouteNames.ownerDashboard);
-      } else {
-        context.go(RouteNames.showcase);
-      }
     } else if (authViewModel.error != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(authViewModel.error ?? 'Registrasi gagal'),
-          backgroundColor: Colors.red.shade700,
+          backgroundColor: colorScheme.error,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
@@ -105,6 +102,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     final authViewModel = context.watch<AuthViewModel>();
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: AppBar(
@@ -125,13 +123,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   // Header
-                  const Text(
+                  Text(
                     'Buat Akun Baru',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF2E7D32),
+                      color: colorScheme.primary,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -140,7 +138,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14,
-                      color: Colors.grey.shade600,
+                      color: colorScheme.onSurfaceVariant,
                     ),
                   ),
                   const SizedBox(height: 36),
@@ -246,7 +244,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
-                            color: Colors.grey.shade700,
+                            color: colorScheme.onSurfaceVariant,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -271,7 +269,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             backgroundColor:
                                 WidgetStateProperty.resolveWith((states) {
                               if (states.contains(WidgetState.selected)) {
-                                return const Color(0xFF2E7D32)
+                                return colorScheme.primary
                                     .withValues(alpha: 0.12);
                               }
                               return null;
@@ -285,20 +283,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           onPressed:
                               authViewModel.isLoading ? null : _handleRegister,
                           style: FilledButton.styleFrom(
-                            backgroundColor: const Color(0xFF2E7D32),
-                            foregroundColor: Colors.white,
+                            backgroundColor: colorScheme.primary,
+                            foregroundColor: colorScheme.onPrimary,
                             minimumSize: const Size(double.infinity, 52),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
                           child: authViewModel.isLoading
-                              ? const SizedBox(
+                              ? SizedBox(
                                   width: 24,
                                   height: 24,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2.5,
-                                    color: Colors.white,
+                                    color: colorScheme.onPrimary,
                                   ),
                                 )
                               : const Text(
@@ -317,18 +315,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   // Divider
                   Row(
                     children: [
-                      Expanded(child: Divider(color: Colors.grey.shade300)),
+                      Expanded(child: Divider(color: colorScheme.outlineVariant)),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Text(
                           'atau',
                           style: TextStyle(
-                            color: Colors.grey.shade500,
+                            color: colorScheme.onSurfaceVariant,
                             fontSize: 13,
                           ),
                         ),
                       ),
-                      Expanded(child: Divider(color: Colors.grey.shade300)),
+                      Expanded(child: Divider(color: colorScheme.outlineVariant)),
                     ],
                   ),
                   const SizedBox(height: 24),
@@ -355,12 +353,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                     ),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.black87,
+                      foregroundColor: colorScheme.onSurface,
                       minimumSize: const Size(double.infinity, 52),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      side: BorderSide(color: Colors.grey.shade300),
+                      side: BorderSide(color: colorScheme.outline),
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -372,15 +370,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       Text(
                         'Sudah punya akun? ',
                         style: TextStyle(
-                          color: Colors.grey.shade600,
+                          color: colorScheme.onSurfaceVariant,
                         ),
                       ),
                       GestureDetector(
                         onTap: () => context.go(RouteNames.login),
-                        child: const Text(
+                        child: Text(
                           'Masuk',
                           style: TextStyle(
-                            color: Color(0xFF2E7D32),
+                            color: colorScheme.primary,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -404,6 +402,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     required IconData icon,
     Widget? suffixIcon,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return InputDecoration(
       labelText: label,
       hintText: hint,
@@ -414,22 +414,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.grey.shade300),
+        borderSide: BorderSide(color: colorScheme.outline),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(
-          color: Color(0xFF2E7D32),
+        borderSide: BorderSide(
+          color: colorScheme.primary,
           width: 2,
         ),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.red),
+        borderSide: BorderSide(color: colorScheme.error),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.red, width: 2),
+        borderSide: BorderSide(color: colorScheme.error, width: 2),
       ),
     );
   }

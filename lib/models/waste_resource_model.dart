@@ -53,23 +53,34 @@ class WasteResourceModel extends Equatable {
   /// Creates a [WasteResourceModel] from a Firestore document map.
   factory WasteResourceModel.fromJson(Map<String, dynamic> json) {
     return WasteResourceModel(
-      id: json['id'] as String,
-      wasteName: json['wasteName'] as String,
-      quantity: (json['quantity'] as num).toDouble(),
-      unit: json['unit'] as String,
-      category: json['category'] as String,
-      reusable: json['reusable'] as bool,
+      id: json['id'] as String? ?? '',
+      wasteName: json['wasteName'] as String? ?? '',
+      quantity: (json['quantity'] as num?)?.toDouble() ?? 0,
+      unit: json['unit'] as String? ?? 'kg',
+      category: json['category'] as String? ?? '',
+      reusable: json['reusable'] as bool? ?? false,
       processingNotes: json['processingNotes'] as String?,
-      ownerId: json['ownerId'] as String,
-      createdAt: (json['createdAt'] as Timestamp).toDate(),
-      updatedAt: (json['updatedAt'] as Timestamp).toDate(),
+      ownerId: json['ownerId'] as String? ?? '',
+      createdAt: _parseDateTime(json['createdAt']),
+      updatedAt: _parseDateTime(json['updatedAt']),
     );
   }
 
+  /// Safely parses a DateTime from Firestore data.
+  static DateTime _parseDateTime(dynamic value) {
+    if (value == null) return DateTime.now();
+    if (value is Timestamp) return value.toDate();
+    if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
+    if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+    return DateTime.now();
+  }
+
   /// Converts this [WasteResourceModel] to a Firestore-compatible map.
+  /// Note: 'id' is excluded because Firestore uses the document ID separately.
+  /// 'createdAt' and 'updatedAt' are excluded because FirestoreService
+  /// adds server timestamps automatically.
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
       'wasteName': wasteName,
       'quantity': quantity,
       'unit': unit,
@@ -77,8 +88,6 @@ class WasteResourceModel extends Equatable {
       'reusable': reusable,
       'processingNotes': processingNotes,
       'ownerId': ownerId,
-      'createdAt': Timestamp.fromDate(createdAt),
-      'updatedAt': Timestamp.fromDate(updatedAt),
     };
   }
 

@@ -70,28 +70,38 @@ class TransactionModel extends Equatable {
   /// Creates a [TransactionModel] from a Firestore document map.
   factory TransactionModel.fromJson(Map<String, dynamic> json) {
     return TransactionModel(
-      id: json['id'] as String,
-      type: TransactionType.fromJson(json['type'] as String),
-      title: json['title'] as String,
-      amount: (json['amount'] as num).toDouble(),
+      id: json['id'] as String? ?? '',
+      type: TransactionType.fromJson(json['type'] as String? ?? 'expense'),
+      title: json['title'] as String? ?? '',
+      amount: (json['amount'] as num?)?.toDouble() ?? 0,
       description: json['description'] as String?,
-      date: (json['date'] as Timestamp).toDate(),
-      ownerId: json['ownerId'] as String,
-      createdAt: (json['createdAt'] as Timestamp).toDate(),
+      date: _parseDateTime(json['date']),
+      ownerId: json['ownerId'] as String? ?? '',
+      createdAt: _parseDateTime(json['createdAt']),
     );
   }
 
+  /// Safely parses a DateTime from Firestore data.
+  static DateTime _parseDateTime(dynamic value) {
+    if (value == null) return DateTime.now();
+    if (value is Timestamp) return value.toDate();
+    if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
+    if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+    return DateTime.now();
+  }
+
   /// Converts this [TransactionModel] to a Firestore-compatible map.
+  /// Note: 'id' is excluded because Firestore uses the document ID separately.
+  /// 'createdAt' is excluded because FirestoreService
+  /// adds server timestamps automatically.
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
       'type': type.toJson(),
       'title': title,
       'amount': amount,
       'description': description,
       'date': Timestamp.fromDate(date),
       'ownerId': ownerId,
-      'createdAt': Timestamp.fromDate(createdAt),
     };
   }
 

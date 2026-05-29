@@ -1,16 +1,15 @@
 /// SplashScreen - Entry point of the ALPACA app.
 ///
 /// Displays the app logo, subtitle, and a loading indicator.
-/// Auto-navigates after 2 seconds based on authentication state.
+/// Navigation is handled by GoRouter's redirect logic in RouteGuard.
+/// Once AuthViewModel resolves auth state, the router automatically
+/// redirects to the appropriate screen.
 library;
 
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import 'package:alpaca_mobile/models/user_model.dart';
 import 'package:alpaca_mobile/viewmodels/auth_view_model.dart';
-import 'package:alpaca_mobile/core/routes/route_names.dart';
 
 /// Splash screen shown on app launch.
 class SplashScreen extends StatefulWidget {
@@ -40,27 +39,11 @@ class _SplashScreenState extends State<SplashScreen>
     );
 
     _animationController.forward();
-    _navigateAfterDelay();
-  }
 
-  /// Waits 2 seconds then navigates based on auth state.
-  Future<void> _navigateAfterDelay() async {
-    await Future.delayed(const Duration(seconds: 2));
-
-    if (!mounted) return;
-
-    final authViewModel = context.read<AuthViewModel>();
-
-    if (authViewModel.isAuthenticated) {
-      final role = authViewModel.currentUser?.role;
-      if (role == UserRole.ownerUmkm) {
-        context.go(RouteNames.ownerDashboard);
-      } else {
-        context.go(RouteNames.showcase);
-      }
-    } else {
-      context.go(RouteNames.login);
-    }
+    // Trigger auth check — once resolved, GoRouter redirect will navigate.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<AuthViewModel>().checkAuthStatus();
+    });
   }
 
   @override

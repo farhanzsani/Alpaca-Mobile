@@ -36,22 +36,32 @@ class MediaModel extends Equatable {
   /// Creates a [MediaModel] from a Firestore document map.
   factory MediaModel.fromJson(Map<String, dynamic> json) {
     return MediaModel(
-      id: json['id'] as String,
-      imageUrl: json['imageUrl'] as String,
-      uploadedBy: json['uploadedBy'] as String,
-      uploadedAt: (json['uploadedAt'] as Timestamp).toDate(),
-      category: json['category'] as String,
+      id: json['id'] as String? ?? '',
+      imageUrl: json['imageUrl'] as String? ?? '',
+      uploadedBy: json['uploadedBy'] as String? ?? '',
+      uploadedAt: _parseDateTime(json['uploadedAt']),
+      category: json['category'] as String? ?? '',
       description: json['description'] as String?,
     );
   }
 
+  /// Safely parses a DateTime from Firestore data.
+  static DateTime _parseDateTime(dynamic value) {
+    if (value == null) return DateTime.now();
+    if (value is Timestamp) return value.toDate();
+    if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
+    if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+    return DateTime.now();
+  }
+
   /// Converts this [MediaModel] to a Firestore-compatible map.
+  /// Note: 'id' is excluded because Firestore uses the document ID separately.
+  /// 'uploadedAt' is excluded because FirestoreService
+  /// adds server timestamps automatically.
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
       'imageUrl': imageUrl,
       'uploadedBy': uploadedBy,
-      'uploadedAt': Timestamp.fromDate(uploadedAt),
       'category': category,
       'description': description,
     };

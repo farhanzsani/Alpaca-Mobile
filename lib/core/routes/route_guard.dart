@@ -19,30 +19,44 @@ class RouteGuard {
   }) {
     final bool isAuthenticated = authViewModel.isAuthenticated;
     final UserRole? userRole = authViewModel.userRole;
-    final bool isPublicRoute = _isPublicRoute(location);
+    final bool isAuthRoute = _isAuthRoute(location);
     final bool isOwnerRoute = _isOwnerRoute(location);
+    final bool isSplash = location == RouteNames.splash;
 
-    // Allow splash screen always
-    if (location == RouteNames.splash) {
-      return null;
+    // --- Splash screen logic ---
+    // If on splash and auth check is still in progress, stay on splash.
+    if (isSplash) {
+      // Still loading — stay on splash.
+      if (authViewModel.isLoading) {
+        return null;
+      }
+      // Auth resolved — redirect based on state.
+      if (isAuthenticated) {
+        return _getHomeRoute(userRole);
+      } else {
+        return RouteNames.login;
+      }
     }
 
-    // If not authenticated and trying to access a protected route
-    if (!isAuthenticated && !isPublicRoute) {
-      return RouteNames.login;
-    }
-
-    // If authenticated and trying to access login/register
-    if (isAuthenticated && _isAuthRoute(location)) {
+    // --- Auth routes (login/register) ---
+    // If already authenticated, redirect away from login/register.
+    if (isAuthenticated && isAuthRoute) {
       return _getHomeRoute(userRole);
     }
 
-    // If authenticated but accessing owner routes without owner role
+    // --- Protected routes ---
+    // If not authenticated and trying to access a protected route.
+    if (!isAuthenticated && !_isPublicRoute(location)) {
+      return RouteNames.login;
+    }
+
+    // --- Owner-only routes ---
+    // If authenticated but not an owner trying to access owner routes.
     if (isAuthenticated && isOwnerRoute && userRole != UserRole.ownerUmkm) {
       return RouteNames.showcase;
     }
 
-    // Allow navigation to proceed
+    // Allow navigation to proceed.
     return null;
   }
 

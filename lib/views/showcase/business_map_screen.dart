@@ -9,6 +9,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
 
 import 'package:alpaca_mobile/core/theme/app_colors.dart';
+import 'package:alpaca_mobile/core/widgets/platform_map.dart';
 import 'package:alpaca_mobile/models/business_location_model.dart';
 import 'package:alpaca_mobile/viewmodels/location_view_model.dart';
 
@@ -178,7 +179,7 @@ class _BusinessMapScreenState extends State<BusinessMapScreen> {
 
     return Stack(
       children: [
-        GoogleMap(
+        PlatformMap(
           initialCameraPosition: CameraPosition(
             target: initialTarget,
             zoom: businesses.length == 1 ? 14 : 5,

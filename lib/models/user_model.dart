@@ -74,14 +74,24 @@ class UserModel extends Equatable {
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
       id: json['id'] as String,
-      email: json['email'] as String,
-      displayName: json['displayName'] as String,
-      role: UserRole.fromJson(json['role'] as String),
+      email: json['email'] as String? ?? '',
+      displayName: json['displayName'] as String? ?? '',
+      role: UserRole.fromJson(json['role'] as String? ?? 'customer'),
       photoUrl: json['photoUrl'] as String?,
       phoneNumber: json['phoneNumber'] as String?,
-      createdAt: (json['createdAt'] as Timestamp).toDate(),
-      updatedAt: (json['updatedAt'] as Timestamp).toDate(),
+      createdAt: _parseDateTime(json['createdAt']),
+      updatedAt: _parseDateTime(json['updatedAt']),
     );
+  }
+
+  /// Safely parses a DateTime from Firestore data.
+  /// Handles Timestamp, String, int (milliseconds), and null.
+  static DateTime _parseDateTime(dynamic value) {
+    if (value == null) return DateTime.now();
+    if (value is Timestamp) return value.toDate();
+    if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
+    if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+    return DateTime.now();
   }
 
   /// Converts this [UserModel] to a Firestore-compatible map.

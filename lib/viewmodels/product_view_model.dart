@@ -42,6 +42,10 @@ class ProductViewModel extends ChangeNotifier {
   /// All public/available products (visible to customers/tourists).
   List<ProductModel> get allProducts => List.unmodifiable(_allProducts);
 
+  /// Products where current stock is at or below the minimum threshold.
+  List<ProductModel> get lowStockProducts =>
+      _products.where((p) => p.isLowStock).toList();
+
   StreamSubscription<List<ProductModel>>? _productsSubscription;
   StreamSubscription<List<ProductModel>>? _allProductsSubscription;
 

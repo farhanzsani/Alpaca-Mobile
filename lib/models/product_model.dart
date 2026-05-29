@@ -30,11 +30,23 @@ class ProductModel extends Equatable {
   /// Whether the product is currently available for purchase.
   final bool isAvailable;
 
+  /// Current stock quantity.
+  final int quantity;
+
+  /// Minimum stock threshold for low stock warning.
+  final int minimumStock;
+
+  /// Unit of measurement (e.g., 'pcs', 'kg', 'liter').
+  final String unit;
+
   /// Timestamp when the product was created.
   final DateTime createdAt;
 
   /// Timestamp when the product was last updated.
   final DateTime updatedAt;
+
+  /// Whether the current stock is at or below the minimum threshold.
+  bool get isLowStock => quantity <= minimumStock;
 
   const ProductModel({
     required this.id,
@@ -45,6 +57,9 @@ class ProductModel extends Equatable {
     required this.ownerId,
     required this.category,
     required this.isAvailable,
+    this.quantity = 0,
+    this.minimumStock = 0,
+    this.unit = 'pcs',
     required this.createdAt,
     required this.updatedAt,
   });
@@ -52,23 +67,37 @@ class ProductModel extends Equatable {
   /// Creates a [ProductModel] from a Firestore document map.
   factory ProductModel.fromJson(Map<String, dynamic> json) {
     return ProductModel(
-      id: json['id'] as String,
-      productName: json['productName'] as String,
+      id: json['id'] as String? ?? '',
+      productName: json['productName'] as String? ?? '',
       description: json['description'] as String?,
-      price: (json['price'] as num).toDouble(),
+      price: (json['price'] as num?)?.toDouble() ?? 0,
       imageUrl: json['imageUrl'] as String?,
-      ownerId: json['ownerId'] as String,
-      category: json['category'] as String,
-      isAvailable: json['isAvailable'] as bool,
-      createdAt: (json['createdAt'] as Timestamp).toDate(),
-      updatedAt: (json['updatedAt'] as Timestamp).toDate(),
+      ownerId: json['ownerId'] as String? ?? '',
+      category: json['category'] as String? ?? 'other',
+      isAvailable: json['isAvailable'] as bool? ?? true,
+      quantity: (json['quantity'] as num?)?.toInt() ?? 0,
+      minimumStock: (json['minimumStock'] as num?)?.toInt() ?? 0,
+      unit: json['unit'] as String? ?? 'pcs',
+      createdAt: _parseDateTime(json['createdAt']),
+      updatedAt: _parseDateTime(json['updatedAt']),
     );
   }
 
+  /// Safely parses a DateTime from Firestore data.
+  static DateTime _parseDateTime(dynamic value) {
+    if (value == null) return DateTime.now();
+    if (value is Timestamp) return value.toDate();
+    if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
+    if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+    return DateTime.now();
+  }
+
   /// Converts this [ProductModel] to a Firestore-compatible map.
+  /// Note: 'id' is excluded because Firestore uses the document ID separately.
+  /// 'createdAt' and 'updatedAt' are excluded because FirestoreService
+  /// adds server timestamps automatically.
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
       'productName': productName,
       'description': description,
       'price': price,
@@ -76,8 +105,9 @@ class ProductModel extends Equatable {
       'ownerId': ownerId,
       'category': category,
       'isAvailable': isAvailable,
-      'createdAt': Timestamp.fromDate(createdAt),
-      'updatedAt': Timestamp.fromDate(updatedAt),
+      'quantity': quantity,
+      'minimumStock': minimumStock,
+      'unit': unit,
     };
   }
 
@@ -91,6 +121,9 @@ class ProductModel extends Equatable {
     String? ownerId,
     String? category,
     bool? isAvailable,
+    int? quantity,
+    int? minimumStock,
+    String? unit,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -103,6 +136,9 @@ class ProductModel extends Equatable {
       ownerId: ownerId ?? this.ownerId,
       category: category ?? this.category,
       isAvailable: isAvailable ?? this.isAvailable,
+      quantity: quantity ?? this.quantity,
+      minimumStock: minimumStock ?? this.minimumStock,
+      unit: unit ?? this.unit,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -118,6 +154,9 @@ class ProductModel extends Equatable {
         ownerId,
         category,
         isAvailable,
+        quantity,
+        minimumStock,
+        unit,
         createdAt,
         updatedAt,
       ];

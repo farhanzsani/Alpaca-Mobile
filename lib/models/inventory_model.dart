@@ -48,30 +48,39 @@ class InventoryModel extends Equatable {
   /// Creates an [InventoryModel] from a Firestore document map.
   factory InventoryModel.fromJson(Map<String, dynamic> json) {
     return InventoryModel(
-      id: json['id'] as String,
-      productName: json['productName'] as String,
-      category: json['category'] as String,
-      quantity: json['quantity'] as int,
-      minimumStock: json['minimumStock'] as int,
-      unit: json['unit'] as String,
-      ownerId: json['ownerId'] as String,
-      createdAt: (json['createdAt'] as Timestamp).toDate(),
-      updatedAt: (json['updatedAt'] as Timestamp).toDate(),
+      id: json['id'] as String? ?? '',
+      productName: json['productName'] as String? ?? '',
+      category: json['category'] as String? ?? '',
+      quantity: (json['quantity'] as num?)?.toInt() ?? 0,
+      minimumStock: (json['minimumStock'] as num?)?.toInt() ?? 0,
+      unit: json['unit'] as String? ?? 'pcs',
+      ownerId: json['ownerId'] as String? ?? '',
+      createdAt: _parseDateTime(json['createdAt']),
+      updatedAt: _parseDateTime(json['updatedAt']),
     );
   }
 
+  /// Safely parses a DateTime from Firestore data.
+  static DateTime _parseDateTime(dynamic value) {
+    if (value == null) return DateTime.now();
+    if (value is Timestamp) return value.toDate();
+    if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
+    if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+    return DateTime.now();
+  }
+
   /// Converts this [InventoryModel] to a Firestore-compatible map.
+  /// Note: 'id' is excluded because Firestore uses the document ID separately.
+  /// 'createdAt' and 'updatedAt' are excluded because FirestoreService
+  /// adds server timestamps automatically.
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
       'productName': productName,
       'category': category,
       'quantity': quantity,
       'minimumStock': minimumStock,
       'unit': unit,
       'ownerId': ownerId,
-      'createdAt': Timestamp.fromDate(createdAt),
-      'updatedAt': Timestamp.fromDate(updatedAt),
     };
   }
 

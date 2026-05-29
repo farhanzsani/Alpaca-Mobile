@@ -8,6 +8,7 @@ import 'dart:ui';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -23,6 +24,9 @@ import 'viewmodels/auth_view_model.dart';
 /// handlers before launching the app.
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize locale data for intl date formatting.
+  await initializeDateFormatting('id_ID', null);
 
   // Set up global error handling for Flutter framework errors.
   FlutterError.onError = (FlutterErrorDetails details) {
@@ -77,7 +81,7 @@ class AlpacaApp extends StatelessWidget {
             title: 'ALPACA',
             theme: AppTheme.light,
             darkTheme: AppTheme.dark,
-            themeMode: ThemeMode.system,
+            themeMode: ThemeMode.light,
             routerConfig: AppRouter.createRouter(
               context.read<AuthViewModel>(),
             ),

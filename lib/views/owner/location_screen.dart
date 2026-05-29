@@ -11,6 +11,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
 
 import 'package:alpaca_mobile/core/theme/app_colors.dart';
+import 'package:alpaca_mobile/core/widgets/platform_map.dart';
 import 'package:alpaca_mobile/models/business_location_model.dart';
 import 'package:alpaca_mobile/viewmodels/auth_view_model.dart';
 import 'package:alpaca_mobile/viewmodels/location_view_model.dart';
@@ -242,7 +243,7 @@ class _LocationScreenState extends State<LocationScreen> {
               clipBehavior: Clip.antiAlias,
               child: SizedBox(
                 height: 220,
-                child: GoogleMap(
+                child: PlatformMap(
                   initialCameraPosition: CameraPosition(
                     target: defaultPosition,
                     zoom: _selectedPosition != null ? 16 : 10,
