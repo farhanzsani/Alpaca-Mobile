@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
@@ -82,9 +82,7 @@ class InventoryViewModel extends ChangeNotifier {
     final result = await _inventoryRepository.addItem(item);
 
     result.when(
-      success: (docId) {
-        // Add the item with the Firestore-generated ID to the local list.
-        final savedItem = item.copyWith(id: docId);
+      success: (savedItem) {
         _items.add(savedItem);
         _viewState = ViewState.loaded;
       },
@@ -190,3 +188,4 @@ class InventoryViewModel extends ChangeNotifier {
     super.dispose();
   }
 }
+

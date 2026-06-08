@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
@@ -41,6 +41,10 @@ class ProductViewModel extends ChangeNotifier {
   List<ProductModel> _allProducts = [];
   /// All public/available products (visible to customers/tourists).
   List<ProductModel> get allProducts => List.unmodifiable(_allProducts);
+
+  List<ProductModel> _storeProducts = [];
+  /// Products belonging to a specific store being viewed in profile.
+  List<ProductModel> get storeProducts => List.unmodifiable(_storeProducts);
 
   /// Products where current stock is at or below the minimum threshold.
   List<ProductModel> get lowStockProducts =>
@@ -111,8 +115,7 @@ class ProductViewModel extends ChangeNotifier {
     final result = await _productRepository.addProduct(product);
 
     result.when(
-      success: (docId) {
-        final savedProduct = product.copyWith(id: docId);
+      success: (savedProduct) {
         _products.add(savedProduct);
         _viewState = ViewState.loaded;
       },
@@ -132,7 +135,7 @@ class ProductViewModel extends ChangeNotifier {
     _setLoading(true);
     _clearError();
 
-    final result = await _productRepository.updateProduct(product);
+    final result = await _productRepository.updateProduct(product.id, product.toJson());
 
     result.when(
       success: (_) {
@@ -193,6 +196,29 @@ class ProductViewModel extends ChangeNotifier {
         .toList();
   }
 
+  /// Loads products for a specific store owner (for store profile view).
+  ///
+  /// Populates [storeProducts] without affecting the main [products] list.
+  Future<void> loadStoreProducts(String ownerId) async {
+    _setLoading(true);
+    _clearError();
+
+    final result = await _productRepository.getProductsByOwner(ownerId);
+
+    result.when(
+      success: (products) {
+        _storeProducts = products;
+        _viewState = products.isEmpty ? ViewState.empty : ViewState.loaded;
+      },
+      failure: (exception) {
+        _error = exception.message;
+        _viewState = ViewState.error;
+      },
+    );
+
+    _setLoading(false);
+  }
+
   /// Subscribes to realtime product updates for the given [ownerId].
   ///
   /// Cancels any existing subscription before creating a new one.
@@ -238,3 +264,5 @@ class ProductViewModel extends ChangeNotifier {
     super.dispose();
   }
 }
+
+

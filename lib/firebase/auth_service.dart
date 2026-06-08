@@ -46,8 +46,16 @@ class AuthService extends FirebaseService {
   Future<Result<User>> signInWithEmail(String email, String password) async {
     return guardedCall(
       () async {
+        final trimmedEmail = email.trim();
+        if (trimmedEmail.isEmpty || password.isEmpty) {
+          throw const AuthException(
+            message: 'Email dan password tidak boleh kosong.',
+            code: 'INVALID_INPUT',
+          );
+        }
+        
         final credential = await _auth.signInWithEmailAndPassword(
-          email: email.trim(),
+          email: trimmedEmail,
           password: password,
         );
         final user = credential.user;
@@ -185,9 +193,15 @@ class AuthService extends FirebaseService {
   Future<Result<void>> signOut() async {
     return guardedCall(
       () async {
-        // Sign out from Google if signed in.
-        if (await _googleSignIn.isSignedIn()) {
-          await _googleSignIn.signOut();
+        // Sign out from Google if signed in and supported.
+        if (_isGoogleSignInSupported()) {
+          try {
+            if (await _googleSignIn.isSignedIn()) {
+              await _googleSignIn.signOut();
+            }
+          } catch (e) {
+            logger.w('signOut: failed to sign out from Google: $e');
+          }
         }
         await _auth.signOut();
         logger.i('signOut: user signed out successfully');

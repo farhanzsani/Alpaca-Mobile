@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
@@ -80,8 +80,7 @@ class WasteViewModel extends ChangeNotifier {
     final result = await _wasteRepository.addWaste(waste);
 
     result.when(
-      success: (docId) {
-        final savedWaste = waste.copyWith(id: docId);
+      success: (savedWaste) {
         _wasteItems.add(savedWaste);
         _viewState = ViewState.loaded;
       },
@@ -221,3 +220,4 @@ class WasteViewModel extends ChangeNotifier {
     super.dispose();
   }
 }
+

@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
@@ -41,6 +41,10 @@ class LocationViewModel extends ChangeNotifier {
   /// All registered business locations for the tourism map.
   List<BusinessLocationModel> get allBusinesses =>
       List.unmodifiable(_allBusinesses);
+
+  BusinessLocationModel? _profileBusiness;
+  /// A single business location loaded for store profile view.
+  BusinessLocationModel? get profileBusiness => _profileBusiness;
 
   ({double latitude, double longitude})? _currentPosition;
   /// The device's current GPS position, or null if not yet retrieved.
@@ -96,8 +100,7 @@ class LocationViewModel extends ChangeNotifier {
     final result = await _businessRepository.createBusiness(location);
 
     result.when(
-      success: (docId) {
-        _businessLocation = location.copyWith(id: docId);
+      success: (savedLocation) { _businessLocation = savedLocation;
         _viewState = ViewState.loaded;
       },
       failure: (exception) {
@@ -163,6 +166,27 @@ class LocationViewModel extends ChangeNotifier {
     );
   }
 
+  /// Loads a single business location by [ownerId] for store profile view.
+  Future<void> loadProfileBusiness(String ownerId) async {
+    _setLoading(true);
+    _clearError();
+
+    final result = await _businessRepository.getBusinessByOwner(ownerId);
+
+    result.when(
+      success: (business) {
+        _profileBusiness = business;
+        _viewState = business != null ? ViewState.loaded : ViewState.empty;
+      },
+      failure: (exception) {
+        _error = exception.message;
+        _viewState = ViewState.error;
+      },
+    );
+
+    _setLoading(false);
+  }
+
   void _clearError() {
     _error = null;
   }
@@ -181,3 +205,4 @@ class LocationViewModel extends ChangeNotifier {
     super.dispose();
   }
 }
+

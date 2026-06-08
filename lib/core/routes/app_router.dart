@@ -20,6 +20,7 @@ import 'package:alpaca_mobile/views/owner/profile_screen.dart';
 import 'package:alpaca_mobile/views/showcase/public_showcase_screen.dart';
 import 'package:alpaca_mobile/views/showcase/product_detail_screen.dart';
 import 'package:alpaca_mobile/views/showcase/business_map_screen.dart';
+import 'package:alpaca_mobile/views/showcase/store_profile_screen.dart';
 
 /// Application router configuration using go_router.
 ///
@@ -157,6 +158,14 @@ class AppRouter {
       path: RouteNames.showcaseMap,
       name: 'businessMap',
       builder: (context, state) => const BusinessMapScreen(),
+    ),
+    GoRoute(
+      path: RouteNames.showcaseStoreProfile,
+      name: 'storeProfile',
+      builder: (context, state) {
+        final ownerId = state.pathParameters['ownerId']!;
+        return StoreProfileScreen(ownerId: ownerId);
+      },
     ),
   ];
 }

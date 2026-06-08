@@ -24,6 +24,7 @@ class RouteNames {
   static const String showcase = '/showcase';
   static const String showcaseProductDetail = '/showcase/product/:id';
   static const String showcaseMap = '/showcase/map';
+  static const String showcaseStoreProfile = '/showcase/store/:ownerId';
 
   /// Routes that do not require authentication.
   static const List<String> publicRoutes = [
@@ -32,6 +33,7 @@ class RouteNames {
     register,
     showcase,
     showcaseMap,
+    showcaseStoreProfile,
   ];
 
   /// Routes that are restricted to owner_umkm role only.
@@ -48,8 +50,9 @@ class RouteNames {
 
   /// Checks whether the given [route] requires authentication.
   static bool isProtected(String route) {
-    // Product detail route uses a parameter, so check prefix
+    // Routes with path parameters need prefix checks
     if (route.startsWith('/showcase/product/')) return false;
+    if (route.startsWith('/showcase/store/')) return false;
     return !publicRoutes.contains(route);
   }
 
@@ -62,4 +65,8 @@ class RouteNames {
   /// Generates the product detail path for a given [productId].
   static String productDetail(String productId) =>
       '/showcase/product/$productId';
+
+  /// Generates the store profile path for a given [ownerId].
+  static String storeProfile(String ownerId) =>
+      '/showcase/store/$ownerId';
 }

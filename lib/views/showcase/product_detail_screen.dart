@@ -243,38 +243,54 @@ class ProductDetailScreen extends StatelessWidget {
   }
 
   Widget _buildOwnerSection(BuildContext context, ProductModel product) {
-    return Row(
-      children: [
-        CircleAvatar(
-          radius: 20,
-          backgroundColor: AppColors.secondaryContainer,
-          child: const Icon(
-            Icons.store_outlined,
-            size: 20,
-            color: AppColors.secondary,
+    return InkWell(
+      onTap: () => context.push(RouteNames.storeProfile(product.ownerId)),
+      borderRadius: BorderRadius.circular(12),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 20,
+            backgroundColor: AppColors.secondaryContainer,
+            child: const Icon(
+              Icons.store_outlined,
+              size: 20,
+              color: AppColors.secondary,
+            ),
           ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Penjual',
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Penjual',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Lihat Profil Toko',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primary,
+                            ),
+                      ),
                     ),
-              ),
-              Text(
-                'UMKM Lokal',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
+                    Icon(
+                      Icons.chevron_right,
+                      size: 18,
+                      color: AppColors.primary,
                     ),
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

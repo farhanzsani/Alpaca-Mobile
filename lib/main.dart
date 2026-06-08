@@ -1,4 +1,4 @@
-/// Main entry point for the ALPACA application.
+﻿/// Main entry point for the ALPACA application.
 ///
 /// Initializes Firebase, sets up global error handling, and launches
 /// the app with provider-based state management and GoRouter navigation.
@@ -7,6 +7,7 @@ library;
 import 'dart:ui';
 
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
@@ -158,3 +159,5 @@ class InitializationErrorApp extends StatelessWidget {
     );
   }
 }
+
+

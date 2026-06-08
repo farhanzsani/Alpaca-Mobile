@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+﻿import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
 
 /// Represents a user in the ALPACA platform.
@@ -103,10 +103,23 @@ class UserModel extends Equatable {
       'role': role.toJson(),
       'photoUrl': photoUrl,
       'phoneNumber': phoneNumber,
+      'createdAt': createdAt.toIso8601String(), 'updatedAt': updatedAt.toIso8601String(),
+    };
+  }
+  /// Converts to Firestore-compatible map (with Timestamp).
+  Map<String, dynamic> toFirestoreJson() {
+    return {
+      'id': id,
+      'email': email,
+      'displayName': displayName,
+      'role': role.toJson(),
+      'photoUrl': photoUrl,
+      'phoneNumber': phoneNumber,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
     };
   }
+
 
   /// Creates a copy of this [UserModel] with the given fields replaced.
   UserModel copyWith({
@@ -143,3 +156,5 @@ class UserModel extends Equatable {
         updatedAt,
       ];
 }
+
+

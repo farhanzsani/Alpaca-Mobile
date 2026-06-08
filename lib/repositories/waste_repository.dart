@@ -1,129 +1,31 @@
-/// Waste resource repository for the ALPACA application.
-///
-/// Provides CRUD operations and real-time streaming for waste resources,
-/// supporting the circular economy feature of the platform.
-library;
-
-import 'dart:async';
-
-import 'package:alpaca_mobile/core/constants/firebase_constants.dart';
+﻿import 'package:alpaca_mobile/core/network/api_client.dart';
 import 'package:alpaca_mobile/core/utils/result.dart';
-import 'package:alpaca_mobile/firebase/firestore_service.dart';
 import 'package:alpaca_mobile/models/waste_resource_model.dart';
 
-/// Repository handling waste resource operations.
-///
-/// Manages tracking of agricultural waste materials that can potentially
-/// be reused or repurposed, supporting sustainability goals.
 class WasteRepository {
-  /// Creates a [WasteRepository] with the required Firestore service.
-  WasteRepository({
-    required FirestoreService firestoreService,
-  }) : _firestoreService = firestoreService;
+  WasteRepository({required ApiClient apiClient}) : _api = apiClient;
+  final ApiClient _api;
 
-  final FirestoreService _firestoreService;
+  Future<Result<List<WasteResourceModel>>> getWasteResources(String ownerId, {bool? reusable}) =>
+      _api.get('/waste-resources', (j) => (j as List).map((e) => WasteResourceModel.fromJson(e as Map<String, dynamic>)).toList(),
+          query: {'owner_id': ownerId, if (reusable != null) 'reusable': reusable.toString()});
 
-  /// Adds a new waste resource record to Firestore.
-  ///
-  /// Returns the document ID of the created waste resource.
-  Future<Result<String>> addWaste(WasteResourceModel waste) async {
-    return _firestoreService.addDocument(
-      collection: FirebaseCollections.wasteResources,
-      data: waste.toJson(),
-      id: waste.id.isNotEmpty ? waste.id : null,
-    );
-  }
+  Future<Result<WasteResourceModel>> getWasteResource(String id) =>
+      _api.get('/waste-resources/$id', (j) => WasteResourceModel.fromJson(j as Map<String, dynamic>));
 
-  /// Updates an existing waste resource record.
-  ///
-  /// The [waste] must have a valid [WasteResourceModel.id].
-  Future<Result<void>> updateWaste(WasteResourceModel waste) async {
-    return _firestoreService.updateDocument(
-      collection: FirebaseCollections.wasteResources,
-      id: waste.id,
-      data: waste.toJson(),
-    );
-  }
+  Future<Result<WasteResourceModel>> createWasteResource(WasteResourceModel waste) =>
+      _api.post('/waste-resources/create', waste.toJson(), (j) => WasteResourceModel.fromJson(j as Map<String, dynamic>));
 
-  /// Deletes a waste resource record by its [id].
-  Future<Result<void>> deleteWaste(String id) async {
-    return _firestoreService.deleteDocument(
-      collection: FirebaseCollections.wasteResources,
-      id: id,
-    );
-  }
+  Future<Result<WasteResourceModel>> updateWasteResource(String id, Map<String, dynamic> data) =>
+      _api.put('/waste-resources/$id', data, (j) => WasteResourceModel.fromJson(j as Map<String, dynamic>));
 
-  /// Retrieves all waste resources for a specific [ownerId].
-  Future<Result<List<WasteResourceModel>>> getWasteByOwner(
-    String ownerId,
-  ) async {
-    return _firestoreService.getCollection<WasteResourceModel>(
-      collection: FirebaseCollections.wasteResources,
-      fromFirestore: (data, docId) =>
-          WasteResourceModel.fromJson({...data, 'id': docId}),
-      queryParams: QueryParams(
-        where: [
-          WhereCondition(
-            field: 'ownerId',
-            operator: WhereOperator.isEqualTo,
-            value: ownerId,
-          ),
-        ],
-        orderBy: 'createdAt',
-        descending: true,
-      ),
-    );
-  }
+  Future<Result<void>> deleteWasteResource(String id) => _api.delete('/waste-resources/$id');
 
-  /// Streams all waste resources for a specific [ownerId] in real-time.
-  Stream<List<WasteResourceModel>> streamWaste(String ownerId) {
-    return _firestoreService
-        .streamCollection<WasteResourceModel>(
-          collection: FirebaseCollections.wasteResources,
-          fromFirestore: (data, docId) =>
-              WasteResourceModel.fromJson({...data, 'id': docId}),
-          queryParams: QueryParams(
-            where: [
-              WhereCondition(
-                field: 'ownerId',
-                operator: WhereOperator.isEqualTo,
-                value: ownerId,
-              ),
-            ],
-            orderBy: 'createdAt',
-            descending: true,
-          ),
-        )
-        .map((result) => result.dataOrNull ?? []);
-  }
-
-  /// Retrieves all reusable waste resources for a specific [ownerId].
-  ///
-  /// Filters waste items where [WasteResourceModel.reusable] is true,
-  /// useful for identifying materials that can be repurposed.
-  Future<Result<List<WasteResourceModel>>> getReusableWaste(
-    String ownerId,
-  ) async {
-    return _firestoreService.getCollection<WasteResourceModel>(
-      collection: FirebaseCollections.wasteResources,
-      fromFirestore: (data, docId) =>
-          WasteResourceModel.fromJson({...data, 'id': docId}),
-      queryParams: QueryParams(
-        where: [
-          WhereCondition(
-            field: 'ownerId',
-            operator: WhereOperator.isEqualTo,
-            value: ownerId,
-          ),
-          WhereCondition(
-            field: 'reusable',
-            operator: WhereOperator.isEqualTo,
-            value: true,
-          ),
-        ],
-        orderBy: 'createdAt',
-        descending: true,
-      ),
-    );
-  }
+  // Aliases untuk backward compatibility
+  Future<Result<List<WasteResourceModel>>> getWasteByOwner(String ownerId) => getWasteResources(ownerId);
+  Future<Result<WasteResourceModel>> addWaste(WasteResourceModel waste) => createWasteResource(waste);
+  Future<Result<WasteResourceModel>> updateWaste(WasteResourceModel waste) => updateWasteResource(waste.id, waste.toJson());
+  Future<Result<void>> deleteWaste(String id) => deleteWasteResource(id);
+  Future<Result<List<WasteResourceModel>>> getReusableWaste(String ownerId) => getWasteResources(ownerId, reusable: true);
+  Stream<List<WasteResourceModel>> streamWaste(String ownerId) => Stream.value([]);
 }

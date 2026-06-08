@@ -246,6 +246,14 @@ abstract final class FirebaseExceptionHandler {
         );
       case 'requires-recent-login':
         return AuthException.sessionExpired();
+      case 'unknown-error':
+      case 'internal':
+        return const AuthException(
+          message: 'Gagal terhubung ke server autentikasi. '
+              'Pastikan Email/Password sudah diaktifkan di Firebase Console '
+              'dan periksa koneksi internet Anda.',
+          code: 'UNKNOWN_ERROR',
+        );
       default:
         return AuthException(
           message: 'Terjadi kesalahan autentikasi: ${e.message}',
@@ -275,6 +283,12 @@ abstract final class FirebaseExceptionHandler {
           message: 'Operasi dibatalkan.',
           code: 'CANCELLED',
         );
+      case 'failed-precondition':
+        return const AppException(
+          message: 'Index database masih dalam proses pembuatan. '
+              'Coba lagi dalam beberapa menit.',
+          code: 'INDEX_NOT_READY',
+        );
       default:
         return AppException(
           message: 'Terjadi kesalahan: ${e.message}',
@@ -283,4 +297,19 @@ abstract final class FirebaseExceptionHandler {
         );
     }
   }
+}
+
+/// Exception untuk HTTP error dari REST API backend.
+class ApiException extends AppException {
+  const ApiException({
+    required super.message,
+    super.code = 'API_ERROR',
+    super.originalException,
+    this.statusCode,
+  });
+
+  final int? statusCode;
+
+  @override
+  List<Object?> get props => [...super.props, statusCode];
 }

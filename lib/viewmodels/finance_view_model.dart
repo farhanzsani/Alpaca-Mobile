@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
@@ -65,11 +65,7 @@ class FinanceViewModel extends ChangeNotifier {
     _setLoading(true);
     _clearError();
 
-    final result = await _transactionRepository.getTransactions(
-      ownerId,
-      startDate: startDate,
-      endDate: endDate,
-    );
+    final result = await _transactionRepository.getTransactions(ownerId);
 
     result.when(
       success: (transactions) {
@@ -98,8 +94,7 @@ class FinanceViewModel extends ChangeNotifier {
     final result = await _transactionRepository.addTransaction(transaction);
 
     result.when(
-      success: (docId) {
-        final savedTransaction = transaction.copyWith(id: docId);
+      success: (savedTransaction) {
         _transactions.add(savedTransaction);
         _viewState = ViewState.loaded;
       },
@@ -119,7 +114,7 @@ class FinanceViewModel extends ChangeNotifier {
     _setLoading(true);
     _clearError();
 
-    final result = await _transactionRepository.updateTransaction(transaction);
+    final result = await _transactionRepository.updateTransaction(transaction.id, transaction.toJson());
 
     result.when(
       success: (_) {
@@ -250,3 +245,5 @@ class FinanceViewModel extends ChangeNotifier {
     super.dispose();
   }
 }
+
+

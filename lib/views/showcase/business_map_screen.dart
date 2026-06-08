@@ -8,6 +8,9 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
 
+import 'package:go_router/go_router.dart';
+
+import 'package:alpaca_mobile/core/routes/route_names.dart';
 import 'package:alpaca_mobile/core/theme/app_colors.dart';
 import 'package:alpaca_mobile/core/widgets/platform_map.dart';
 import 'package:alpaca_mobile/models/business_location_model.dart';
@@ -375,6 +378,20 @@ class _BusinessInfoCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
             ],
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerRight,
+              child: FilledButton.tonalIcon(
+                onPressed: () => context.push(
+                  RouteNames.storeProfile(business.ownerId),
+                ),
+                icon: const Icon(Icons.storefront_outlined, size: 16),
+                label: const Text('Lihat Toko'),
+                style: FilledButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                ),
+              ),
+            ),
           ],
         ),
       ),

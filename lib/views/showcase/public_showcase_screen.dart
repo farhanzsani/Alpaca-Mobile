@@ -13,6 +13,7 @@ import 'package:alpaca_mobile/core/routes/route_names.dart';
 import 'package:alpaca_mobile/core/theme/app_colors.dart';
 import 'package:alpaca_mobile/models/product_model.dart';
 import 'package:alpaca_mobile/viewmodels/product_view_model.dart';
+import 'package:alpaca_mobile/viewmodels/auth_view_model.dart';
 
 /// Public-facing product catalog screen.
 ///
@@ -105,6 +106,33 @@ class _PublicShowcaseScreenState extends State<PublicShowcaseScreen> {
     return filtered;
   }
 
+  Future<void> _logout() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Keluar'),
+        content: const Text('Apakah Anda yakin ingin keluar?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Batal'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Keluar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      await context.read<AuthViewModel>().logout();
+      if (mounted) {
+        context.go(RouteNames.login);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final productVm = context.watch<ProductViewModel>();
@@ -117,6 +145,11 @@ class _PublicShowcaseScreenState extends State<PublicShowcaseScreen> {
             icon: const Icon(Icons.map_outlined),
             tooltip: 'Peta Bisnis',
             onPressed: () => context.push(RouteNames.showcaseMap),
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: 'Keluar',
+            onPressed: _logout,
           ),
         ],
       ),

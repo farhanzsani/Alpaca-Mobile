@@ -15,6 +15,7 @@ import 'package:alpaca_mobile/core/theme/app_colors.dart';
 import 'package:alpaca_mobile/models/product_model.dart';
 import 'package:alpaca_mobile/viewmodels/auth_view_model.dart';
 import 'package:alpaca_mobile/viewmodels/product_view_model.dart';
+import 'package:alpaca_mobile/repositories/media_repository.dart';
 
 /// Screen for managing the product catalog of a business owner.
 ///
@@ -475,6 +476,29 @@ class _ProductFormSheetState extends State<_ProductFormSheet> {
     final userId = authVm.currentUser?.id ?? '';
     final now = DateTime.now();
 
+    String? imageUrl = widget.product?.imageUrl;
+
+    if (_selectedImage != null) {
+      final mediaRepo = context.read<MediaRepository>();
+      final uploadResult = await mediaRepo.uploadImage(
+        _selectedImage!,
+        'products',
+        userId,
+      );
+
+      if (uploadResult.isSuccess) {
+        imageUrl = uploadResult.dataOrNull?.imageUrl;
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(uploadResult.exceptionOrNull?.message ?? 'Gagal mengunggah gambar.')),
+          );
+          setState(() => _isSaving = false);
+        }
+        return;
+      }
+    }
+
     final product = ProductModel(
       id: widget.product?.id ?? '',
       productName: _nameController.text.trim(),
@@ -482,7 +506,7 @@ class _ProductFormSheetState extends State<_ProductFormSheet> {
           ? _descriptionController.text.trim()
           : null,
       price: double.tryParse(_priceController.text.trim()) ?? 0,
-      imageUrl: widget.product?.imageUrl,
+      imageUrl: imageUrl,
       ownerId: userId,
       category: _selectedCategory,
       isAvailable: _isAvailable,
