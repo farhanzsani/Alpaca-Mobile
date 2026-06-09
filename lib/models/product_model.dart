@@ -68,19 +68,37 @@ class ProductModel extends Equatable {
   factory ProductModel.fromJson(Map<String, dynamic> json) {
     return ProductModel(
       id: json['id'] as String? ?? '',
-      productName: json['productName'] as String? ?? '',
+      productName: json['product_name'] as String? ?? json['productName'] as String? ?? '',
       description: json['description'] as String?,
-      price: (json['price'] as num?)?.toDouble() ?? 0,
-      imageUrl: json['imageUrl'] as String?,
-      ownerId: json['ownerId'] as String? ?? '',
+      price: _parseDouble(json['price']),
+      imageUrl: json['image_url'] ?? json['imageUrl'],
+      ownerId: json['owner_id'] as String? ?? json['ownerId'] as String? ?? '',
       category: json['category'] as String? ?? 'other',
-      isAvailable: json['isAvailable'] as bool? ?? true,
-      quantity: (json['quantity'] as num?)?.toInt() ?? 0,
-      minimumStock: (json['minimumStock'] as num?)?.toInt() ?? 0,
+      isAvailable: json['is_available'] as bool? ?? json['isAvailable'] as bool? ?? true,
+      quantity: _parseInt(json['quantity']),
+      minimumStock: _parseInt(json['minimum_stock'] ?? json['minimumStock']),
       unit: json['unit'] as String? ?? 'pcs',
-      createdAt: _parseDateTime(json['createdAt']),
-      updatedAt: _parseDateTime(json['updatedAt']),
+      createdAt: _parseDateTime(json['created_at'] ?? json['createdAt']),
+      updatedAt: _parseDateTime(json['updated_at'] ?? json['updatedAt']),
     );
+  }
+
+  /// Safely parses a double from various types.
+  static double _parseDouble(dynamic value) {
+    if (value == null) return 0;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) return double.tryParse(value) ?? 0;
+    return 0;
+  }
+
+  /// Safely parses an int from various types.
+  static int _parseInt(dynamic value) {
+    if (value == null) return 0;
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    if (value is String) return int.tryParse(value) ?? 0;
+    return 0;
   }
 
   /// Safely parses a DateTime from Firestore data.
@@ -98,15 +116,15 @@ class ProductModel extends Equatable {
   /// adds server timestamps automatically.
   Map<String, dynamic> toJson() {
     return {
-      'productName': productName,
+      'product_name': productName,
       'description': description,
       'price': price,
-      'imageUrl': imageUrl,
-      'ownerId': ownerId,
+      'image_url': imageUrl,
+      'owner_id': ownerId,
       'category': category,
-      'isAvailable': isAvailable,
+      'is_available': isAvailable,
       'quantity': quantity,
-      'minimumStock': minimumStock,
+      'minimum_stock': minimumStock,
       'unit': unit,
     };
   }

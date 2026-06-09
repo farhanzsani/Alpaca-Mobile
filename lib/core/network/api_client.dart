@@ -1,4 +1,5 @@
 ﻿import 'dart:convert';
+import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 import 'package:alpaca_mobile/core/exceptions/app_exception.dart';
@@ -10,7 +11,7 @@ class ApiClient {
         _client = client ?? http.Client(),
         _auth = auth ?? FirebaseAuth.instance;
 
-  static const String defaultBaseUrl = 'https://api-alpaca.vercel.app/api/v1';
+  static const String defaultBaseUrl = 'http://localhost:3001/api/v1';
 
   final String _baseUrl;
   final http.Client _client;
@@ -50,11 +51,16 @@ class ApiClient {
 
   Uri _uri(String path, [Map<String, String?>? query]) {
     final uri = Uri.parse('$_baseUrl$path');
-    if (query == null) return uri;
+    if (query == null) {
+      print('[ApiClient] Request URI: $uri');
+      return uri;
+    }
     final q = Map.fromEntries(
       query.entries.where((e) => e.value != null).map((e) => MapEntry(e.key, e.value!)),
     );
-    return q.isEmpty ? uri : uri.replace(queryParameters: q);
+    final finalUri = q.isEmpty ? uri : uri.replace(queryParameters: q);
+    print('[ApiClient] Request URI: $finalUri');
+    return finalUri;
   }
 
   Future<Result<T>> get<T>(String path, T Function(dynamic) fromJson,
@@ -64,9 +70,12 @@ class ApiClient {
 
   Future<Result<T>> post<T>(
           String path, Map<String, dynamic> body, T Function(dynamic) fromJson) =>
-      _call(() async => _decode(
+      _call(() async {
+        print('[ApiClient] POST $path with body: $body');
+        return _decode(
           await _client.post(_uri(path), headers: await _headers(), body: jsonEncode(body)),
-          fromJson));
+          fromJson);
+      });
 
   Future<Result<T>> put<T>(
           String path, Map<String, dynamic> body, T Function(dynamic) fromJson) =>
@@ -78,6 +87,38 @@ class ApiClient {
         _checkStatus(await _client.delete(_uri(path), headers: await _headers()));
       });
 
+  Future<Result<String>> uploadImage(File file) => _call(() async {
+        final uri = _uri('/upload/image');
+        print('[ApiClient] Upload image to: $uri');
+        final request = http.MultipartRequest('POST', uri);
+        
+        // Add headers (without Content-Type, will be set automatically with boundary)
+        final headers = await _headers();
+        headers.remove('Content-Type'); // Remove to let MultipartRequest set it
+        request.headers.addAll(headers);
+        
+        // Add file
+        final bytes = await file.readAsBytes();
+        final filename = file.path.split(RegExp(r'[/\\]')).last;
+        print('[ApiClient] Uploading file: $filename, size: ${bytes.length} bytes');
+        request.files.add(http.MultipartFile.fromBytes(
+          'file',
+          bytes,
+          filename: filename,
+        ));
+        
+        final streamedResponse = await request.send();
+        final response = await http.Response.fromStream(streamedResponse);
+        
+        print('[ApiClient] Upload response: ${response.statusCode}');
+        print('[ApiClient] Upload body: ${response.body}');
+        
+        _checkStatus(response);
+        final json = jsonDecode(utf8.decode(response.bodyBytes));
+        final imageUrl = json['data']['url'] ?? json['url'] ?? json['data'];
+        return imageUrl as String;
+      });
+
   T _decode<T>(http.Response res, T Function(dynamic) fromJson) {
     _checkStatus(res);
     return fromJson(jsonDecode(utf8.decode(res.bodyBytes)));
@@ -87,6 +128,9 @@ class ApiClient {
     print('[ApiClient] Response: ${res.statusCode} ${res.reasonPhrase}');
     final code = res.statusCode;
     if (code >= 200 && code < 300) return;
+    
+    print('[ApiClient] Error body: ${res.body}');
+    
     dynamic body;
     try { body = jsonDecode(res.body); } catch (_) {}
     final msg = body is Map ? (body['message'] ?? body['error'] ?? res.reasonPhrase) : res.reasonPhrase;

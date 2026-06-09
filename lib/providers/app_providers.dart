@@ -41,7 +41,7 @@ List<SingleChildWidget> getAppProviders(SharedPreferences prefs) {
   final productRepository = ProductRepository(apiClient: apiClient);
   final inventoryRepository = InventoryRepository(apiClient: apiClient);
   final transactionRepository = TransactionRepository(apiClient: apiClient);
-  final mediaRepository = MediaRepository(firestoreService: firestoreService, storageService: storageService);
+  final mediaRepository = MediaRepository(firestoreService: firestoreService, storageService: storageService, apiClient: apiClient);
   final businessRepository = BusinessRepository(apiClient: apiClient);
   final wasteRepository = WasteRepository(apiClient: apiClient);
 

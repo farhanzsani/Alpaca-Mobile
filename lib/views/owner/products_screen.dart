@@ -62,10 +62,15 @@ class _ProductsScreenState extends State<ProductsScreen> {
         product: product,
         onSave: (savedProduct) async {
           final productVm = context.read<ProductViewModel>();
+          final authVm = context.read<AuthViewModel>();
           if (product != null) {
             await productVm.updateProduct(savedProduct);
           } else {
             await productVm.addProduct(savedProduct);
+          }
+          // Reload products after create/update
+          if (authVm.currentUser?.id != null) {
+            await productVm.loadProducts(authVm.currentUser!.id);
           }
           if (mounted) Navigator.pop(context);
         },

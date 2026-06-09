@@ -73,6 +73,21 @@ class _PublicShowcaseScreenState extends State<PublicShowcaseScreen> {
     }
   }
 
+  String _getCategoryInBackendFormat(String category) {
+    switch (category) {
+      case 'food':
+        return 'Makanan';
+      case 'beverage':
+        return 'Minuman';
+      case 'handicraft':
+        return 'Kerajinan';
+      case 'agriculture':
+        return 'Pertanian';
+      default:
+        return 'Lainnya';
+    }
+  }
+
   String _formatPrice(double price) {
     final formatted = price.toStringAsFixed(0).replaceAllMapped(
           RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
@@ -86,9 +101,10 @@ class _PublicShowcaseScreenState extends State<PublicShowcaseScreen> {
 
     // Apply category filter
     if (_selectedCategory != null && _selectedCategory!.isNotEmpty) {
+      final backendCategory = _getCategoryInBackendFormat(_selectedCategory!);
       filtered = filtered
           .where((p) =>
-              p.category.toLowerCase() == _selectedCategory!.toLowerCase())
+              p.category.toLowerCase() == backendCategory.toLowerCase())
           .toList();
     }
 

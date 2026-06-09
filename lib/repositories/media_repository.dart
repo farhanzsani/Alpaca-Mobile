@@ -7,6 +7,7 @@ library;
 import 'dart:async';
 import 'dart:io';
 
+import 'package:alpaca_mobile/core/network/api_client.dart';
 import 'package:alpaca_mobile/core/constants/firebase_constants.dart';
 import 'package:alpaca_mobile/core/exceptions/app_exception.dart';
 import 'package:alpaca_mobile/core/utils/result.dart';
@@ -23,16 +24,18 @@ class MediaRepository {
   MediaRepository({
     required FirestoreService firestoreService,
     required StorageService storageService,
+    required ApiClient apiClient,
   })  : _firestoreService = firestoreService,
-        _storageService = storageService;
+        _storageService = storageService,
+        _apiClient = apiClient;
 
   final FirestoreService _firestoreService;
   final StorageService _storageService;
+  final ApiClient _apiClient;
 
   /// Uploads an image file and creates a media document in Firestore.
   ///
-  /// The file is uploaded to Firebase Storage under the [category] path,
-  /// and a [MediaModel] document is created with the download URL.
+  /// The file is uploaded to backend API endpoint.
   ///
   /// Returns the created [MediaModel] on success.
   Future<Result<MediaModel>> uploadImage(
@@ -40,33 +43,15 @@ class MediaRepository {
     String category,
     String uploadedBy,
   ) async {
-    // Generate a unique file name based on timestamp.
-    final fileName =
-        '${DateTime.now().millisecondsSinceEpoch}_${file.path.split(Platform.pathSeparator).last}';
-    final storagePath = '${FirebaseStoragePaths.uploads}/$category/$fileName';
-
-    // Upload file to Firebase Storage.
-    final uploadResult = await _storageService.uploadFile(
-      path: storagePath,
-      file: file,
-    );
+    // Upload to backend API
+    final uploadResult = await _apiClient.uploadImage(file);
 
     return uploadResult.when(
-      success: (metadata) async {
-        final downloadUrl = metadata.downloadUrl;
-        if (downloadUrl == null) {
-          return Result<MediaModel>.failure(
-            const MediaException(
-              message: 'Gagal mendapatkan URL unduhan setelah upload.',
-              code: 'DOWNLOAD_URL_NULL',
-            ),
-          );
-        }
-
+      success: (imageUrl) async {
         final now = DateTime.now();
         final mediaModel = MediaModel(
           id: '', // Will be set by Firestore auto-generated ID.
-          imageUrl: downloadUrl,
+          imageUrl: imageUrl,
           uploadedBy: uploadedBy,
           uploadedAt: now,
           category: category,

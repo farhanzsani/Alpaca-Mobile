@@ -8,6 +8,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 import 'package:alpaca_mobile/viewmodels/auth_view_model.dart';
 import 'package:alpaca_mobile/core/routes/route_names.dart';
@@ -46,7 +47,12 @@ class _LoginScreenState extends State<LoginScreen> {
     );
 
     if (!mounted) return;
-    _showErrorIfAny(authViewModel);
+    
+    if (authViewModel.isAuthenticated) {
+      _printFirebaseToken();
+    } else {
+      _showErrorIfAny(authViewModel);
+    }
   }
 
   /// Handles Google Sign-In flow.
@@ -56,7 +62,18 @@ class _LoginScreenState extends State<LoginScreen> {
     await authViewModel.signInWithGoogle();
 
     if (!mounted) return;
-    _showErrorIfAny(authViewModel);
+    
+    if (authViewModel.isAuthenticated) {
+      _printFirebaseToken();
+    } else {
+      _showErrorIfAny(authViewModel);
+    }
+  }
+
+  /// Prints Firebase token to console after successful login.
+  Future<void> _printFirebaseToken() async {
+    final fcmToken = await FirebaseMessaging.instance.getToken();
+    print('Firebase Token: $fcmToken');
   }
 
   /// Shows error snackbar if authentication failed.

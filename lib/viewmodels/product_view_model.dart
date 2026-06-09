@@ -82,26 +82,28 @@ class ProductViewModel extends ChangeNotifier {
   ///
   /// Used by customers/tourists to browse the product catalog.
   /// Only includes products where [ProductModel.isAvailable] is true.
-  void loadAllProducts() {
-    _allProductsSubscription?.cancel();
-    _viewState = ViewState.loading;
-    notifyListeners();
+  Future<void> loadAllProducts() async {
+    print('[ProductViewModel] loadAllProducts called');
+    _setLoading(true);
+    _clearError();
 
-    _allProductsSubscription =
-        _productRepository.streamAllProducts().listen(
-      (products) {
+    final result = await _productRepository.getAllProducts();
+
+    result.when(
+      success: (products) {
+        print('[ProductViewModel] Success: ${products.length} products');
         _allProducts = products;
         _viewState = products.isEmpty ? ViewState.empty : ViewState.loaded;
-        _isLoading = false;
-        notifyListeners();
+        print('[ProductViewModel] viewState: $_viewState, allProducts: ${_allProducts.length}');
       },
-      onError: (Object error) {
-        _error = error.toString();
+      failure: (exception) {
+        print('[ProductViewModel] Failure: ${exception.message}');
+        _error = exception.message;
         _viewState = ViewState.error;
-        _isLoading = false;
-        notifyListeners();
       },
     );
+
+    _setLoading(false);
   }
 
   /// Adds a new product to the catalog.
