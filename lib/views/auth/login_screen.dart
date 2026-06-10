@@ -11,6 +11,8 @@ import 'package:provider/provider.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 import 'package:alpaca_mobile/viewmodels/auth_view_model.dart';
+import 'package:alpaca_mobile/viewmodels/location_view_model.dart';
+import 'package:alpaca_mobile/models/user_model.dart';
 import 'package:alpaca_mobile/core/routes/route_names.dart';
 import 'package:alpaca_mobile/core/validators/form_validators.dart';
 
@@ -49,6 +51,17 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
     
     if (authViewModel.isAuthenticated) {
+      // If user is owner, load location and WAIT
+      if (authViewModel.userRole == UserRole.ownerUmkm) {
+        final userId = authViewModel.currentUser?.id;
+        if (userId != null) {
+          print('[LoginScreen] Loading location for owner...');
+          await context.read<LocationViewModel>().getCurrentLocation(userId);
+          // Wait a bit for notifyListeners to propagate
+          await Future.delayed(const Duration(milliseconds: 100));
+          print('[LoginScreen] Location loaded');
+        }
+      }
       _printFirebaseToken();
     } else {
       _showErrorIfAny(authViewModel);
@@ -64,6 +77,17 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
     
     if (authViewModel.isAuthenticated) {
+      // If user is owner, load location and WAIT
+      if (authViewModel.userRole == UserRole.ownerUmkm) {
+        final userId = authViewModel.currentUser?.id;
+        if (userId != null) {
+          print('[LoginScreen] Loading location for owner (Google)...');
+          await context.read<LocationViewModel>().getCurrentLocation(userId);
+          // Wait a bit for notifyListeners to propagate
+          await Future.delayed(const Duration(milliseconds: 100));
+          print('[LoginScreen] Location loaded (Google)');
+        }
+      }
       _printFirebaseToken();
     } else {
       _showErrorIfAny(authViewModel);

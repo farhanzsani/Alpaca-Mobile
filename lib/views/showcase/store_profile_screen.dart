@@ -13,8 +13,10 @@ import 'package:alpaca_mobile/core/routes/route_names.dart';
 import 'package:alpaca_mobile/core/theme/app_colors.dart';
 import 'package:alpaca_mobile/core/widgets/platform_map.dart';
 import 'package:alpaca_mobile/models/business_location_model.dart';
+import 'package:alpaca_mobile/models/media_model.dart';
 import 'package:alpaca_mobile/models/product_model.dart';
 import 'package:alpaca_mobile/viewmodels/location_view_model.dart';
+import 'package:alpaca_mobile/viewmodels/media_view_model.dart';
 import 'package:alpaca_mobile/viewmodels/product_view_model.dart';
 
 /// Screen showing the profile of a store/business.
@@ -38,6 +40,8 @@ class StoreProfileScreen extends StatefulWidget {
 }
 
 class _StoreProfileScreenState extends State<StoreProfileScreen> {
+  int _currentMediaPage = 0;
+
   @override
   void initState() {
     super.initState();
@@ -47,8 +51,12 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
   }
 
   void _loadData() {
+    print('[StoreProfile] Loading data for owner: ${widget.ownerId}');
     context.read<LocationViewModel>().loadProfileBusiness(widget.ownerId);
     context.read<ProductViewModel>().loadStoreProducts(widget.ownerId);
+    print('[StoreProfile] Calling loadMediaByOwner...');
+    context.read<MediaViewModel>().loadMediaByOwner(widget.ownerId);
+    print('[StoreProfile] loadMediaByOwner called');
   }
 
   String _formatPrice(double price) {
@@ -146,6 +154,9 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
     ProductViewModel productVm,
   ) {
     final theme = Theme.of(context);
+    final mediaVm = context.watch<MediaViewModel>();
+    
+    print('[StoreProfile] _buildContent: mediaItems=${mediaVm.mediaItems.length}');
 
     return RefreshIndicator(
       onRefresh: () async => _loadData(),
@@ -159,6 +170,9 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
 
             // Map
             _buildMapSection(business, theme),
+
+            // Media gallery section
+            _buildMediaSection(mediaVm, theme),
 
             // Products section
             _buildProductsSection(productVm, theme),
@@ -284,6 +298,165 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
               ),
             ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildMediaSection(MediaViewModel mediaVm, ThemeData theme) {
+    print('[StoreProfile] _buildMediaSection called, items: ${mediaVm.mediaItems.length}');
+    print('[StoreProfile] MediaViewModel hashCode: ${mediaVm.hashCode}');
+    
+    if (mediaVm.mediaItems.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Galeri Toko',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              height: 180,
+              decoration: BoxDecoration(
+                color: AppColors.surfaceVariant,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.photo_library_outlined,
+                      size: 48,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Belum ada foto',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      height: 220,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Galeri Toko',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  '${_currentMediaPage + 1}/${mediaVm.mediaItems.length}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: Stack(
+              children: [
+                PageView.builder(
+                  itemCount: mediaVm.mediaItems.length,
+                  onPageChanged: (index) {
+                    setState(() => _currentMediaPage = index);
+                  },
+                  itemBuilder: (context, index) {
+                    final media = mediaVm.mediaItems[index];
+                    return GestureDetector(
+                      onTap: () => _showImageDialog(media),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.network(
+                          media.imageUrl,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stack) => Container(
+                            color: AppColors.surfaceVariant,
+                            child: const Icon(Icons.broken_image, size: 64),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                if (mediaVm.mediaItems.length > 1)
+                  Positioned(
+                    bottom: 8,
+                    left: 0,
+                    right: 0,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(
+                        mediaVm.mediaItems.length,
+                        (index) => Container(
+                          width: 8,
+                          height: 8,
+                          margin: const EdgeInsets.symmetric(horizontal: 3),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: _currentMediaPage == index
+                                ? Colors.white
+                                : Colors.white.withOpacity(0.4),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showImageDialog(MediaModel media) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.network(
+              media.imageUrl,
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stack) => Container(
+                height: 300,
+                color: AppColors.surfaceVariant,
+                child: const Icon(Icons.broken_image, size: 64),
+              ),
+            ),
+            if (media.description != null)
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(media.description!),
+              ),
+          ],
+        ),
       ),
     );
   }

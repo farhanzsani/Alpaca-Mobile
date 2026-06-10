@@ -54,15 +54,15 @@ class WasteResourceModel extends Equatable {
   factory WasteResourceModel.fromJson(Map<String, dynamic> json) {
     return WasteResourceModel(
       id: json['id'] as String? ?? '',
-      wasteName: json['wasteName'] as String? ?? '',
+      wasteName: json['waste_name'] as String? ?? json['wasteName'] as String? ?? '',
       quantity: (json['quantity'] as num?)?.toDouble() ?? 0,
       unit: json['unit'] as String? ?? 'kg',
       category: json['category'] as String? ?? '',
       reusable: json['reusable'] as bool? ?? false,
-      processingNotes: json['processingNotes'] as String?,
-      ownerId: json['ownerId'] as String? ?? '',
-      createdAt: _parseDateTime(json['createdAt']),
-      updatedAt: _parseDateTime(json['updatedAt']),
+      processingNotes: json['processing_notes'] as String? ?? json['processingNotes'] as String?,
+      ownerId: json['owner_id'] as String? ?? json['ownerId'] as String? ?? '',
+      createdAt: _parseDateTime(json['created_at'] ?? json['createdAt']),
+      updatedAt: _parseDateTime(json['updated_at'] ?? json['updatedAt']),
     );
   }
 
@@ -81,13 +81,13 @@ class WasteResourceModel extends Equatable {
   /// adds server timestamps automatically.
   Map<String, dynamic> toJson() {
     return {
-      'wasteName': wasteName,
+      'waste_name': wasteName,
       'quantity': quantity,
       'unit': unit,
       'category': category,
       'reusable': reusable,
-      'processingNotes': processingNotes,
-      'ownerId': ownerId,
+      'processing_notes': processingNotes,
+      'owner_id': ownerId,
     };
   }
 

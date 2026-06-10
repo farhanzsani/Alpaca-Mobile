@@ -37,6 +37,8 @@ class MediaViewModel extends ChangeNotifier {
   List<MediaModel> _mediaList = [];
   /// All loaded media items.
   List<MediaModel> get mediaList => List.unmodifiable(_mediaList);
+  /// Alias for mediaList (for consistency with store profile screen)
+  List<MediaModel> get mediaItems => mediaList;
 
   bool _isUploading = false;
   /// Whether an image upload is currently in progress.
@@ -75,10 +77,11 @@ class MediaViewModel extends ChangeNotifier {
 
     result.when(
       success: (media) {
-        _mediaList.add(media);
+        print('[MediaViewModel] Upload success, waiting for reload...');
         _viewState = ViewState.loaded;
       },
       failure: (exception) {
+        print('[MediaViewModel] Upload failed: ${exception.message}');
         _error = exception.message;
         _viewState = ViewState.error;
       },
@@ -93,6 +96,7 @@ class MediaViewModel extends ChangeNotifier {
   ///
   /// Fetches media records from Firestore filtered by the uploader.
   Future<void> loadMedia(String userId) async {
+    print('[MediaViewModel] loadMedia called for userId: $userId');
     _setLoading(true);
     _clearError();
 
@@ -100,10 +104,12 @@ class MediaViewModel extends ChangeNotifier {
 
     result.when(
       success: (mediaList) {
+        print('[MediaViewModel] Loaded ${mediaList.length} media items');
         _mediaList = mediaList;
         _viewState = mediaList.isEmpty ? ViewState.empty : ViewState.loaded;
       },
       failure: (exception) {
+        print('[MediaViewModel] Error loading media: ${exception.message}');
         _error = exception.message;
         _viewState = ViewState.error;
       },
@@ -111,6 +117,9 @@ class MediaViewModel extends ChangeNotifier {
 
     _setLoading(false);
   }
+
+  /// Alias for loadMedia (for store profile view)
+  Future<void> loadMediaByOwner(String ownerId) => loadMedia(ownerId);
 
   /// Deletes a media item by its [mediaId].
   ///

@@ -11,6 +11,7 @@ import 'package:provider/provider.dart';
 
 import 'package:alpaca_mobile/models/user_model.dart';
 import 'package:alpaca_mobile/viewmodels/auth_view_model.dart';
+import 'package:alpaca_mobile/viewmodels/location_view_model.dart';
 import 'package:alpaca_mobile/core/routes/route_names.dart';
 import 'package:alpaca_mobile/core/validators/form_validators.dart';
 

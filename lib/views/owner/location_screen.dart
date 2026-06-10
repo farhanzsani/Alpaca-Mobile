@@ -218,12 +218,84 @@ class _LocationScreenState extends State<LocationScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Lokasi Bisnis'),
+      backgroundColor: const Color(0xFFF9FAFB),
+      body: Column(
+        children: [
+          _buildHeader(),
+          Expanded(
+            child: locationVm.isLoading && locationVm.businessLocation == null
+                ? const Center(
+                    child: CircularProgressIndicator(
+                      color: Color(0xFF22C55E),
+                    ),
+                  )
+                : _buildForm(context, locationVm),
+          ),
+        ],
       ),
-      body: locationVm.isLoading && locationVm.businessLocation == null
-          ? const Center(child: CircularProgressIndicator())
-          : _buildForm(context, locationVm),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF064E3B), Color(0xFF065F46)],
+        ),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(40),
+          bottomRight: Radius.circular(40),
+        ),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF86EFAC).withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.store_rounded,
+                  color: Color(0xFF86EFAC),
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Lokasi Bisnis',
+                      style: TextStyle(
+                        fontSize: 20,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Text(
+                      'Atur lokasi bisnis Anda',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF86EFAC),
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -232,17 +304,29 @@ class _LocationScreenState extends State<LocationScreen> {
         const LatLng(-6.200000, 106.816666); // Default: Jakarta
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       child: Form(
         key: _formKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Map preview
-            Card(
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFE5E7EB)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
               clipBehavior: Clip.antiAlias,
               child: SizedBox(
-                height: 220,
+                height: 240,
                 child: PlatformMap(
                   initialCameraPosition: CameraPosition(
                     target: defaultPosition,
@@ -278,53 +362,62 @@ class _LocationScreenState extends State<LocationScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
 
-            // GPS button and coordinates
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: _isGettingLocation ? null : _getCurrentPosition,
-                    icon: _isGettingLocation
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.my_location),
-                    label: Text(
-                      _isGettingLocation
-                          ? 'Mendapatkan lokasi...'
-                          : 'Gunakan GPS',
-                    ),
-                  ),
+            // GPS button
+            OutlinedButton.icon(
+              onPressed: _isGettingLocation ? null : _getCurrentPosition,
+              icon: _isGettingLocation
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Color(0xFF22C55E),
+                      ),
+                    )
+                  : const Icon(Icons.my_location_rounded),
+              label: Text(
+                _isGettingLocation
+                    ? 'Mendapatkan lokasi...'
+                    : 'Gunakan GPS',
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF22C55E),
+                side: const BorderSide(color: Color(0xFF22C55E)),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
-              ],
+              ),
             ),
             if (_selectedPosition != null) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryContainer.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(8),
+                  color: const Color(0xFFF0FDF4),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFF86EFAC)),
                 ),
                 child: Row(
                   children: [
                     const Icon(
-                      Icons.location_on,
-                      size: 18,
-                      color: AppColors.primary,
+                      Icons.location_on_rounded,
+                      size: 20,
+                      color: Color(0xFF22C55E),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         '${_selectedPosition!.latitude.toStringAsFixed(6)}, '
                         '${_selectedPosition!.longitude.toStringAsFixed(6)}',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              fontFamily: 'monospace',
-                            ),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontFamily: 'monospace',
+                          color: Color(0xFF065F46),
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
                   ],
@@ -336,10 +429,27 @@ class _LocationScreenState extends State<LocationScreen> {
             // Business name
             TextFormField(
               controller: _nameController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Nama Bisnis',
                 hintText: 'Masukkan nama bisnis Anda',
-                prefixIcon: Icon(Icons.store_outlined),
+                prefixIcon: const Icon(Icons.store_rounded),
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF22C55E),
+                    width: 2,
+                  ),
+                ),
               ),
               textCapitalization: TextCapitalization.words,
               validator: (value) {
@@ -354,10 +464,27 @@ class _LocationScreenState extends State<LocationScreen> {
             // Address
             TextFormField(
               controller: _addressController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Alamat',
                 hintText: 'Masukkan alamat lengkap',
-                prefixIcon: Icon(Icons.location_on_outlined),
+                prefixIcon: const Icon(Icons.location_on_rounded),
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF22C55E),
+                    width: 2,
+                  ),
+                ),
               ),
               textCapitalization: TextCapitalization.sentences,
               maxLines: 2,
@@ -373,10 +500,27 @@ class _LocationScreenState extends State<LocationScreen> {
             // Description
             TextFormField(
               controller: _descriptionController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Deskripsi (Opsional)',
                 hintText: 'Deskripsikan bisnis Anda',
-                prefixIcon: Icon(Icons.description_outlined),
+                prefixIcon: const Icon(Icons.description_rounded),
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF22C55E),
+                    width: 2,
+                  ),
+                ),
               ),
               textCapitalization: TextCapitalization.sentences,
               maxLines: 3,
@@ -385,19 +529,38 @@ class _LocationScreenState extends State<LocationScreen> {
 
             // Error message
             if (locationVm.error != null)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: Text(
-                  locationVm.error!,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.error,
+              Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEE2E2),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFDC2626)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.error_outline_rounded,
+                      color: Color(0xFFDC2626),
+                      size: 20,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        locationVm.error!,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFFDC2626),
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                  textAlign: TextAlign.center,
+                    ),
+                  ],
                 ),
               ),
 
             // Save button
-            FilledButton.icon(
+            ElevatedButton.icon(
               onPressed: locationVm.isLoading ? null : _saveLocation,
               icon: locationVm.isLoading
                   ? const SizedBox(
@@ -408,13 +571,23 @@ class _LocationScreenState extends State<LocationScreen> {
                         color: Colors.white,
                       ),
                     )
-                  : const Icon(Icons.save_outlined),
+                  : const Icon(Icons.save_rounded),
               label: Text(
                 locationVm.businessLocation != null
                     ? 'Perbarui Lokasi'
                     : 'Simpan Lokasi',
               ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF22C55E),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 0,
+              ),
             ),
+            const SizedBox(height: 20),
           ],
         ),
       ),

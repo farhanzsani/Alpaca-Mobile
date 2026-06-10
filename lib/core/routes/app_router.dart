@@ -4,11 +4,14 @@ import 'package:provider/provider.dart';
 import 'package:alpaca_mobile/core/routes/route_names.dart';
 import 'package:alpaca_mobile/core/routes/route_guard.dart';
 import 'package:alpaca_mobile/viewmodels/auth_view_model.dart';
+import 'package:alpaca_mobile/viewmodels/location_view_model.dart';
 
 // Screen imports
 import 'package:alpaca_mobile/views/splash_screen.dart';
 import 'package:alpaca_mobile/views/auth/login_screen.dart';
 import 'package:alpaca_mobile/views/auth/register_screen.dart';
+import 'package:alpaca_mobile/views/auth/business_onboarding_screen.dart';
+import 'package:alpaca_mobile/views/owner/owner_main_screen.dart';
 import 'package:alpaca_mobile/views/owner/owner_dashboard_screen.dart';
 import 'package:alpaca_mobile/views/owner/inventory_screen.dart';
 import 'package:alpaca_mobile/views/owner/bookkeeping_screen.dart';
@@ -38,6 +41,7 @@ class AppRouter {
   /// provider tree for redirect logic.
   static GoRouter router(BuildContext context) {
     final authViewModel = context.read<AuthViewModel>();
+    final locationViewModel = context.read<LocationViewModel>();
 
     return GoRouter(
       navigatorKey: _rootNavigatorKey,
@@ -48,6 +52,7 @@ class AppRouter {
         return RouteGuard.redirect(
           location: location,
           authViewModel: authViewModel,
+          locationViewModel: locationViewModel,
         );
       },
       routes: _routes,
@@ -59,7 +64,7 @@ class AppRouter {
   ///
   /// Use this factory when you need the router to reactively redirect
   /// on authentication state changes.
-  static GoRouter createRouter(AuthViewModel authViewModel) {
+  static GoRouter createRouter(AuthViewModel authViewModel, LocationViewModel locationViewModel) {
     return GoRouter(
       navigatorKey: _rootNavigatorKey,
       initialLocation: RouteNames.splash,
@@ -70,6 +75,7 @@ class AppRouter {
         return RouteGuard.redirect(
           location: location,
           authViewModel: authViewModel,
+          locationViewModel: locationViewModel,
         );
       },
       routes: _routes,
@@ -97,12 +103,17 @@ class AppRouter {
       name: 'register',
       builder: (context, state) => const RegisterScreen(),
     ),
+    GoRoute(
+      path: RouteNames.businessOnboarding,
+      name: 'businessOnboarding',
+      builder: (context, state) => const BusinessOnboardingScreen(),
+    ),
 
     // Owner routes
     GoRoute(
       path: RouteNames.ownerDashboard,
       name: 'ownerDashboard',
-      builder: (context, state) => const OwnerDashboardScreen(),
+      builder: (context, state) => const OwnerMainScreen(),
     ),
     GoRoute(
       path: RouteNames.ownerInventory,

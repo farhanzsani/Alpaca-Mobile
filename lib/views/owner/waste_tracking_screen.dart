@@ -118,11 +118,18 @@ class _WasteTrackingScreenState extends State<WasteTrackingScreen> {
         waste: waste,
         onSave: (savedWaste) async {
           final wasteVm = context.read<WasteViewModel>();
+          final authVm = context.read<AuthViewModel>();
+          final userId = authVm.currentUser?.id ?? '';
+          
           if (waste != null) {
             await wasteVm.updateWaste(savedWaste);
           } else {
             await wasteVm.addWaste(savedWaste);
           }
+          
+          // Reload waste list
+          await wasteVm.loadWaste(userId);
+          
           if (mounted) Navigator.pop(context);
         },
       ),
@@ -137,6 +144,9 @@ class _WasteTrackingScreenState extends State<WasteTrackingScreen> {
         content: Text(
           'Apakah Anda yakin ingin menghapus "${waste.wasteName}"?',
         ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -144,7 +154,7 @@ class _WasteTrackingScreenState extends State<WasteTrackingScreen> {
           ),
           FilledButton(
             style: FilledButton.styleFrom(
-              backgroundColor: AppColors.error,
+              backgroundColor: const Color(0xFFDC2626),
             ),
             onPressed: () => Navigator.pop(context, true),
             child: const Text('Hapus'),
@@ -163,38 +173,106 @@ class _WasteTrackingScreenState extends State<WasteTrackingScreen> {
     final wasteVm = context.watch<WasteViewModel>();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Pelacakan Limbah'),
-        actions: [
-          if (wasteVm.wasteItems.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(right: 16),
-              child: Center(
-                child: Text(
-                  '${wasteVm.wasteItems.length} item',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ),
-            ),
-        ],
-      ),
+      backgroundColor: const Color(0xFFF9FAFB),
       body: Column(
         children: [
+          _buildHeader(wasteVm),
           _buildFilters(context),
           Expanded(child: _buildBody(wasteVm)),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openWasteForm(),
-        icon: const Icon(Icons.add),
+        backgroundColor: const Color(0xFF22C55E),
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.add_rounded),
         label: const Text('Tambah Limbah'),
+      ),
+    );
+  }
+
+  Widget _buildHeader(WasteViewModel wasteVm) {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF064E3B), Color(0xFF065F46)],
+        ),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(40),
+          bottomRight: Radius.circular(40),
+        ),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF86EFAC).withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.recycling_rounded,
+                  color: Color(0xFF86EFAC),
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Pelacakan Limbah',
+                      style: TextStyle(
+                        fontSize: 20,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Text(
+                      'Kelola limbah bisnis',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF86EFAC),
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (wasteVm.wasteItems.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '${wasteVm.wasteItems.length} item',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
 
   Widget _buildFilters(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -209,6 +287,21 @@ class _WasteTrackingScreenState extends State<WasteTrackingScreen> {
                   onSelected: (_) {
                     setState(() => _selectedCategory = null);
                   },
+                  backgroundColor: Colors.white,
+                  selectedColor: const Color(0xFF22C55E).withValues(alpha: 0.15),
+                  checkmarkColor: const Color(0xFF22C55E),
+                  side: BorderSide(
+                    color: _selectedCategory == null
+                        ? const Color(0xFF22C55E)
+                        : const Color(0xFFE5E7EB),
+                  ),
+                  labelStyle: TextStyle(
+                    color: _selectedCategory == null
+                        ? const Color(0xFF22C55E)
+                        : const Color(0xFF6B7280),
+                    fontSize: 13,
+                    fontWeight: _selectedCategory == null ? FontWeight.w600 : FontWeight.w500,
+                  ),
                 ),
                 const SizedBox(width: 8),
                 ..._categories.map(
@@ -222,13 +315,28 @@ class _WasteTrackingScreenState extends State<WasteTrackingScreen> {
                           _selectedCategory = selected ? category : null;
                         });
                       },
+                      backgroundColor: Colors.white,
+                      selectedColor: _categoryColor(category).withValues(alpha: 0.15),
+                      checkmarkColor: _categoryColor(category),
+                      side: BorderSide(
+                        color: _selectedCategory == category
+                            ? _categoryColor(category)
+                            : const Color(0xFFE5E7EB),
+                      ),
+                      labelStyle: TextStyle(
+                        color: _selectedCategory == category
+                            ? _categoryColor(category)
+                            : const Color(0xFF6B7280),
+                        fontSize: 13,
+                        fontWeight: _selectedCategory == category ? FontWeight.w600 : FontWeight.w500,
+                      ),
                     ),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 8),
           // Reusable filter
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
@@ -240,10 +348,31 @@ class _WasteTrackingScreenState extends State<WasteTrackingScreen> {
                   onSelected: (_) {
                     setState(() => _filterReusable = null);
                   },
+                  backgroundColor: Colors.white,
+                  selectedColor: const Color(0xFF22C55E).withValues(alpha: 0.15),
+                  checkmarkColor: const Color(0xFF22C55E),
+                  side: BorderSide(
+                    color: _filterReusable == null
+                        ? const Color(0xFF22C55E)
+                        : const Color(0xFFE5E7EB),
+                  ),
+                  labelStyle: TextStyle(
+                    color: _filterReusable == null
+                        ? const Color(0xFF22C55E)
+                        : const Color(0xFF6B7280),
+                    fontSize: 13,
+                    fontWeight: _filterReusable == null ? FontWeight.w600 : FontWeight.w500,
+                  ),
                 ),
                 const SizedBox(width: 8),
                 FilterChip(
-                  avatar: const Icon(Icons.recycling, size: 16),
+                  avatar: Icon(
+                    Icons.recycling_rounded,
+                    size: 16,
+                    color: _filterReusable == true
+                        ? const Color(0xFF22C55E)
+                        : const Color(0xFF6B7280),
+                  ),
                   label: const Text('Dapat Digunakan Ulang'),
                   selected: _filterReusable == true,
                   onSelected: (selected) {
@@ -251,10 +380,31 @@ class _WasteTrackingScreenState extends State<WasteTrackingScreen> {
                       _filterReusable = selected ? true : null;
                     });
                   },
+                  backgroundColor: Colors.white,
+                  selectedColor: const Color(0xFF22C55E).withValues(alpha: 0.15),
+                  checkmarkColor: const Color(0xFF22C55E),
+                  side: BorderSide(
+                    color: _filterReusable == true
+                        ? const Color(0xFF22C55E)
+                        : const Color(0xFFE5E7EB),
+                  ),
+                  labelStyle: TextStyle(
+                    color: _filterReusable == true
+                        ? const Color(0xFF22C55E)
+                        : const Color(0xFF6B7280),
+                    fontSize: 13,
+                    fontWeight: _filterReusable == true ? FontWeight.w600 : FontWeight.w500,
+                  ),
                 ),
                 const SizedBox(width: 8),
                 FilterChip(
-                  avatar: const Icon(Icons.delete_outline, size: 16),
+                  avatar: Icon(
+                    Icons.delete_outline_rounded,
+                    size: 16,
+                    color: _filterReusable == false
+                        ? const Color(0xFFDC2626)
+                        : const Color(0xFF6B7280),
+                  ),
                   label: const Text('Tidak Dapat Digunakan'),
                   selected: _filterReusable == false,
                   onSelected: (selected) {
@@ -262,6 +412,21 @@ class _WasteTrackingScreenState extends State<WasteTrackingScreen> {
                       _filterReusable = selected ? false : null;
                     });
                   },
+                  backgroundColor: Colors.white,
+                  selectedColor: const Color(0xFFDC2626).withValues(alpha: 0.15),
+                  checkmarkColor: const Color(0xFFDC2626),
+                  side: BorderSide(
+                    color: _filterReusable == false
+                        ? const Color(0xFFDC2626)
+                        : const Color(0xFFE5E7EB),
+                  ),
+                  labelStyle: TextStyle(
+                    color: _filterReusable == false
+                        ? const Color(0xFFDC2626)
+                        : const Color(0xFF6B7280),
+                    fontSize: 13,
+                    fontWeight: _filterReusable == false ? FontWeight.w600 : FontWeight.w500,
+                  ),
                 ),
               ],
             ),
@@ -273,7 +438,11 @@ class _WasteTrackingScreenState extends State<WasteTrackingScreen> {
 
   Widget _buildBody(WasteViewModel wasteVm) {
     if (wasteVm.isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: CircularProgressIndicator(
+          color: Color(0xFF22C55E),
+        ),
+      );
     }
 
     if (wasteVm.error != null) {
@@ -283,18 +452,41 @@ class _WasteTrackingScreenState extends State<WasteTrackingScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.error_outline, size: 64, color: AppColors.error),
-              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEE2E2),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Icon(
+                  Icons.error_outline_rounded,
+                  size: 56,
+                  color: Color(0xFFDC2626),
+                ),
+              ),
+              const SizedBox(height: 20),
               Text(
                 wasteVm.error!,
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium,
+                style: const TextStyle(
+                  fontSize: 15,
+                  color: Color(0xFF1F2937),
+                  fontWeight: FontWeight.w500,
+                ),
               ),
               const SizedBox(height: 16),
-              FilledButton.icon(
+              ElevatedButton.icon(
                 onPressed: _loadWaste,
-                icon: const Icon(Icons.refresh),
+                icon: const Icon(Icons.refresh_rounded),
                 label: const Text('Coba Lagi'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF22C55E),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
             ],
           ),
@@ -309,23 +501,36 @@ class _WasteTrackingScreenState extends State<WasteTrackingScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.recycling,
-                size: 80,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0FDF4),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Icon(
+                  Icons.recycling_rounded,
+                  size: 64,
+                  color: Color(0xFF22C55E),
+                ),
               ),
-              const SizedBox(height: 16),
-              Text(
+              const SizedBox(height: 20),
+              const Text(
                 'Belum ada data limbah',
-                style: Theme.of(context).textTheme.titleMedium,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1F2937),
+                ),
               ),
               const SizedBox(height: 8),
-              Text(
-                'Mulai lacak limbah bisnis Anda untuk mendukung ekonomi sirkular',
+              const Text(
+                'Mulai lacak limbah bisnis Anda untuk\nmendukung ekonomi sirkular',
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF6B7280),
+                  height: 1.5,
+                ),
               ),
             ],
           ),
@@ -342,15 +547,25 @@ class _WasteTrackingScreenState extends State<WasteTrackingScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.filter_list_off,
-                size: 64,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF3F4F6),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Icon(
+                  Icons.filter_list_off_rounded,
+                  size: 64,
+                  color: Color(0xFF6B7280),
+                ),
               ),
-              const SizedBox(height: 16),
-              Text(
+              const SizedBox(height: 20),
+              const Text(
                 'Tidak ada item yang cocok dengan filter',
-                style: Theme.of(context).textTheme.bodyMedium,
+                style: TextStyle(
+                  fontSize: 15,
+                  color: Color(0xFF6B7280),
+                ),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -360,9 +575,10 @@ class _WasteTrackingScreenState extends State<WasteTrackingScreen> {
     }
 
     return RefreshIndicator(
+      color: const Color(0xFF22C55E),
       onRefresh: () async => _loadWaste(),
       child: ListView.builder(
-        padding: const EdgeInsets.fromLTRB(12, 4, 12, 80),
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
         itemCount: filteredItems.length,
         itemBuilder: (context, index) {
           final waste = filteredItems[index];
@@ -397,89 +613,144 @@ class _WasteListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        onTap: onTap,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading: CircleAvatar(
-          backgroundColor: categoryColor.withValues(alpha: 0.15),
-          child: Icon(
-            _categoryIcon(waste.category),
-            color: categoryColor,
-            size: 20,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
-        ),
-        title: Row(
-          children: [
-            Expanded(
-              child: Text(
-                waste.wasteName,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            if (waste.reusable)
+        ],
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                width: 48,
+                height: 48,
                 decoration: BoxDecoration(
-                  color: AppColors.success.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(4),
+                  color: categoryColor.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+                child: Icon(
+                  _categoryIcon(waste.category),
+                  color: categoryColor,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(
-                      Icons.recycling,
-                      size: 12,
-                      color: AppColors.success,
-                    ),
-                    const SizedBox(width: 2),
-                    Text(
-                      'Reusable',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: AppColors.success,
-                            fontWeight: FontWeight.w600,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            waste.wasteName,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF1F2937),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
+                        ),
+                        if (waste.reusable) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF22C55E).withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: const [
+                                Icon(
+                                  Icons.recycling_rounded,
+                                  size: 12,
+                                  color: Color(0xFF22C55E),
+                                ),
+                                SizedBox(width: 4),
+                                Text(
+                                  'Reusable',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Color(0xFF22C55E),
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Text(
+                          '${waste.quantity} ${waste.unit}',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF6B7280),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: categoryColor.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: categoryColor.withValues(alpha: 0.3),
+                            ),
+                          ),
+                          child: Text(
+                            categoryLabel,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: categoryColor,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
-          ],
-        ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 4),
-          child: Row(
-            children: [
-              Text(
-                '${waste.quantity} ${waste.unit}',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
               const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                decoration: BoxDecoration(
-                  color: categoryColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  categoryLabel,
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: categoryColor,
-                      ),
+              InkWell(
+                onTap: onDelete,
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEE2E2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.delete_outline_rounded,
+                    size: 20,
+                    color: Color(0xFFDC2626),
+                  ),
                 ),
               ),
             ],
           ),
-        ),
-        trailing: IconButton(
-          icon: const Icon(Icons.delete_outline, size: 20),
-          onPressed: onDelete,
-          color: AppColors.error,
-          tooltip: 'Hapus',
         ),
       ),
     );

@@ -73,12 +73,19 @@ class TransactionModel extends Equatable {
       id: json['id'] as String? ?? '',
       type: TransactionType.fromJson(json['type'] as String? ?? 'expense'),
       title: json['title'] as String? ?? '',
-      amount: (json['amount'] as num?)?.toDouble() ?? 0,
+      amount: _parseAmount(json['amount']),
       description: json['description'] as String?,
       date: _parseDateTime(json['date']),
-      ownerId: json['ownerId'] as String? ?? '',
+      ownerId: json['owner_id'] as String? ?? json['ownerId'] as String? ?? '',
       createdAt: _parseDateTime(json['createdAt']),
     );
+  }
+
+  static double _parseAmount(dynamic value) {
+    if (value == null) return 0;
+    if (value is num) return value.toDouble();
+    if (value is String) return double.tryParse(value) ?? 0;
+    return 0;
   }
 
   /// Safely parses a DateTime from Firestore data.
@@ -100,8 +107,8 @@ class TransactionModel extends Equatable {
       'title': title,
       'amount': amount,
       'description': description,
-      'date': Timestamp.fromDate(date),
-      'ownerId': ownerId,
+      'date': date.toIso8601String(),
+      'owner_id': ownerId,
     };
   }
 

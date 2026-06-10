@@ -9,7 +9,6 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import 'package:alpaca_mobile/core/routes/route_names.dart';
-import 'package:alpaca_mobile/core/theme/app_colors.dart';
 import 'package:alpaca_mobile/models/user_model.dart';
 import 'package:alpaca_mobile/viewmodels/auth_view_model.dart';
 import 'package:alpaca_mobile/viewmodels/location_view_model.dart';
@@ -84,6 +83,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  bool _isValidUrl(String url) {
+    return url.startsWith('http://') || url.startsWith('https://');
+  }
+
   @override
   Widget build(BuildContext context) {
     final authVm = context.watch<AuthViewModel>();
@@ -91,141 +94,201 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final user = authVm.currentUser;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Profil'),
-      ),
+      backgroundColor: const Color(0xFFF9FAFB),
       body: user == null
           ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  // Avatar section
-                  _buildAvatarSection(context, user),
-                  const SizedBox(height: 24),
-
-                  // User info card
-                  _buildUserInfoCard(context, user),
-                  const SizedBox(height: 16),
-
-                  // Business info card
-                  if (locationVm.businessLocation != null)
-                    _buildBusinessInfoCard(context, locationVm),
-                  if (locationVm.businessLocation != null)
-                    const SizedBox(height: 16),
-
-                  // Actions
-                  _buildActionsCard(context),
-                  const SizedBox(height: 24),
-
-                  // App version
-                  Text(
-                    'ALPACA v1.0.0',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+          : Column(
+              children: [
+                _buildHeader(context, user),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      children: [
+                        _buildUserInfoCard(context, user),
+                        const SizedBox(height: 16),
+                        if (locationVm.businessLocation != null)
+                          _buildBusinessInfoCard(context, locationVm),
+                        if (locationVm.businessLocation != null)
+                          const SizedBox(height: 16),
+                        _buildActionsCard(context),
+                        const SizedBox(height: 24),
+                        Text(
+                          'ALPACA v1.0.0',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade500,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Platform Digitalisasi UMKM Agraris',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey.shade400,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Platform Digitalisasi UMKM Agraris',
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                ),
+              ],
+            ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context, UserModel user) {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF064E3B), Color(0xFF065F46)],
+        ),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(40),
+          bottomRight: Radius.circular(40),
+        ),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 20, 24),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    onPressed: () => context.go(RouteNames.ownerDashboard),
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Profil',
+                    style: TextStyle(
+                      fontSize: 20,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ],
               ),
             ),
-    );
-  }
-
-  Widget _buildAvatarSection(BuildContext context, UserModel user) {
-    return Column(
-      children: [
-        CircleAvatar(
-          radius: 50,
-          backgroundColor: AppColors.primaryContainer,
-          backgroundImage:
-              user.photoUrl != null ? NetworkImage(user.photoUrl!) : null,
-          child: user.photoUrl == null
-              ? Text(
-                  user.displayName.isNotEmpty
-                      ? user.displayName[0].toUpperCase()
-                      : '?',
-                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                        color: AppColors.onPrimaryContainer,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
+              child: Column(
+                children: [
+                  CircleAvatar(
+                    radius: 50,
+                    backgroundColor: const Color(0xFF86EFAC).withValues(alpha: 0.2),
+                    backgroundImage: user.photoUrl != null && _isValidUrl(user.photoUrl!) ? NetworkImage(user.photoUrl!) : null,
+                    child: user.photoUrl == null || !_isValidUrl(user.photoUrl!)
+                        ? Text(
+                            user.displayName.isNotEmpty ? user.displayName[0].toUpperCase() : '?',
+                            style: const TextStyle(
+                              fontSize: 36,
+                              color: Color(0xFF86EFAC),
+                              fontWeight: FontWeight.w700,
+                            ),
+                          )
+                        : null,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    user.displayName,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF86EFAC).withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: const Color(0xFF86EFAC).withValues(alpha: 0.3),
                       ),
-                )
-              : null,
-        ),
-        const SizedBox(height: 12),
-        Text(
-          user.displayName,
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
+                    ),
+                    child: Text(
+                      _roleLabel(user.role),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF86EFAC),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
               ),
+            ),
+          ],
         ),
-        const SizedBox(height: 4),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-          decoration: BoxDecoration(
-            color: AppColors.primaryContainer.withValues(alpha: 0.5),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Text(
-            _roleLabel(user.role),
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w600,
-                ),
-          ),
-        ),
-      ],
+      ),
     );
   }
 
   Widget _buildUserInfoCard(BuildContext context, UserModel user) {
-    return Card(
-      margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.person_outline, size: 20),
-                const SizedBox(width: 8),
-                Text(
-                  'Informasi Akun',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF22C55E).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-              ],
-            ),
-            const Divider(height: 24),
-            _buildInfoRow(
-              context,
-              icon: Icons.email_outlined,
-              label: 'Email',
-              value: user.email,
-            ),
-            const SizedBox(height: 12),
-            _buildInfoRow(
-              context,
-              icon: Icons.phone_outlined,
-              label: 'Telepon',
-              value: user.phoneNumber ?? 'Belum diatur',
-            ),
-            const SizedBox(height: 12),
-            _buildInfoRow(
-              context,
-              icon: Icons.calendar_today_outlined,
-              label: 'Bergabung',
-              value: _formatDate(user.createdAt),
-            ),
-          ],
-        ),
+                child: const Icon(
+                  Icons.person_outline,
+                  size: 20,
+                  color: Color(0xFF22C55E),
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'Informasi Akun',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1F2937),
+                ),
+              ),
+            ],
+          ),
+          const Divider(height: 32),
+          _buildInfoRow(
+            context,
+            icon: Icons.email_outlined,
+            label: 'Email',
+            value: user.email,
+          ),
+          const SizedBox(height: 16),
+          _buildInfoRow(
+            context,
+            icon: Icons.phone_outlined,
+            label: 'Telepon',
+            value: user.phoneNumber ?? 'Belum diatur',
+          ),
+          const SizedBox(height: 16),
+          _buildInfoRow(
+            context,
+            icon: Icons.calendar_today_outlined,
+            label: 'Bergabung',
+            value: _formatDate(user.createdAt),
+          ),
+        ],
       ),
     );
   }
@@ -234,66 +297,98 @@ class _ProfileScreenState extends State<ProfileScreen> {
       BuildContext context, LocationViewModel locationVm) {
     final business = locationVm.businessLocation!;
 
-    return Card(
-      margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.store_outlined, size: 20),
-                const SizedBox(width: 8),
-                Text(
-                  'Informasi Bisnis',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF22C55E).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-              ],
-            ),
-            const Divider(height: 24),
-            _buildInfoRow(
-              context,
-              icon: Icons.business_outlined,
-              label: 'Nama Bisnis',
-              value: business.businessName,
-            ),
-            const SizedBox(height: 12),
-            _buildInfoRow(
-              context,
-              icon: Icons.location_on_outlined,
-              label: 'Alamat',
-              value: business.address,
-            ),
-            if (business.description != null &&
-                business.description!.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              _buildInfoRow(
-                context,
-                icon: Icons.description_outlined,
-                label: 'Deskripsi',
-                value: business.description!,
+                child: const Icon(
+                  Icons.store_outlined,
+                  size: 20,
+                  color: Color(0xFF22C55E),
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'Informasi Bisnis',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1F2937),
+                ),
               ),
             ],
+          ),
+          const Divider(height: 32),
+          _buildInfoRow(
+            context,
+            icon: Icons.business_outlined,
+            label: 'Nama Bisnis',
+            value: business.businessName,
+          ),
+          const SizedBox(height: 16),
+          _buildInfoRow(
+            context,
+            icon: Icons.location_on_outlined,
+            label: 'Alamat',
+            value: business.address,
+          ),
+          if (business.description != null &&
+              business.description!.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            _buildInfoRow(
+              context,
+              icon: Icons.description_outlined,
+              label: 'Deskripsi',
+              value: business.description!,
+            ),
           ],
-        ),
+        ],
       ),
     );
   }
 
   Widget _buildActionsCard(BuildContext context) {
-    return Card(
-      margin: EdgeInsets.zero,
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
       child: Column(
         children: [
           ListTile(
-            leading: const Icon(Icons.edit_outlined),
-            title: const Text('Edit Profil'),
-            trailing: const Icon(Icons.chevron_right),
+            leading: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF22C55E).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.edit_outlined, size: 20, color: Color(0xFF22C55E)),
+            ),
+            title: const Text(
+              'Edit Profil',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF1F2937),
+              ),
+            ),
+            trailing: const Icon(Icons.chevron_right, color: Color(0xFF9CA3AF)),
             onTap: () {
-              // Navigate to edit profile - can be extended
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Fitur edit profil akan segera hadir.'),
@@ -303,17 +398,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           const Divider(height: 1, indent: 16, endIndent: 16),
           ListTile(
-            leading: const Icon(Icons.location_on_outlined),
-            title: const Text('Kelola Lokasi'),
-            trailing: const Icon(Icons.chevron_right),
+            leading: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFD97706).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.location_on_outlined, size: 20, color: Color(0xFFD97706)),
+            ),
+            title: const Text(
+              'Kelola Lokasi',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF1F2937),
+              ),
+            ),
+            trailing: const Icon(Icons.chevron_right, color: Color(0xFF9CA3AF)),
             onTap: () => context.push(RouteNames.ownerLocation),
           ),
           const Divider(height: 1, indent: 16, endIndent: 16),
           ListTile(
-            leading: Icon(Icons.logout, color: AppColors.error),
-            title: Text(
+            leading: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFDC2626).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.logout, size: 20, color: Color(0xFFDC2626)),
+            ),
+            title: const Text(
               'Keluar',
-              style: TextStyle(color: AppColors.error),
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFFDC2626),
+              ),
             ),
             onTap: _logout,
           ),
@@ -333,24 +453,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
       children: [
         Icon(
           icon,
-          size: 16,
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
+          size: 18,
+          color: const Color(0xFF6B7280),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 label,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF6B7280),
+                  fontWeight: FontWeight.w500,
+                ),
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: 4),
               Text(
                 value,
-                style: Theme.of(context).textTheme.bodyMedium,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF1F2937),
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ],
           ),

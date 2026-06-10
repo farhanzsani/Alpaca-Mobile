@@ -33,9 +33,9 @@ class MediaRepository {
   final StorageService _storageService;
   final ApiClient _apiClient;
 
-  /// Uploads an image file and creates a media document in Firestore.
+  /// Uploads an image file to backend API.
   ///
-  /// The file is uploaded to backend API endpoint.
+  /// Backend handles both file upload and database record creation.
   ///
   /// Returns the created [MediaModel] on success.
   Future<Result<MediaModel>> uploadImage(
@@ -43,54 +43,49 @@ class MediaRepository {
     String category,
     String uploadedBy,
   ) async {
-    // Upload to backend API
-    final uploadResult = await _apiClient.uploadImage(file);
+    // Upload file with category - backend saves to appropriate folder
+    final uploadResult = await _apiClient.uploadImage(file, category: category);
 
-    return uploadResult.when(
-      success: (imageUrl) async {
-        final now = DateTime.now();
-        final mediaModel = MediaModel(
-          id: '', // Will be set by Firestore auto-generated ID.
-          imageUrl: imageUrl,
-          uploadedBy: uploadedBy,
-          uploadedAt: now,
-          category: category,
-        );
-
-        // Create media document in Firestore.
-        final docResult = await _firestoreService.addDocument(
-          collection: FirebaseCollections.media,
-          data: mediaModel.toJson(),
-        );
-
-        return docResult.when(
-          success: (docId) =>
-              Result.success(mediaModel.copyWith(id: docId)),
-          failure: (exception) => Result<MediaModel>.failure(exception),
-        );
-      },
-      failure: (exception) => Result.failure(exception),
-    );
+    return uploadResult.map((imageUrl) {
+      // Return model based on upload response
+      // Note: backend should return full media object, not just URL
+      return MediaModel(
+        id: '', // Will be fetched when reloading
+        imageUrl: imageUrl,
+        uploadedBy: uploadedBy,
+        uploadedAt: DateTime.now(),
+        category: category,
+      );
+    });
   }
 
-  /// Retrieves all media items for a specific [ownerId].
+  /// Retrieves all media items for a specific [ownerId] from backend API.
   Future<Result<List<MediaModel>>> getMedia(String ownerId) async {
-    return _firestoreService.getCollection<MediaModel>(
-      collection: FirebaseCollections.media,
-      fromFirestore: (data, docId) =>
-          MediaModel.fromJson({...data, 'id': docId}),
-      queryParams: QueryParams(
-        where: [
-          WhereCondition(
-            field: 'uploadedBy',
-            operator: WhereOperator.isEqualTo,
-            value: ownerId,
-          ),
-        ],
-        orderBy: 'uploadedAt',
-        descending: true,
-      ),
-    );
+    return _apiClient.get('/media', (j) {
+      print('[MediaRepository] ===== GET /media =====');
+      print('[MediaRepository] Raw JSON: $j');
+      print('[MediaRepository] JSON type: ${j.runtimeType}');
+      
+      final data = j is Map ? j['data'] : j;
+      print('[MediaRepository] Extracted data: $data');
+      print('[MediaRepository] Data type: ${data.runtimeType}');
+      
+      if (data is List) {
+        print('[MediaRepository] List length: ${data.length}');
+        if (data.isNotEmpty) {
+          print('[MediaRepository] First item: ${data[0]}');
+        }
+        final mediaList = data.map((e) {
+          print('[MediaRepository] Parsing item: $e');
+          return MediaModel.fromJson(e as Map<String, dynamic>);
+        }).toList();
+        print('[MediaRepository] Successfully parsed ${mediaList.length} media items');
+        return mediaList;
+      } else {
+        print('[MediaRepository] ⚠️ Data is not a List!');
+        return [];
+      }
+    }, query: {'owner_id': ownerId});
   }
 
   /// Deletes a media item by its [id] and removes the file from Storage.
@@ -117,24 +112,9 @@ class MediaRepository {
   }
 
   /// Streams all media items for a specific [ownerId] in real-time.
+  /// NOTE: Currently disabled as backend uses REST API, not Firestore
   Stream<List<MediaModel>> streamMedia(String ownerId) {
-    return _firestoreService
-        .streamCollection<MediaModel>(
-          collection: FirebaseCollections.media,
-          fromFirestore: (data, docId) =>
-              MediaModel.fromJson({...data, 'id': docId}),
-          queryParams: QueryParams(
-            where: [
-              WhereCondition(
-                field: 'uploadedBy',
-                operator: WhereOperator.isEqualTo,
-                value: ownerId,
-              ),
-            ],
-            orderBy: 'uploadedAt',
-            descending: true,
-          ),
-        )
-        .map((result) => result.dataOrNull ?? []);
+    // Return empty stream - use loadMedia() instead for REST API
+    return Stream.value([]);
   }
 }

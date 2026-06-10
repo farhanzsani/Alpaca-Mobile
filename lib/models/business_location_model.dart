@@ -53,15 +53,15 @@ class BusinessLocationModel extends Equatable {
   factory BusinessLocationModel.fromJson(Map<String, dynamic> json) {
     return BusinessLocationModel(
       id: json['id'] as String? ?? '',
-      businessName: json['businessName'] as String? ?? '',
+      businessName: json['business_name'] as String? ?? json['businessName'] as String? ?? '',
       latitude: (json['latitude'] as num?)?.toDouble() ?? 0,
       longitude: (json['longitude'] as num?)?.toDouble() ?? 0,
       address: json['address'] as String? ?? '',
       description: json['description'] as String?,
-      ownerId: json['ownerId'] as String? ?? '',
-      imageUrl: json['imageUrl'] as String?,
-      createdAt: _parseDateTime(json['createdAt']),
-      updatedAt: _parseDateTime(json['updatedAt']),
+      ownerId: json['owner_id'] as String? ?? json['ownerId'] as String? ?? '',
+      imageUrl: json['image_url'] as String? ?? json['imageUrl'] as String?,
+      createdAt: _parseDateTime(json['created_at'] ?? json['createdAt']),
+      updatedAt: _parseDateTime(json['updated_at'] ?? json['updatedAt']),
     );
   }
 
@@ -80,13 +80,13 @@ class BusinessLocationModel extends Equatable {
   /// adds server timestamps automatically.
   Map<String, dynamic> toJson() {
     return {
-      'businessName': businessName,
+      'business_name': businessName,
       'latitude': latitude,
       'longitude': longitude,
       'address': address,
       'description': description,
-      'ownerId': ownerId,
-      'imageUrl': imageUrl,
+      'owner_id': ownerId,
+      'image_url': imageUrl,
     };
   }
 

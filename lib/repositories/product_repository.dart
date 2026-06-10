@@ -8,8 +8,25 @@ class ProductRepository {
 
   Future<Result<List<ProductModel>>> getProducts(String ownerId) =>
       _api.get('/products', (j) {
+        print('[ProductRepository] ===== GET /products?owner_id=$ownerId =====');
         final data = j is Map ? j['data'] : j;
-        return (data as List).map((e) => ProductModel.fromJson(e as Map<String, dynamic>)).toList();
+        print('[ProductRepository] Received ${(data as List).length} products');
+        
+        final allProducts = data.map((e) => ProductModel.fromJson(e as Map<String, dynamic>)).toList();
+        
+        // Debug: cek owner_id dari beberapa produk
+        if (allProducts.isNotEmpty) {
+          print('[ProductRepository] Sample product owner_ids:');
+          for (var i = 0; i < (allProducts.length > 3 ? 3 : allProducts.length); i++) {
+            print('  - Product ${i + 1}: owner_id="${allProducts[i].ownerId}" (length: ${allProducts[i].ownerId.length})');
+          }
+          print('[ProductRepository] Looking for: "$ownerId" (length: ${ownerId.length})');
+        }
+        
+        // Temporary fix: filter di client side karena backend belum filter
+        final filtered = allProducts.where((p) => p.ownerId == ownerId).toList();
+        print('[ProductRepository] Filtered to ${filtered.length} products for owner $ownerId');
+        return filtered;
       }, query: {'owner_id': ownerId});
 
   Future<Result<List<ProductModel>>> getAllProducts() =>

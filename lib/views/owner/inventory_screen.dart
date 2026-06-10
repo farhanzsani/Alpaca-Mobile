@@ -79,18 +79,11 @@ class _InventoryScreenState extends State<InventoryScreen> {
     final inventoryVM = context.watch<InventoryViewModel>();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Inventaris'),
-        backgroundColor: const Color(0xFF2E7D32),
-        foregroundColor: Colors.white,
-        elevation: 0,
-      ),
+      backgroundColor: const Color(0xFFF9FAFB),
       body: Column(
         children: [
-          // Search and filter bar
+          _buildHeader(inventoryVM),
           _buildSearchBar(inventoryVM),
-
-          // Item list
           Expanded(
             child: _buildItemList(inventoryVM),
           ),
@@ -98,10 +91,89 @@ class _InventoryScreenState extends State<InventoryScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddEditDialog(context, inventoryVM),
-        backgroundColor: const Color(0xFF2E7D32),
+        backgroundColor: const Color(0xFF22C55E),
         foregroundColor: Colors.white,
-        icon: const Icon(Icons.add),
+        icon: const Icon(Icons.add_rounded),
         label: const Text('Tambah Item'),
+      ),
+    );
+  }
+
+  Widget _buildHeader(InventoryViewModel inventoryVM) {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF064E3B), Color(0xFF065F46)],
+        ),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(40),
+          bottomRight: Radius.circular(40),
+        ),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF86EFAC).withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.inventory_2_rounded,
+                  color: Color(0xFF86EFAC),
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Inventaris',
+                      style: TextStyle(
+                        fontSize: 20,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Text(
+                      'Kelola stok barang',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF86EFAC),
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (inventoryVM.items.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '${inventoryVM.items.length} item',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -111,17 +183,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
     final categories = ['Semua', ..._getCategories(inventoryVM.items)];
 
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+      padding: const EdgeInsets.all(20),
+      color: const Color(0xFFF9FAFB),
       child: Column(
         children: [
           // Search field
@@ -132,70 +195,88 @@ class _InventoryScreenState extends State<InventoryScreen> {
             },
             decoration: InputDecoration(
               hintText: 'Cari item...',
-              prefixIcon: const Icon(Icons.search),
+              hintStyle: const TextStyle(
+                color: Color(0xFF9CA3AF),
+                fontSize: 14,
+              ),
+              prefixIcon: const Icon(
+                Icons.search_rounded,
+                color: Color(0xFF6B7280),
+              ),
               suffixIcon: _searchController.text.isNotEmpty
                   ? IconButton(
-                      icon: const Icon(Icons.clear),
+                      icon: const Icon(Icons.clear_rounded),
                       onPressed: () {
                         _searchController.clear();
                         setState(() => _searchQuery = '');
                       },
+                      color: const Color(0xFF6B7280),
                     )
                   : null,
+              filled: true,
+              fillColor: Colors.white,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey.shade300),
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey.shade300),
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(14),
                 borderSide: const BorderSide(
-                  color: Color(0xFF2E7D32),
+                  color: Color(0xFF22C55E),
                   width: 2,
                 ),
               ),
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 16,
-                vertical: 12,
+                vertical: 14,
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          if (categories.length > 1) ...[
+            const SizedBox(height: 14),
+            SizedBox(
+              height: 38,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: categories.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 8),
+                itemBuilder: (context, index) {
+                  final category = categories[index];
+                  final isSelected = _selectedCategory == category;
 
-          // Category filter chips
-          SizedBox(
-            height: 36,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: categories.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
-              itemBuilder: (context, index) {
-                final category = categories[index];
-                final isSelected = _selectedCategory == category;
-
-                return FilterChip(
-                  label: Text(category),
-                  selected: isSelected,
-                  onSelected: (selected) {
-                    setState(() {
-                      _selectedCategory = category;
-                    });
-                  },
-                  selectedColor: const Color(0xFF2E7D32).withValues(alpha: 0.2),
-                  checkmarkColor: const Color(0xFF2E7D32),
-                  labelStyle: TextStyle(
-                    color: isSelected
-                        ? const Color(0xFF2E7D32)
-                        : Colors.grey.shade700,
-                    fontSize: 12,
-                  ),
-                );
-              },
+                  return FilterChip(
+                    label: Text(category),
+                    selected: isSelected,
+                    onSelected: (selected) {
+                      setState(() {
+                        _selectedCategory = category;
+                      });
+                    },
+                    backgroundColor: Colors.white,
+                    selectedColor: const Color(0xFF22C55E).withValues(alpha: 0.15),
+                    checkmarkColor: const Color(0xFF22C55E),
+                    side: BorderSide(
+                      color: isSelected
+                          ? const Color(0xFF22C55E)
+                          : const Color(0xFFE5E7EB),
+                    ),
+                    labelStyle: TextStyle(
+                      color: isSelected
+                          ? const Color(0xFF22C55E)
+                          : const Color(0xFF6B7280),
+                      fontSize: 13,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  );
+                },
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );
@@ -206,7 +287,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
     if (inventoryVM.isLoading) {
       return const Center(
         child: CircularProgressIndicator(
-          color: Color(0xFF2E7D32),
+          color: Color(0xFF22C55E),
         ),
       );
     }
@@ -215,37 +296,48 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
     if (items.isEmpty) {
       return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.inventory_2_outlined,
-              size: 64,
-              color: Colors.grey.shade400,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Belum ada item inventaris',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey.shade600,
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0FDF4),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Icon(
+                  Icons.inventory_2_rounded,
+                  size: 64,
+                  color: Color(0xFF22C55E),
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Tap tombol + untuk menambah item baru',
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.grey.shade500,
+              const SizedBox(height: 20),
+              const Text(
+                'Belum ada item inventaris',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1F2937),
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 8),
+              const Text(
+                'Tap tombol + untuk menambah item baru',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF6B7280),
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
       itemCount: items.length,
       itemBuilder: (context, index) {
         final item = items[index];
@@ -257,13 +349,13 @@ class _InventoryScreenState extends State<InventoryScreen> {
           background: Container(
             alignment: Alignment.centerRight,
             padding: const EdgeInsets.only(right: 20),
-            margin: const EdgeInsets.symmetric(vertical: 4),
+            margin: const EdgeInsets.only(bottom: 10),
             decoration: BoxDecoration(
-              color: Colors.red.shade400,
-              borderRadius: BorderRadius.circular(12),
+              color: const Color(0xFFDC2626),
+              borderRadius: BorderRadius.circular(16),
             ),
             child: const Icon(
-              Icons.delete_outline,
+              Icons.delete_outline_rounded,
               color: Colors.white,
               size: 28,
             ),
@@ -278,15 +370,28 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 content: Text('${item.productName} dihapus'),
                 behavior: SnackBarBehavior.floating,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
             );
           },
-          child: Card(
-            margin: const EdgeInsets.symmetric(vertical: 4),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isLowStock
+                    ? const Color(0xFFD97706)
+                    : const Color(0xFFE5E7EB),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             child: InkWell(
               onTap: () => _showAddEditDialog(
@@ -294,21 +399,32 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 inventoryVM,
                 existingItem: item,
               ),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(16),
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Row(
                   children: [
-                    // Stock indicator
+                    // Icon container
                     Container(
-                      width: 4,
+                      width: 48,
                       height: 48,
                       decoration: BoxDecoration(
-                        color: isLowStock ? Colors.red : Colors.green,
-                        borderRadius: BorderRadius.circular(2),
+                        color: isLowStock
+                            ? const Color(0xFFFEF3C7)
+                            : const Color(0xFF22C55E).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        isLowStock
+                            ? Icons.warning_amber_rounded
+                            : Icons.inventory_2_rounded,
+                        color: isLowStock
+                            ? const Color(0xFFD97706)
+                            : const Color(0xFF22C55E),
+                        size: 24,
                       ),
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: 14),
 
                     // Item details
                     Expanded(
@@ -320,14 +436,15 @@ class _InventoryScreenState extends State<InventoryScreen> {
                             style: const TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
+                              color: Color(0xFF1F2937),
                             ),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             item.category,
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 12,
-                              color: Colors.grey.shade600,
+                              color: Color(0xFF9CA3AF),
                             ),
                           ),
                         ],
@@ -342,29 +459,55 @@ class _InventoryScreenState extends State<InventoryScreen> {
                           '${item.quantity} ${item.unit}',
                           style: TextStyle(
                             fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: isLowStock ? Colors.red : Colors.green,
+                            fontWeight: FontWeight.w700,
+                            color: isLowStock
+                                ? const Color(0xFFD97706)
+                                : const Color(0xFF22C55E),
                           ),
                         ),
+                        const SizedBox(height: 2),
                         Text(
                           'Min: ${item.minimumStock}',
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 11,
-                            color: Colors.grey.shade500,
+                            color: Color(0xFF9CA3AF),
                           ),
                         ),
                       ],
                     ),
 
-                    // Low stock warning icon
-                    if (isLowStock) ...[
-                      const SizedBox(width: 8),
-                      const Icon(
-                        Icons.warning_amber_rounded,
-                        color: Colors.orange,
-                        size: 20,
+                    // Delete button
+                    const SizedBox(width: 8),
+                    InkWell(
+                      onTap: () async {
+                        final confirmed = await _showDeleteConfirmation(context);
+                        if (confirmed == true) {
+                          inventoryVM.deleteItem(item.id);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('${item.productName} dihapus'),
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEE2E2),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.delete_outline_rounded,
+                          color: Color(0xFFDC2626),
+                          size: 20,
+                        ),
                       ),
-                    ],
+                    ),
                   ],
                 ),
               ),
@@ -393,7 +536,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
             style: FilledButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: const Color(0xFFDC2626),
             ),
             child: const Text('Hapus'),
           ),
@@ -645,7 +788,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                             );
                           },
                           style: FilledButton.styleFrom(
-                            backgroundColor: const Color(0xFF2E7D32),
+                            backgroundColor: const Color(0xFF22C55E),
                             minimumSize: const Size(0, 48),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),

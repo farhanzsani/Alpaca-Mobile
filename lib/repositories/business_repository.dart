@@ -7,7 +7,10 @@ class BusinessRepository {
   final ApiClient _api;
 
   Future<Result<List<BusinessLocationModel>>> getBusinessLocations() =>
-      _api.get('/business-locations', (j) => (j as List).map((e) => BusinessLocationModel.fromJson(e as Map<String, dynamic>)).toList());
+      _api.get('/business-locations', (j) {
+        final data = j is Map ? j['data'] : j;
+        return (data as List).map((e) => BusinessLocationModel.fromJson(e as Map<String, dynamic>)).toList();
+      });
 
   Future<Result<BusinessLocationModel>> getBusinessLocation(String id) =>
       _api.get('/business-locations/$id', (j) => BusinessLocationModel.fromJson(j as Map<String, dynamic>));
@@ -22,9 +25,15 @@ class BusinessRepository {
 
   // Aliases untuk backward compatibility
   Stream<List<BusinessLocationModel>> getAllBusinesses() => Stream.value([]);
-  Future<Result<BusinessLocationModel>> getBusinessByOwner(String ownerId) async {
+  Future<Result<BusinessLocationModel?>> getBusinessByOwner(String ownerId) async {
     final all = await getBusinessLocations();
-    return all.map((list) => list.firstWhere((b) => b.ownerId == ownerId));
+    return all.map((list) {
+      try {
+        return list.firstWhere((b) => b.ownerId == ownerId);
+      } catch (_) {
+        return null;
+      }
+    });
   }
   Future<Result<BusinessLocationModel>> createBusiness(BusinessLocationModel location) => createBusinessLocation(location);
   Future<Result<BusinessLocationModel>> updateBusiness(BusinessLocationModel location) => updateBusinessLocation(location.id, location.toJson());

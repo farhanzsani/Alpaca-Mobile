@@ -71,6 +71,7 @@ class LocationViewModel extends ChangeNotifier {
   ///
   /// Fetches the owner's registered business from Firestore.
   Future<void> getCurrentLocation(String ownerId) async {
+    print('[LocationViewModel] getCurrentLocation: ownerId=$ownerId');
     _setLoading(true);
     _clearError();
 
@@ -78,16 +79,19 @@ class LocationViewModel extends ChangeNotifier {
 
     result.when(
       success: (business) {
+        print('[LocationViewModel] getCurrentLocation: success, business=$business');
         _businessLocation = business;
         _viewState = business != null ? ViewState.loaded : ViewState.empty;
       },
       failure: (exception) {
+        print('[LocationViewModel] getCurrentLocation: failure, error=${exception.message}');
         _error = exception.message;
         _viewState = ViewState.error;
       },
     );
 
     _setLoading(false);
+    print('[LocationViewModel] getCurrentLocation: done, businessLocation=$_businessLocation');
   }
 
   /// Saves a new business location to Firestore.

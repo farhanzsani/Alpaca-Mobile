@@ -115,47 +115,127 @@ class _BookkeepingScreenState extends State<BookkeepingScreen>
     final financeVM = context.watch<FinanceViewModel>();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Pembukuan'),
-        backgroundColor: const Color(0xFF2E7D32),
-        foregroundColor: Colors.white,
-        elevation: 0,
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: Colors.white,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white70,
-          onTap: (_) => setState(() {}),
-          tabs: const [
-            Tab(text: 'Semua'),
-            Tab(text: 'Pemasukan'),
-            Tab(text: 'Pengeluaran'),
-          ],
-        ),
-      ),
+      backgroundColor: const Color(0xFFF9FAFB),
       body: Column(
         children: [
-          // Summary card
-          _buildSummaryCard(financeVM),
-
-          // Month filter
-          _buildMonthFilter(),
-
-          // Transaction list
+          _buildHeader(),
           Expanded(
-            child: _buildTransactionList(
-              _getFilteredTransactions(financeVM.transactions),
-              financeVM,
+            child: Column(
+              children: [
+                _buildSummaryCard(financeVM),
+                _buildMonthFilter(),
+                Expanded(
+                  child: _buildTransactionList(
+                    _getFilteredTransactions(financeVM.transactions),
+                    financeVM,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddTransactionSheet(context, financeVM),
-        backgroundColor: const Color(0xFF2E7D32),
+        backgroundColor: const Color(0xFF22C55E),
         foregroundColor: Colors.white,
-        icon: const Icon(Icons.add),
+        icon: const Icon(Icons.add_rounded),
         label: const Text('Transaksi'),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF064E3B), Color(0xFF065F46)],
+        ),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(40),
+          bottomRight: Radius.circular(40),
+        ),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF86EFAC).withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.receipt_long_rounded,
+                      color: Color(0xFF86EFAC),
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Pembukuan',
+                          style: TextStyle(
+                            fontSize: 20,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        Text(
+                          'Kelola transaksi keuangan',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF86EFAC),
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Tab bar
+            Container(
+              margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: TabBar(
+                controller: _tabController,
+                indicator: BoxDecoration(
+                  color: const Color(0xFF86EFAC),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                labelColor: const Color(0xFF064E3B),
+                unselectedLabelColor: Colors.white.withValues(alpha: 0.7),
+                labelStyle: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+                dividerColor: Colors.transparent,
+                onTap: (_) => setState(() {}),
+                tabs: const [
+                  Tab(text: 'Semua'),
+                  Tab(text: 'Pemasukan'),
+                  Tab(text: 'Pengeluaran'),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -164,14 +244,15 @@ class _BookkeepingScreenState extends State<BookkeepingScreen>
   Widget _buildSummaryCard(FinanceViewModel financeVM) {
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.all(16),
+      margin: const EdgeInsets.fromLTRB(20, 20, 20, 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.15),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -180,22 +261,24 @@ class _BookkeepingScreenState extends State<BookkeepingScreen>
       child: Column(
         children: [
           // Balance
-          Text(
+          const Text(
             'Saldo',
             style: TextStyle(
               fontSize: 13,
-              color: Colors.grey.shade600,
+              color: Color(0xFF6B7280),
+              fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Text(
             _currencyFormat.format(financeVM.balance),
             style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
+              fontSize: 32,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -1,
               color: financeVM.balance >= 0
-                  ? const Color(0xFF2E7D32)
-                  : Colors.red.shade700,
+                  ? const Color(0xFF064E3B)
+                  : const Color(0xFFDC2626),
             ),
           ),
           const SizedBox(height: 20),
@@ -206,38 +289,42 @@ class _BookkeepingScreenState extends State<BookkeepingScreen>
               // Income
               Expanded(
                 child: Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: Colors.green.shade50,
-                    borderRadius: BorderRadius.circular(12),
+                    color: const Color(0xFF22C55E).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: const Color(0xFF22C55E).withValues(alpha: 0.2),
+                    ),
                   ),
                   child: Column(
                     children: [
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
+                        children: const [
                           Icon(
-                            Icons.arrow_downward_rounded,
-                            color: Colors.green.shade700,
+                            Icons.trending_up_rounded,
+                            color: Color(0xFF22C55E),
                             size: 16,
                           ),
-                          const SizedBox(width: 4),
+                          SizedBox(width: 6),
                           Text(
                             'Pemasukan',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.green.shade700,
+                              color: Color(0xFF22C55E),
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 6),
                       Text(
                         _currencyFormat.format(financeVM.totalIncome),
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green.shade700,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF22C55E),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -251,38 +338,42 @@ class _BookkeepingScreenState extends State<BookkeepingScreen>
               // Expense
               Expanded(
                 child: Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: Colors.red.shade50,
-                    borderRadius: BorderRadius.circular(12),
+                    color: const Color(0xFFDC2626).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: const Color(0xFFDC2626).withValues(alpha: 0.2),
+                    ),
                   ),
                   child: Column(
                     children: [
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
+                        children: const [
                           Icon(
-                            Icons.arrow_upward_rounded,
-                            color: Colors.red.shade700,
+                            Icons.trending_down_rounded,
+                            color: Color(0xFFDC2626),
                             size: 16,
                           ),
-                          const SizedBox(width: 4),
+                          SizedBox(width: 6),
                           Text(
                             'Pengeluaran',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.red.shade700,
+                              color: Color(0xFFDC2626),
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 6),
                       Text(
                         _currencyFormat.format(financeVM.totalExpense),
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.red.shade700,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFFDC2626),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -301,26 +392,49 @@ class _BookkeepingScreenState extends State<BookkeepingScreen>
   /// Builds the month filter row.
   Widget _buildMonthFilter() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           const Text(
             'Transaksi',
             style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF1F2937),
             ),
           ),
-          TextButton.icon(
-            onPressed: _selectMonth,
-            icon: const Icon(Icons.calendar_month, size: 18),
-            label: Text(
-              _monthFormat.format(_selectedMonth),
-              style: const TextStyle(fontSize: 13),
-            ),
-            style: TextButton.styleFrom(
-              foregroundColor: const Color(0xFF2E7D32),
+          InkWell(
+            onTap: _selectMonth,
+            borderRadius: BorderRadius.circular(10),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF22C55E).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: const Color(0xFF22C55E).withValues(alpha: 0.3),
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.calendar_month_rounded,
+                    size: 18,
+                    color: Color(0xFF22C55E),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    _monthFormat.format(_selectedMonth),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF22C55E),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -336,102 +450,175 @@ class _BookkeepingScreenState extends State<BookkeepingScreen>
     if (financeVM.isLoading) {
       return const Center(
         child: CircularProgressIndicator(
-          color: Color(0xFF2E7D32),
+          color: Color(0xFF22C55E),
         ),
       );
     }
 
     if (transactions.isEmpty) {
       return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.receipt_long_outlined,
-              size: 64,
-              color: Colors.grey.shade400,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Belum ada transaksi',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey.shade600,
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0FDF4),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Icon(
+                  Icons.receipt_long_rounded,
+                  size: 56,
+                  color: Color(0xFF22C55E),
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Tap tombol + untuk mencatat transaksi',
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.grey.shade500,
+              const SizedBox(height: 20),
+              const Text(
+                'Belum ada transaksi',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1F2937),
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 8),
+              const Text(
+                'Tap tombol + untuk mencatat transaksi',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF6B7280),
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
 
     return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
       itemCount: transactions.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 8),
+      separatorBuilder: (_, __) => const SizedBox(height: 10),
       itemBuilder: (context, index) {
         final transaction = transactions[index];
         final isIncome = transaction.type == TransactionType.income;
 
-        return Card(
-          elevation: 1,
-          shape: RoundedRectangleBorder(
+        return Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
             borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE5E7EB)),
           ),
-          child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 8,
-            ),
-            leading: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: isIncome
-                    ? Colors.green.shade50
-                    : Colors.red.shade50,
-                borderRadius: BorderRadius.circular(12),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: isIncome
+                      ? const Color(0xFF22C55E).withValues(alpha: 0.1)
+                      : const Color(0xFFDC2626).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  isIncome
+                      ? Icons.arrow_downward_rounded
+                      : Icons.arrow_upward_rounded,
+                  color: isIncome
+                      ? const Color(0xFF22C55E)
+                      : const Color(0xFFDC2626),
+                  size: 22,
+                ),
               ),
-              child: Icon(
-                isIncome
-                    ? Icons.arrow_downward_rounded
-                    : Icons.arrow_upward_rounded,
-                color: isIncome
-                    ? Colors.green.shade700
-                    : Colors.red.shade700,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      transaction.title,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                        color: Color(0xFF1F2937),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      _dateFormat.format(transaction.date),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF9CA3AF),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            title: Text(
-              transaction.title,
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '${isIncome ? '+' : '-'} ${_currencyFormat.format(transaction.amount)}',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: isIncome
+                          ? const Color(0xFF22C55E)
+                          : const Color(0xFFDC2626),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  InkWell(
+                    onTap: () async {
+                      final confirmed = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          title: const Text('Hapus Transaksi'),
+                          content: Text(
+                            'Apakah Anda yakin ingin menghapus "${transaction.title}"?',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('Batal'),
+                            ),
+                            FilledButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: const Color(0xFFDC2626),
+                              ),
+                              child: const Text('Hapus'),
+                            ),
+                          ],
+                        ),
+                      );
+                      if (confirmed == true) {
+                        await context.read<FinanceViewModel>().deleteTransaction(transaction.id);
+                      }
+                    },
+                    borderRadius: BorderRadius.circular(6),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEE2E2),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Icon(
+                        Icons.delete_outline_rounded,
+                        size: 16,
+                        color: Color(0xFFDC2626),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ),
-            subtitle: Text(
-              _dateFormat.format(transaction.date),
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey.shade600,
-              ),
-            ),
-            trailing: Text(
-              '${isIncome ? '+' : '-'} ${_currencyFormat.format(transaction.amount)}',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: isIncome
-                    ? Colors.green.shade700
-                    : Colors.red.shade700,
-              ),
-            ),
+            ],
           ),
         );
       },
@@ -685,7 +872,7 @@ class _BookkeepingScreenState extends State<BookkeepingScreen>
                           const SizedBox(width: 12),
                           Expanded(
                             child: FilledButton(
-                              onPressed: () {
+                              onPressed: () async {
                                 if (!formKey.currentState!.validate()) return;
 
                                 final amount = double.parse(
@@ -710,7 +897,10 @@ class _BookkeepingScreenState extends State<BookkeepingScreen>
                                   createdAt: DateTime.now(),
                                 );
 
-                                financeVM.addTransaction(transaction);
+                                await financeVM.addTransaction(transaction);
+                                
+                                // Reload transactions after create
+                                await financeVM.loadTransactions(userId);
 
                                 Navigator.pop(context);
                                 ScaffoldMessenger.of(context).showSnackBar(

@@ -57,10 +57,27 @@ class AuthRepository {
       data: newUser.toFirestoreJson(),
     );
 
-    // 4. Simpan ke backend (secondary, fire-and-forget)
-    _api.post('/users/create', {...newUser.toJson(), 'id': uid}, (_) => {}).catchError((e) {
-      print('[Auth] Backend sync failed (non-critical): $e');
-    });
+    // 4. Simpan ke backend (secondary) - WAIT for completion
+    try {
+      print('[Auth] Syncing user to backend: ${newUser.email}');
+      final backendResult = await _api.post('/users/create', {
+        'id': uid,
+        'email': newUser.email,
+        'display_name': newUser.displayName,
+        'role': newUser.role.toJson(),
+        'photo_url': newUser.photoUrl ?? '',
+        'phone_number': newUser.phoneNumber,
+        'created_at': newUser.createdAt.toIso8601String(),
+        'updated_at': newUser.updatedAt.toIso8601String(),
+      }, (_) => {});
+      if (backendResult.isSuccess) {
+        print('[Auth] Backend sync successful');
+      } else {
+        print('[Auth] Backend sync failed: ${backendResult.exceptionOrNull?.message}');
+      }
+    } catch (e) {
+      print('[Auth] Backend sync error (non-critical): $e');
+    }
 
     print('[Auth] User created: ${newUser.email}, role=${newUser.role.toJson()}');
     return newUser;

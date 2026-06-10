@@ -62,6 +62,7 @@ class FinanceViewModel extends ChangeNotifier {
     DateTime? startDate,
     DateTime? endDate,
   }) async {
+    print('[FinanceViewModel] loadTransactions called for owner: $ownerId');
     _setLoading(true);
     _clearError();
 
@@ -69,11 +70,13 @@ class FinanceViewModel extends ChangeNotifier {
 
     result.when(
       success: (transactions) {
+        print('[FinanceViewModel] loadTransactions success: ${transactions.length} items');
         _transactions = transactions;
         _viewState =
             transactions.isEmpty ? ViewState.empty : ViewState.loaded;
       },
       failure: (exception) {
+        print('[FinanceViewModel] loadTransactions failed: ${exception.message}');
         _error = exception.message;
         _viewState = ViewState.error;
       },
@@ -88,6 +91,7 @@ class FinanceViewModel extends ChangeNotifier {
   /// appended to the local list and totals are recalculated automatically
   /// via computed getters.
   Future<void> addTransaction(TransactionModel transaction) async {
+    print('[FinanceViewModel] addTransaction called');
     _setLoading(true);
     _clearError();
 
@@ -95,10 +99,12 @@ class FinanceViewModel extends ChangeNotifier {
 
     result.when(
       success: (savedTransaction) {
+        print('[FinanceViewModel] addTransaction success: ${savedTransaction.id}');
         _transactions.add(savedTransaction);
         _viewState = ViewState.loaded;
       },
       failure: (exception) {
+        print('[FinanceViewModel] addTransaction failed: ${exception.message}');
         _error = exception.message;
         _viewState = ViewState.error;
       },

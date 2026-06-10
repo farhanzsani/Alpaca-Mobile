@@ -7,8 +7,10 @@ class WasteRepository {
   final ApiClient _api;
 
   Future<Result<List<WasteResourceModel>>> getWasteResources(String ownerId, {bool? reusable}) =>
-      _api.get('/waste-resources', (j) => (j as List).map((e) => WasteResourceModel.fromJson(e as Map<String, dynamic>)).toList(),
-          query: {'owner_id': ownerId, if (reusable != null) 'reusable': reusable.toString()});
+      _api.get('/waste-resources', (j) {
+        final data = j is Map ? j['data'] : j;
+        return (data as List).map((e) => WasteResourceModel.fromJson(e as Map<String, dynamic>)).toList();
+      }, query: {'owner_id': ownerId, if (reusable != null) 'reusable': reusable.toString()});
 
   Future<Result<WasteResourceModel>> getWasteResource(String id) =>
       _api.get('/waste-resources/$id', (j) => WasteResourceModel.fromJson(j as Map<String, dynamic>));

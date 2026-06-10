@@ -10,6 +10,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:alpaca_mobile/viewmodels/auth_view_model.dart';
+import 'package:alpaca_mobile/viewmodels/location_view_model.dart';
+import 'package:alpaca_mobile/models/user_model.dart';
 
 /// Splash screen shown on app launch.
 class SplashScreen extends StatefulWidget {
@@ -41,8 +43,23 @@ class _SplashScreenState extends State<SplashScreen>
     _animationController.forward();
 
     // Trigger auth check — once resolved, GoRouter redirect will navigate.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<AuthViewModel>().checkAuthStatus();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final authVm = context.read<AuthViewModel>();
+      await authVm.checkAuthStatus();
+      
+      // If authenticated as owner, load location BEFORE router redirect
+      if (mounted && authVm.isAuthenticated && authVm.userRole == UserRole.ownerUmkm) {
+        final userId = authVm.currentUser?.id;
+        if (userId != null) {
+          // Wait for location to finish loading
+          await context.read<LocationViewModel>().getCurrentLocation(userId);
+        }
+      }
+      
+      // Force rebuild after location loaded so router can redirect correctly
+      if (mounted) {
+        setState(() {});
+      }
     });
   }
 

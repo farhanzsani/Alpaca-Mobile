@@ -2,6 +2,7 @@
 import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:alpaca_mobile/core/exceptions/app_exception.dart';
 import 'package:alpaca_mobile/core/utils/result.dart';
 
@@ -11,7 +12,7 @@ class ApiClient {
         _client = client ?? http.Client(),
         _auth = auth ?? FirebaseAuth.instance;
 
-  static const String defaultBaseUrl = 'http://localhost:3001/api/v1';
+  static const String defaultBaseUrl = 'http://localhost:3000/api/v1';
 
   final String _baseUrl;
   final http.Client _client;
@@ -87,7 +88,7 @@ class ApiClient {
         _checkStatus(await _client.delete(_uri(path), headers: await _headers()));
       });
 
-  Future<Result<String>> uploadImage(File file) => _call(() async {
+  Future<Result<String>> uploadImage(File file, {String? category}) => _call(() async {
         final uri = _uri('/upload/image');
         print('[ApiClient] Upload image to: $uri');
         final request = http.MultipartRequest('POST', uri);
@@ -97,15 +98,42 @@ class ApiClient {
         headers.remove('Content-Type'); // Remove to let MultipartRequest set it
         request.headers.addAll(headers);
         
-        // Add file
-        final bytes = await file.readAsBytes();
+        // Compress and add file
+        var bytes = await file.readAsBytes();
         final filename = file.path.split(RegExp(r'[/\\]')).last;
-        print('[ApiClient] Uploading file: $filename, size: ${bytes.length} bytes');
+        final sizeInMB = bytes.length / (1024 * 1024);
+        
+        print('[ApiClient] Original file: $filename, size: ${sizeInMB.toStringAsFixed(2)} MB');
+        
+        // Compress if larger than 1MB
+        if (sizeInMB > 1.0) {
+          try {
+            final compressed = await FlutterImageCompress.compressWithFile(
+              file.absolute.path,
+              quality: 70,
+              minWidth: 1024,
+              minHeight: 1024,
+            );
+            if (compressed != null) {
+              bytes = compressed;
+              print('[ApiClient] Compressed to: ${(bytes.length / (1024 * 1024)).toStringAsFixed(2)} MB');
+            }
+          } catch (e) {
+            print('[ApiClient] Compression failed: $e, using original');
+          }
+        }
+        
         request.files.add(http.MultipartFile.fromBytes(
           'file',
           bytes,
           filename: filename,
         ));
+        
+        // Add category field
+        if (category != null) {
+          request.fields['category'] = category;
+          print('[ApiClient] Upload category: $category');
+        }
         
         final streamedResponse = await request.send();
         final response = await http.Response.fromStream(streamedResponse);
@@ -115,8 +143,22 @@ class ApiClient {
         
         _checkStatus(response);
         final json = jsonDecode(utf8.decode(response.bodyBytes));
-        final imageUrl = json['data']['url'] ?? json['url'] ?? json['data'];
-        return imageUrl as String;
+        
+        // Backend returns: { status, data: { image_url, ... } }
+        String imageUrl;
+        if (json is Map) {
+          final data = json['data'];
+          if (data is Map) {
+            imageUrl = data['image_url'] ?? '';
+          } else {
+            imageUrl = data?.toString() ?? '';
+          }
+        } else {
+          imageUrl = json.toString();
+        }
+        
+        print('[ApiClient] Extracted image URL: $imageUrl');
+        return imageUrl;
       });
 
   T _decode<T>(http.Response res, T Function(dynamic) fromJson) {
