@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:alpaca_mobile/core/routes/route_names.dart';
 import 'package:alpaca_mobile/models/product_model.dart';
+import 'package:alpaca_mobile/services/favorites_service.dart';
 import 'package:alpaca_mobile/viewmodels/product_view_model.dart';
 import 'package:alpaca_mobile/viewmodels/location_view_model.dart';
 
@@ -16,19 +17,70 @@ class ProductDetailScreen extends StatefulWidget {
 }
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
+  final FavoritesService _favoritesService = FavoritesService();
   String? _businessName;
+  String? _currentOwnerId; // Track current owner to avoid stale data
+  bool _isFavorite = false;
+  bool _isFavoriteLoading = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ProductViewModel>().loadProductById(widget.productId);
+      _loadFavoriteStatus();
     });
   }
 
+  Future<void> _loadFavoriteStatus() async {
+    final isFavorite = await _favoritesService.isFavoriteItem(
+      widget.productId,
+      'product',
+    );
+    if (!mounted) return;
+    setState(() => _isFavorite = isFavorite);
+  }
+
+  Future<void> _toggleFavorite() async {
+    if (_isFavoriteLoading) return;
+
+    setState(() => _isFavoriteLoading = true);
+    final result = await _favoritesService.toggleFavoriteItem(
+      widget.productId,
+      'product',
+    );
+
+    if (!mounted) return;
+
+    result.when(
+      success: (isFavorite) {
+        setState(() {
+          _isFavorite = isFavorite;
+          _isFavoriteLoading = false;
+        });
+      },
+      failure: (exception) {
+        setState(() => _isFavoriteLoading = false);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(exception.message)));
+      },
+    );
+  }
+
   Future<void> _loadBusinessName(String ownerId) async {
-    final businessName = await context.read<LocationViewModel>().getBusinessNameByOwner(ownerId);
-    if (mounted) {
+    // Reset if owner changed
+    if (_currentOwnerId != ownerId) {
+      setState(() {
+        _businessName = null;
+        _currentOwnerId = ownerId;
+      });
+    }
+
+    final businessName = await context
+        .read<LocationViewModel>()
+        .getBusinessNameByOwner(ownerId);
+    if (mounted && _currentOwnerId == ownerId) {
       setState(() {
         _businessName = businessName;
       });
@@ -36,10 +88,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   String _formatPrice(double price) {
-    final formatted = price.toStringAsFixed(0).replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (match) => '${match[1]}.',
-    );
+    final formatted = price
+        .toStringAsFixed(0)
+        .replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (match) => '${match[1]}.',
+        );
     return 'Rp $formatted';
   }
 
@@ -67,7 +121,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: product == null
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF22C55E)))
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFF22C55E)),
+            )
           : CustomScrollView(
               slivers: [
                 _buildAppBar(context, product),
@@ -104,17 +160,58 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 8,
               ),
             ],
           ),
           child: IconButton(
-            icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF1F2937)),
+            icon: const Icon(
+              Icons.arrow_back_rounded,
+              color: Color(0xFF1F2937),
+            ),
             onPressed: () => Navigator.pop(context),
           ),
         ),
       ),
+      actions: [
+        Padding(
+          padding: const EdgeInsets.all(8),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  blurRadius: 8,
+                ),
+              ],
+            ),
+            child: IconButton(
+              tooltip: _isFavorite ? 'Hapus dari favorit' : 'Tambah ke favorit',
+              icon: _isFavoriteLoading
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Color(0xFF22C55E),
+                      ),
+                    )
+                  : Icon(
+                      _isFavorite
+                          ? Icons.favorite_rounded
+                          : Icons.favorite_border_rounded,
+                      color: _isFavorite
+                          ? const Color(0xFFDC2626)
+                          : const Color(0xFF1F2937),
+                    ),
+              onPressed: _toggleFavorite,
+            ),
+          ),
+        ),
+      ],
       flexibleSpace: FlexibleSpaceBar(
         background: Hero(
           tag: 'product_${product.id}',
@@ -122,7 +219,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               ? Image.network(
                   product.imageUrl!,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => _buildImagePlaceholder(),
+                  errorBuilder: (_, _, _) => _buildImagePlaceholder(),
                 )
               : _buildImagePlaceholder(),
         ),
@@ -151,7 +248,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             decoration: BoxDecoration(
               color: const Color(0xFFF0FDF4),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFF22C55E).withOpacity(0.2)),
+              border: Border.all(
+                color: const Color(0xFF22C55E).withValues(alpha: 0.2),
+              ),
             ),
             child: Text(
               _categoryLabel(product.category),
@@ -193,7 +292,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   '/ ${product.unit}',
                   style: TextStyle(
                     fontSize: 16,
-                    color: const Color(0xFF6B7280).withOpacity(0.8),
+                    color: const Color(0xFF6B7280).withValues(alpha: 0.8),
                   ),
                 ),
               ),
@@ -253,8 +352,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
-              product.isLowStock ? Icons.warning_amber_rounded : Icons.check_circle_rounded,
-              color: product.isLowStock ? const Color(0xFFDC2626) : const Color(0xFF22C55E),
+              product.isLowStock
+                  ? Icons.warning_amber_rounded
+                  : Icons.check_circle_rounded,
+              color: product.isLowStock
+                  ? const Color(0xFFDC2626)
+                  : const Color(0xFF22C55E),
               size: 24,
             ),
           ),
@@ -268,7 +371,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: product.isLowStock ? const Color(0xFFDC2626) : const Color(0xFF22C55E),
+                    color: product.isLowStock
+                        ? const Color(0xFFDC2626)
+                        : const Color(0xFF22C55E),
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -299,7 +404,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF14532D).withOpacity(0.3),
+            color: const Color(0xFF14532D).withValues(alpha: 0.3),
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),
@@ -318,7 +423,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   width: 56,
                   height: 56,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: const Icon(
@@ -344,7 +449,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        _businessName != null ? 'Lihat produk lainnya' : 'Memuat info toko...',
+                        _businessName != null
+                            ? 'Lihat produk lainnya'
+                            : 'Memuat info toko...',
                         style: const TextStyle(
                           fontSize: 14,
                           color: Color(0xFF86EFAC),
@@ -367,9 +474,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   Widget _buildDivider() {
-    return Container(
-      height: 8,
-      color: const Color(0xFFF8FAFC),
-    );
+    return Container(height: 8, color: const Color(0xFFF8FAFC));
   }
 }

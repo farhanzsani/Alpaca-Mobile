@@ -233,14 +233,8 @@ class LocationViewModel extends ChangeNotifier {
     
     final cacheKey = 'business_name_$ownerId';
     
-    // Try cache first
-    if (_cacheService != null) {
-      final cachedName = _cacheService!.load<String>(cacheKey);
-      if (cachedName != null) {
-        print('[LocationViewModel] Cache hit for business name: $ownerId -> $cachedName');
-        return cachedName;
-      }
-    }
+    // TEMPORARY: Skip cache for debugging
+    print('[LocationViewModel] Skipping cache, fetching fresh business name for: $ownerId');
     
     // Create and store the request future
     final requestFuture = _fetchBusinessName(ownerId, cacheKey);

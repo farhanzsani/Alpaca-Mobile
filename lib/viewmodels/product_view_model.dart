@@ -93,23 +93,8 @@ class ProductViewModel extends ChangeNotifier {
     print('[ProductViewModel] loadAllProducts called');
     final cacheKey = 'all_products';
     
-    // Try cache first
-    if (_cacheService != null) {
-      final cachedProducts = _cacheService!.load<List<dynamic>>(cacheKey);
-      if (cachedProducts != null) {
-        try {
-          _allProducts = cachedProducts
-              .map((json) => ProductModel.fromJson(json as Map<String, dynamic>))
-              .toList();
-          _viewState = _allProducts.isEmpty ? ViewState.empty : ViewState.loaded;
-          print('[ProductViewModel] Cache hit: ${_allProducts.length} products');
-          notifyListeners();
-          return;
-        } catch (e) {
-          print('[ProductViewModel] Cache data corrupted, will fetch fresh: $e');
-        }
-      }
-    }
+    // TEMPORARY: Skip cache for debugging
+    print('[ProductViewModel] Skipping cache, fetching fresh data');
     
     _setLoading(true);
     _clearError();
@@ -119,6 +104,9 @@ class ProductViewModel extends ChangeNotifier {
     result.when(
       success: (products) {
         print('[ProductViewModel] Success: ${products.length} products');
+        if (products.isNotEmpty) {
+          print('[ProductViewModel] First product ID: "${products[0].id}" name: "${products[0].productName}"');
+        }
         _allProducts = products;
         _viewState = products.isEmpty ? ViewState.empty : ViewState.loaded;
         
@@ -128,7 +116,7 @@ class ProductViewModel extends ChangeNotifier {
           _cacheService!.save(
             key: cacheKey,
             data: productsJson,
-            ttl: const Duration(minutes: 15), // Cache for 15 minutes
+            ttl: const Duration(minutes: 15),
           );
           print('[ProductViewModel] Cached ${products.length} products');
         }
@@ -228,23 +216,29 @@ class ProductViewModel extends ChangeNotifier {
   ///
   /// Fetches the product directly from the API endpoint.
   Future<void> loadProductById(String productId) async {
+    print('[ProductViewModel] loadProductById: $productId');
     _setLoading(true);
     _clearError();
 
     final result = await _productRepository.getProduct(productId);
     
+    print('[ProductViewModel] loadProductById result: ${result.isSuccess ? "SUCCESS" : "FAILURE"}');
+    
     result.when(
       success: (product) {
+        print('[ProductViewModel] Product loaded: ${product.productName}');
         _selectedProduct = product;
         _viewState = ViewState.loaded;
       },
       failure: (exception) {
+        print('[ProductViewModel] Load failed: ${exception.message}');
         _error = exception.message;
         _viewState = ViewState.error;
       },
     );
 
     _setLoading(false);
+    print('[ProductViewModel] loadProductById done, selectedProduct: ${_selectedProduct?.productName ?? "NULL"}');
   }
 
   /// Filters the all-products list by [category].

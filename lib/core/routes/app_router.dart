@@ -159,17 +159,17 @@ class AppRouter {
       builder: (context, state) => const CustomerMainScreen(initialIndex: 0),
     ),
     GoRoute(
-      path: '/showcase/product',
-      name: 'productsList',
-      builder: (context, state) => const CustomerMainScreen(initialIndex: 0),
-    ),
-    GoRoute(
-      path: RouteNames.showcaseProductDetail,
+      path: RouteNames.showcaseProductDetail, // /showcase/product/:id
       name: 'productDetail',
       builder: (context, state) {
         final productId = state.pathParameters['id']!;
         return ProductDetailScreen(productId: productId);
       },
+    ),
+    GoRoute(
+      path: '/showcase/products', // Ganti ke plural untuk avoid conflict
+      name: 'productsList',
+      builder: (context, state) => const CustomerMainScreen(initialIndex: 0),
     ),
     GoRoute(
       path: RouteNames.showcaseMap,

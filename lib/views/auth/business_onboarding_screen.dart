@@ -213,6 +213,7 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
       latitude: _selectedLocation.latitude,
       longitude: _selectedLocation.longitude,
       ownerId: user.id,
+      ownerPhone: null, // Will be set from user profile
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
     );

@@ -190,6 +190,7 @@ class _LocationScreenState extends State<LocationScreen> {
           ? _descriptionController.text.trim()
           : null,
       ownerId: userId,
+      ownerPhone: existingLocation?.ownerPhone, // Preserve existing
       createdAt: existingLocation?.createdAt ?? now,
       updatedAt: now,
     );

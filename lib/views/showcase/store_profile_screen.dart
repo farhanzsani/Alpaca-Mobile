@@ -1,7 +1,6 @@
 /// Professional store profile with modern storefront design.
 library;
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -10,8 +9,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:alpaca_mobile/core/routes/route_names.dart';
 import 'package:alpaca_mobile/core/widgets/platform_map.dart';
 import 'package:alpaca_mobile/models/business_location_model.dart';
-import 'package:alpaca_mobile/models/media_model.dart';
 import 'package:alpaca_mobile/models/product_model.dart';
+import 'package:alpaca_mobile/services/favorites_service.dart';
 import 'package:alpaca_mobile/viewmodels/location_view_model.dart';
 import 'package:alpaca_mobile/viewmodels/media_view_model.dart';
 import 'package:alpaca_mobile/viewmodels/product_view_model.dart';
@@ -27,8 +26,11 @@ class StoreProfileScreen extends StatefulWidget {
 }
 
 class _StoreProfileScreenState extends State<StoreProfileScreen> {
+  final FavoritesService _favoritesService = FavoritesService();
   int _currentMediaPage = 0;
-  String? _ownerPhone;
+  String? _favoriteBusinessId;
+  bool _isFavorite = false;
+  bool _isFavoriteLoading = false;
 
   @override
   void initState() {
@@ -45,26 +47,47 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
     context.read<LocationViewModel>().loadProfileBusiness(widget.ownerId);
     context.read<ProductViewModel>().loadStoreProducts(widget.ownerId);
     context.read<MediaViewModel>().loadMediaByOwner(widget.ownerId);
-    await _fetchOwnerPhone();
     print('[StoreProfileScreen] _loadData end');
   }
 
-  Future<void> _fetchOwnerPhone() async {
-    try {
-      final doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(widget.ownerId)
-          .get();
-      
-      if (doc.exists && mounted) {
-        final data = doc.data();
+  Future<void> _loadFavoriteStatus(String businessId) async {
+    if (_favoriteBusinessId == businessId) return;
+
+    _favoriteBusinessId = businessId;
+    final isFavorite = await _favoritesService.isFavoriteItem(
+      businessId,
+      'business',
+    );
+
+    if (!mounted || _favoriteBusinessId != businessId) return;
+    setState(() => _isFavorite = isFavorite);
+  }
+
+  Future<void> _toggleFavorite(String businessId) async {
+    if (_isFavoriteLoading) return;
+
+    setState(() => _isFavoriteLoading = true);
+    final result = await _favoritesService.toggleFavoriteItem(
+      businessId,
+      'business',
+    );
+
+    if (!mounted) return;
+
+    result.when(
+      success: (isFavorite) {
         setState(() {
-          _ownerPhone = data?['phoneNumber'] as String?;
+          _isFavorite = isFavorite;
+          _isFavoriteLoading = false;
         });
-      }
-    } catch (e) {
-      print('[StoreProfile] Error fetching owner phone: $e');
-    }
+      },
+      failure: (exception) {
+        setState(() => _isFavoriteLoading = false);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(exception.message)));
+      },
+    );
   }
 
   void _openWhatsApp(String phone) async {
@@ -77,9 +100,9 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
         formattedPhone = '62$cleanPhone';
       }
     }
-    
+
     final url = 'https://wa.me/$formattedPhone';
-    
+
     if (await canLaunchUrl(Uri.parse(url))) {
       await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
     } else {
@@ -89,14 +112,6 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
         );
       }
     }
-  }
-
-  String _formatPrice(double price) {
-    final formatted = price.toStringAsFixed(0).replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (match) => '${match[1]}.',
-    );
-    return 'Rp $formatted';
   }
 
   @override
@@ -115,13 +130,20 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
             icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
             onPressed: () => Navigator.pop(context),
           ),
-          title: const Text('Profil Toko', style: TextStyle(color: Colors.white)),
+          title: const Text(
+            'Profil Toko',
+            style: TextStyle(color: Colors.white),
+          ),
         ),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, size: 64, color: Color(0xFF9CA3AF)),
+              const Icon(
+                Icons.error_outline,
+                size: 64,
+                color: Color(0xFF9CA3AF),
+              ),
               const SizedBox(height: 16),
               Text(
                 locationVm.error ?? 'Gagal memuat data toko',
@@ -153,7 +175,10 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
             icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
             onPressed: () => Navigator.pop(context),
           ),
-          title: const Text('Profil Toko', style: TextStyle(color: Colors.white)),
+          title: const Text(
+            'Profil Toko',
+            style: TextStyle(color: Colors.white),
+          ),
         ),
         body: const Center(
           child: Column(
@@ -161,7 +186,10 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
             children: [
               CircularProgressIndicator(color: Color(0xFF22C55E)),
               SizedBox(height: 16),
-              Text('Memuat data toko...', style: TextStyle(color: Color(0xFF6B7280))),
+              Text(
+                'Memuat data toko...',
+                style: TextStyle(color: Color(0xFF6B7280)),
+              ),
             ],
           ),
         ),
@@ -178,7 +206,10 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
             icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
             onPressed: () => Navigator.pop(context),
           ),
-          title: const Text('Profil Toko', style: TextStyle(color: Colors.white)),
+          title: const Text(
+            'Profil Toko',
+            style: TextStyle(color: Colors.white),
+          ),
         ),
         body: const Center(
           child: Column(
@@ -186,12 +217,17 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
             children: [
               Icon(Icons.store_outlined, size: 64, color: Color(0xFF9CA3AF)),
               SizedBox(height: 16),
-              Text('Toko tidak ditemukan', style: TextStyle(fontSize: 16, color: Color(0xFF6B7280))),
+              Text(
+                'Toko tidak ditemukan',
+                style: TextStyle(fontSize: 16, color: Color(0xFF6B7280)),
+              ),
             ],
           ),
         ),
       );
     }
+
+    _loadFavoriteStatus(business.id);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -231,17 +267,58 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 8,
               ),
             ],
           ),
           child: IconButton(
-            icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF1F2937)),
+            icon: const Icon(
+              Icons.arrow_back_rounded,
+              color: Color(0xFF1F2937),
+            ),
             onPressed: () => Navigator.pop(context),
           ),
         ),
       ),
+      actions: [
+        Padding(
+          padding: const EdgeInsets.all(8),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  blurRadius: 8,
+                ),
+              ],
+            ),
+            child: IconButton(
+              tooltip: _isFavorite ? 'Hapus dari favorit' : 'Tambah ke favorit',
+              icon: _isFavoriteLoading
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Color(0xFF22C55E),
+                      ),
+                    )
+                  : Icon(
+                      _isFavorite
+                          ? Icons.favorite_rounded
+                          : Icons.favorite_border_rounded,
+                      color: _isFavorite
+                          ? const Color(0xFFDC2626)
+                          : const Color(0xFF1F2937),
+                    ),
+              onPressed: () => _toggleFavorite(business.id),
+            ),
+          ),
+        ),
+      ],
       flexibleSpace: FlexibleSpaceBar(
         background: Stack(
           fit: StackFit.expand,
@@ -260,7 +337,7 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
                   return Image.network(
                     media.imageUrl,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _buildStorePlaceholder(),
+                    errorBuilder: (_, _, _) => _buildStorePlaceholder(),
                   );
                 },
               )
@@ -268,7 +345,7 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
               Image.network(
                 business.imageUrl!,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _buildStorePlaceholder(),
+                errorBuilder: (_, _, _) => _buildStorePlaceholder(),
               )
             else
               _buildStorePlaceholder(),
@@ -279,7 +356,7 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.black.withOpacity(0.3),
+                    Colors.black.withValues(alpha: 0.3),
                     Colors.transparent,
                   ],
                 ),
@@ -303,7 +380,7 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
                         shape: BoxShape.circle,
                         color: _currentMediaPage == index
                             ? Colors.white
-                            : Colors.white.withOpacity(0.4),
+                            : Colors.white.withValues(alpha: 0.4),
                       ),
                     ),
                   ),
@@ -319,7 +396,11 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
     return Container(
       color: const Color(0xFF14532D),
       child: const Center(
-        child: Icon(Icons.storefront_rounded, size: 80, color: Color(0xFF86EFAC)),
+        child: Icon(
+          Icons.storefront_rounded,
+          size: 80,
+          color: Color(0xFF86EFAC),
+        ),
       ),
     );
   }
@@ -333,7 +414,7 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -356,7 +437,11 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.location_on_rounded, size: 20, color: Color(0xFF6B7280)),
+              const Icon(
+                Icons.location_on_rounded,
+                size: 20,
+                color: Color(0xFF6B7280),
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -370,7 +455,8 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
               ),
             ],
           ),
-          if (business.description != null && business.description!.isNotEmpty) ...[
+          if (business.description != null &&
+              business.description!.isNotEmpty) ...[
             const SizedBox(height: 16),
             Text(
               business.description!,
@@ -381,12 +467,13 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
               ),
             ),
           ],
-          if (_ownerPhone != null && _ownerPhone!.isNotEmpty) ...[
+          if (business.ownerPhone != null &&
+              business.ownerPhone!.isNotEmpty) ...[
             const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: () => _openWhatsApp(_ownerPhone!),
+                onPressed: () => _openWhatsApp(business.ownerPhone!),
                 icon: const Icon(Icons.phone, size: 20),
                 label: const Text('Hubungi via WhatsApp'),
                 style: ElevatedButton.styleFrom(
@@ -416,7 +503,7 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -450,7 +537,7 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -472,10 +559,7 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
               ),
               Text(
                 '${productVm.storeProducts.length} produk',
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF6B7280),
-                ),
+                style: const TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
               ),
             ],
           ),
@@ -505,7 +589,8 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
                 final product = productVm.storeProducts[index];
                 return _ProductCard(
                   product: product,
-                  onTap: () => context.push(RouteNames.productDetail(product.id)),
+                  onTap: () =>
+                      context.push(RouteNames.productDetail(product.id)),
                 );
               },
             ),
@@ -522,10 +607,12 @@ class _ProductCard extends StatelessWidget {
   final VoidCallback onTap;
 
   String _formatPrice(double price) {
-    final formatted = price.toStringAsFixed(0).replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (match) => '${match[1]}.',
-    );
+    final formatted = price
+        .toStringAsFixed(0)
+        .replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (match) => '${match[1]}.',
+        );
     return 'Rp $formatted';
   }
 
@@ -543,13 +630,15 @@ class _ProductCard extends StatelessWidget {
           children: [
             Expanded(
               child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(16),
+                ),
                 child: product.imageUrl != null && product.imageUrl!.isNotEmpty
                     ? Image.network(
                         product.imageUrl!,
                         fit: BoxFit.cover,
                         width: double.infinity,
-                        errorBuilder: (_, __, ___) => _buildPlaceholder(),
+                        errorBuilder: (_, _, _) => _buildPlaceholder(),
                       )
                     : _buildPlaceholder(),
               ),

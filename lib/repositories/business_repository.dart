@@ -58,55 +58,19 @@ class BusinessRepository {
             .toList());
   }
 
-  /// Get business by owner - uses API with fallback to Firestore
+  /// Get business by owner - uses API
   Future<Result<BusinessLocationModel?>> getBusinessByOwner(String ownerId) async {
     try {
-      // Try API first with ?mine=true filter
       final result = await _api.getPublic('/business-locations', (j) {
         final data = j is Map ? j['data'] : j;
         final locations = (data as List)
             .map((e) => BusinessLocationModel.fromJson(e as Map<String, dynamic>))
+            .where((loc) => loc.ownerId == ownerId)
             .toList();
-        // Find the one matching ownerId
-        return locations.where((loc) => loc.ownerId == ownerId).toList();
-      }, query: {'mine': 'false'}); // Get all, then filter by owner
+        return locations.isNotEmpty ? locations.first : null;
+      });
       
-      return result.when(
-        success: (locations) {
-          if (locations.isEmpty) {
-            return Result.success(null);
-          }
-          return Result.success(locations.first as BusinessLocationModel);
-        },
-        failure: (exception) async {
-          // Fallback to Firestore
-          try {
-            var snapshot = await _firestore
-                .collection('business_locations')
-                .where('owner_id', isEqualTo: ownerId)
-                .limit(1)
-                .get();
-            
-            if (snapshot.docs.isEmpty) {
-              snapshot = await _firestore
-                  .collection('business_locations')
-                  .where('ownerId', isEqualTo: ownerId)
-                  .limit(1)
-                  .get();
-            }
-            
-            if (snapshot.docs.isEmpty) {
-              return Result.success(null);
-            }
-            
-            final data = snapshot.docs.first.data();
-            data['id'] = snapshot.docs.first.id;
-            return Result.success(BusinessLocationModel.fromJson(data));
-          } catch (e) {
-            return Result.failure(AppException(message: 'Failed to get business: $e'));
-          }
-        },
-      );
+      return result;
     } catch (e) {
       return Result.failure(AppException(message: 'Failed to get business: $e'));
     }

@@ -30,6 +30,9 @@ class BusinessLocationModel extends Equatable {
   /// URL to an image representing this business location.
   final String? imageUrl;
 
+  /// Owner's phone number (from included owner data).
+  final String? ownerPhone;
+
   /// Timestamp when the location was created.
   final DateTime createdAt;
 
@@ -45,12 +48,19 @@ class BusinessLocationModel extends Equatable {
     this.description,
     required this.ownerId,
     this.imageUrl,
+    this.ownerPhone,
     required this.createdAt,
     required this.updatedAt,
   });
 
   /// Creates a [BusinessLocationModel] from a Firestore document map.
   factory BusinessLocationModel.fromJson(Map<String, dynamic> json) {
+    // Parse owner phone if owner object exists
+    String? ownerPhone;
+    if (json['owner'] != null && json['owner'] is Map) {
+      ownerPhone = json['owner']['phone_number'] as String?;
+    }
+    
     return BusinessLocationModel(
       id: json['id'] as String? ?? '',
       businessName: json['business_name'] as String? ?? json['businessName'] as String? ?? '',
@@ -60,6 +70,7 @@ class BusinessLocationModel extends Equatable {
       description: json['description'] as String?,
       ownerId: json['owner_id'] as String? ?? json['ownerId'] as String? ?? '',
       imageUrl: json['image_url'] as String? ?? json['imageUrl'] as String?,
+      ownerPhone: ownerPhone,
       createdAt: _parseDateTime(json['created_at'] ?? json['createdAt']),
       updatedAt: _parseDateTime(json['updated_at'] ?? json['updatedAt']),
     );
@@ -87,6 +98,7 @@ class BusinessLocationModel extends Equatable {
       'description': description,
       'owner_id': ownerId,
       'image_url': imageUrl,
+      if (ownerPhone != null) 'owner_phone': ownerPhone,
     };
   }
 
@@ -100,6 +112,7 @@ class BusinessLocationModel extends Equatable {
     String? description,
     String? ownerId,
     String? imageUrl,
+    String? ownerPhone,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -112,6 +125,7 @@ class BusinessLocationModel extends Equatable {
       description: description ?? this.description,
       ownerId: ownerId ?? this.ownerId,
       imageUrl: imageUrl ?? this.imageUrl,
+      ownerPhone: ownerPhone ?? this.ownerPhone,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -127,6 +141,7 @@ class BusinessLocationModel extends Equatable {
         description,
         ownerId,
         imageUrl,
+        ownerPhone,
         createdAt,
         updatedAt,
       ];

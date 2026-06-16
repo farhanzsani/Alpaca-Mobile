@@ -66,8 +66,13 @@ class RouteNames {
   }
 
   /// Generates the product detail path for a given [productId].
-  static String productDetail(String productId) =>
-      '/showcase/product/$productId';
+  static String productDetail(String productId) {
+    if (productId.isEmpty) {
+      print('[RouteNames] ERROR: productId is empty!');
+      return '/showcase'; // Fallback to showcase
+    }
+    return '/showcase/product/$productId';
+  }
 
   /// Generates the store profile path for a given [ownerId].
   static String storeProfile(String ownerId) =>

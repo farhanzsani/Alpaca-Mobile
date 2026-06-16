@@ -254,7 +254,10 @@ class _PublicShowcaseScreenState extends State<PublicShowcaseScreen> {
             final product = products[index];
             return _ProductCard(
               product: product,
-              onTap: () => context.push(RouteNames.productDetail(product.id)),
+              onTap: () {
+                print('[ProductCard] Tapped product: ${product.id} - ${product.productName}');
+                context.push(RouteNames.productDetail(product.id));
+              },
             );
           },
           childCount: products.length,

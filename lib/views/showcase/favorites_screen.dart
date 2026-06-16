@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 import 'package:alpaca_mobile/core/routes/route_names.dart';
 import 'package:alpaca_mobile/models/business_location_model.dart';
+import 'package:alpaca_mobile/models/product_model.dart';
 import 'package:alpaca_mobile/services/favorites_service.dart';
-import 'package:alpaca_mobile/viewmodels/location_view_model.dart';
 
-/// Screen showing user's favorite stores.
 class FavoritesScreen extends StatefulWidget {
   const FavoritesScreen({super.key});
 
@@ -16,8 +14,9 @@ class FavoritesScreen extends StatefulWidget {
 
 class _FavoritesScreenState extends State<FavoritesScreen> {
   final FavoritesService _favoritesService = FavoritesService();
-  List<String> _favoriteIds = [];
+  List<FavoriteItem> _favorites = [];
   bool _isLoading = true;
+  String? _error;
 
   @override
   void initState() {
@@ -26,48 +25,115 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   }
 
   Future<void> _loadFavorites() async {
-    setState(() => _isLoading = true);
-    _favoriteIds = await _favoritesService.getFavorites();
-    
-    // Load all businesses to filter favorites
-    if (mounted) {
-      context.read<LocationViewModel>().loadAllBusinesses();
-    }
-    
-    if (mounted) {
-      setState(() => _isLoading = false);
-    }
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    final result = await _favoritesService.getFavoriteItems();
+
+    if (!mounted) return;
+    result.when(
+      success: (favorites) {
+        setState(() {
+          _favorites = favorites;
+          _isLoading = false;
+        });
+      },
+      failure: (exception) {
+        setState(() {
+          _error = exception.message;
+          _isLoading = false;
+        });
+      },
+    );
   }
 
-  Future<void> _removeFavorite(String storeId) async {
-    await _favoritesService.removeFavorite(storeId);
-    await _loadFavorites();
+  Future<void> _removeFavorite(FavoriteItem favorite) async {
+    final result = await _favoritesService.removeFavoriteItem(
+      favorite.itemId,
+      favorite.itemType,
+    );
+
+    if (!mounted) return;
+    result.when(
+      success: (_) => _loadFavorites(),
+      failure: (exception) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(exception.message)));
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final locationVm = context.watch<LocationViewModel>();
-    
-    // Filter businesses to show only favorites
-    final favoriteBusinesses = locationVm.allBusinesses
-        .where((b) => _favoriteIds.contains(b.ownerId))
+    final products = _favorites
+        .where((favorite) => favorite.product != null)
+        .map((favorite) => (favorite: favorite, product: favorite.product!))
+        .toList();
+    final businesses = _favorites
+        .where((favorite) => favorite.business != null)
+        .map((favorite) => (favorite: favorite, business: favorite.business!))
         .toList();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
       body: Column(
         children: [
-          _buildHeader(favoriteBusinesses.length),
+          _buildHeader(_favorites.length),
           Expanded(
             child: _isLoading
                 ? const Center(
-                    child: CircularProgressIndicator(
-                      color: Color(0xFF22C55E),
-                    ),
+                    child: CircularProgressIndicator(color: Color(0xFF22C55E)),
                   )
-                : favoriteBusinesses.isEmpty
-                    ? _buildEmptyState()
-                    : _buildFavoritesList(favoriteBusinesses),
+                : _error != null
+                ? _buildErrorState()
+                : _favorites.isEmpty
+                ? _buildEmptyState()
+                : RefreshIndicator(
+                    color: const Color(0xFF22C55E),
+                    onRefresh: _loadFavorites,
+                    child: ListView(
+                      padding: const EdgeInsets.all(20),
+                      children: [
+                        if (products.isNotEmpty) ...[
+                          _buildSectionTitle('Produk Favorit', products.length),
+                          const SizedBox(height: 12),
+                          ...products.map(
+                            (entry) => Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: _ProductFavoriteCard(
+                                product: entry.product,
+                                onTap: () => context.push(
+                                  RouteNames.productDetail(entry.product.id),
+                                ),
+                                onRemove: () => _removeFavorite(entry.favorite),
+                              ),
+                            ),
+                          ),
+                        ],
+                        if (businesses.isNotEmpty) ...[
+                          _buildSectionTitle('Toko Favorit', businesses.length),
+                          const SizedBox(height: 12),
+                          ...businesses.map(
+                            (entry) => Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: _BusinessFavoriteCard(
+                                business: entry.business,
+                                onTap: () => context.push(
+                                  RouteNames.storeProfile(
+                                    entry.business.ownerId,
+                                  ),
+                                ),
+                                onRemove: () => _removeFavorite(entry.favorite),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
           ),
         ],
       ),
@@ -112,7 +178,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Toko Favorit',
+                      'Favorit',
                       style: TextStyle(
                         fontSize: 20,
                         color: Colors.white,
@@ -120,7 +186,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                       ),
                     ),
                     Text(
-                      'Toko yang Anda simpan',
+                      'Produk dan toko yang Anda simpan',
                       style: TextStyle(
                         fontSize: 13,
                         color: Color(0xFF86EFAC),
@@ -132,13 +198,16 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
               ),
               if (count > 0)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    '$count toko',
+                    '$count item',
                     style: const TextStyle(
                       fontSize: 13,
                       color: Colors.white,
@@ -153,37 +222,91 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildSectionTitle(String title, int count) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 4, bottom: 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              title,
+              style: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF14532D),
+              ),
+            ),
+          ),
+          Text(
+            '$count item',
+            style: const TextStyle(
+              fontSize: 13,
+              color: Color(0xFF6B7280),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorState() {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF0FDF4),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: const Icon(
-                Icons.favorite_border_rounded,
-                size: 64,
-                color: Color(0xFF22C55E),
-              ),
+            const Icon(
+              Icons.error_outline_rounded,
+              size: 56,
+              color: Color(0xFF9CA3AF),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _error ?? 'Gagal memuat favorit',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 15, color: Color(0xFF6B7280)),
             ),
             const SizedBox(height: 20),
-            const Text(
-              'Belum ada toko favorit',
+            ElevatedButton(
+              onPressed: _loadFavorites,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF22C55E),
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Coba Lagi'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return const Center(
+      child: Padding(
+        padding: EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.favorite_border_rounded,
+              size: 72,
+              color: Color(0xFF22C55E),
+            ),
+            SizedBox(height: 20),
+            Text(
+              'Belum ada favorit',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
                 color: Color(0xFF1F2937),
               ),
             ),
-            const SizedBox(height: 8),
-            const Text(
-              'Simpan toko favorit Anda untuk\nakses cepat di sini',
+            SizedBox(height: 8),
+            Text(
+              'Simpan produk atau toko favorit Anda\nuntuk akses cepat di sini',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
@@ -196,36 +319,87 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       ),
     );
   }
+}
 
-  Widget _buildFavoritesList(List<BusinessLocationModel> businesses) {
-    return RefreshIndicator(
-      color: const Color(0xFF22C55E),
-      onRefresh: _loadFavorites,
-      child: ListView.separated(
-        padding: const EdgeInsets.all(20),
-        itemCount: businesses.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 12),
-        itemBuilder: (context, index) {
-          final business = businesses[index];
-          return _FavoriteCard(
-            business: business,
-            onTap: () => context.push(RouteNames.storeProfile(business.ownerId)),
-            onRemove: () => _removeFavorite(business.ownerId),
-          );
-        },
-      ),
+class _ProductFavoriteCard extends StatelessWidget {
+  const _ProductFavoriteCard({
+    required this.product,
+    required this.onTap,
+    required this.onRemove,
+  });
+
+  final ProductModel product;
+  final VoidCallback onTap;
+  final VoidCallback onRemove;
+
+  String _formatPrice(double price) {
+    final formatted = price
+        .toStringAsFixed(0)
+        .replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (match) => '${match[1]}.',
+        );
+    return 'Rp $formatted';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _FavoriteCardShell(
+      onTap: onTap,
+      onRemove: onRemove,
+      leading: product.imageUrl != null && product.imageUrl!.isNotEmpty
+          ? ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.network(
+                product.imageUrl!,
+                fit: BoxFit.cover,
+                width: 60,
+                height: 60,
+                errorBuilder: (_, _, _) => _IconBox(icon: Icons.image_outlined),
+              ),
+            )
+          : _IconBox(icon: Icons.image_outlined),
+      title: product.productName,
+      subtitle: '${_formatPrice(product.price)} / ${product.unit}',
     );
   }
 }
 
-class _FavoriteCard extends StatelessWidget {
-  const _FavoriteCard({
+class _BusinessFavoriteCard extends StatelessWidget {
+  const _BusinessFavoriteCard({
     required this.business,
     required this.onTap,
     required this.onRemove,
   });
 
   final BusinessLocationModel business;
+  final VoidCallback onTap;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    return _FavoriteCardShell(
+      onTap: onTap,
+      onRemove: onRemove,
+      leading: const _IconBox(icon: Icons.store_rounded),
+      title: business.businessName,
+      subtitle: business.address,
+    );
+  }
+}
+
+class _FavoriteCardShell extends StatelessWidget {
+  const _FavoriteCardShell({
+    required this.leading,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+    required this.onRemove,
+  });
+
+  final Widget leading;
+  final String title;
+  final String subtitle;
   final VoidCallback onTap;
   final VoidCallback onRemove;
 
@@ -251,26 +425,14 @@ class _FavoriteCard extends StatelessWidget {
           padding: const EdgeInsets.all(14),
           child: Row(
             children: [
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF0FDF4),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.store_rounded,
-                  color: Color(0xFF22C55E),
-                  size: 28,
-                ),
-              ),
+              leading,
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      business.businessName,
+                      title,
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
@@ -280,16 +442,15 @@ class _FavoriteCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
-                    if (business.address != null)
-                      Text(
-                        business.address!,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: Color(0xFF6B7280),
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF6B7280),
                       ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ],
                 ),
               ),
@@ -303,6 +464,25 @@ class _FavoriteCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _IconBox extends StatelessWidget {
+  const _IconBox({required this.icon});
+
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 60,
+      height: 60,
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0FDF4),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Icon(icon, color: const Color(0xFF22C55E), size: 28),
     );
   }
 }

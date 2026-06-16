@@ -19,31 +19,42 @@ class RouteGuard {
     required AuthViewModel authViewModel,
     LocationViewModel? locationViewModel,
   }) {
+    print('[RouteGuard] Checking route: $location');
+    
     final bool isAuthenticated = authViewModel.isAuthenticated;
     final UserRole? userRole = authViewModel.userRole;
     final bool isAuthRoute = _isAuthRoute(location);
     final bool isSplash = location == RouteNames.splash;
 
+    print('[RouteGuard] isAuth: $isAuthenticated, role: $userRole, isAuthRoute: $isAuthRoute, isSplash: $isSplash');
+
     // Handle splash screen only
     if (isSplash && !authViewModel.isLoading) {
       if (isAuthenticated) {
-        return userRole == UserRole.ownerUmkm ? RouteNames.ownerDashboard : RouteNames.showcase;
+        final redirect = userRole == UserRole.ownerUmkm ? RouteNames.ownerDashboard : RouteNames.showcase;
+        print('[RouteGuard] Splash redirect to: $redirect');
+        return redirect;
       } else {
+        print('[RouteGuard] Splash redirect to login');
         return RouteNames.login;
       }
     }
 
     // If authenticated and on auth routes, go home
     if (isAuthenticated && isAuthRoute) {
-      return userRole == UserRole.ownerUmkm ? RouteNames.ownerDashboard : RouteNames.showcase;
+      final redirect = userRole == UserRole.ownerUmkm ? RouteNames.ownerDashboard : RouteNames.showcase;
+      print('[RouteGuard] Auth route redirect to: $redirect');
+      return redirect;
     }
 
     // If not authenticated and on protected routes, go to login
     if (!isAuthenticated && !_isPublicRoute(location) && !isSplash) {
+      print('[RouteGuard] Protected route redirect to login');
       return RouteNames.login;
     }
 
     // Allow all other navigation
+    print('[RouteGuard] Allowing navigation to: $location');
     return null;
   }
 
