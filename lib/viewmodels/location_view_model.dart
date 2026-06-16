@@ -4,9 +4,10 @@ import 'package:flutter/foundation.dart';
 
 import 'package:alpaca_mobile/models/business_location_model.dart';
 import 'package:alpaca_mobile/repositories/business_repository.dart';
-
-/// Represents the current state of a view.
-enum ViewState { initial, loading, loaded, error, empty }
+import 'package:alpaca_mobile/core/services/cache_service.dart';
+import 'package:alpaca_mobile/core/exceptions/app_exception.dart';
+import 'package:alpaca_mobile/core/utils/result.dart';
+import 'package:alpaca_mobile/core/enums/view_state.dart';
 
 /// ViewModel for business location and GPS management.
 ///
@@ -14,10 +15,14 @@ enum ViewState { initial, loading, loaded, error, empty }
 /// business locations on the local culinary tourism map.
 class LocationViewModel extends ChangeNotifier {
   /// Creates a [LocationViewModel] with the given [BusinessRepository].
-  LocationViewModel({required BusinessRepository businessRepository})
-      : _businessRepository = businessRepository;
+  LocationViewModel({
+    required BusinessRepository businessRepository,
+    CacheService? cacheService,
+  }) : _businessRepository = businessRepository,
+       _cacheService = cacheService;
 
   final BusinessRepository _businessRepository;
+  final CacheService? _cacheService;
 
   // --- State ---
 
@@ -172,23 +177,36 @@ class LocationViewModel extends ChangeNotifier {
 
   /// Loads a single business location by [ownerId] for store profile view.
   Future<void> loadProfileBusiness(String ownerId) async {
+    print('[LocationViewModel] loadProfileBusiness: ownerId=$ownerId');
     _setLoading(true);
     _clearError();
 
-    final result = await _businessRepository.getBusinessByOwner(ownerId);
+    try {
+      final result = await _businessRepository.getBusinessByOwner(ownerId).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () => Result.failure(AppException(message: 'Timeout: Gagal memuat data toko')),
+      );
 
-    result.when(
-      success: (business) {
-        _profileBusiness = business;
-        _viewState = business != null ? ViewState.loaded : ViewState.empty;
-      },
-      failure: (exception) {
-        _error = exception.message;
-        _viewState = ViewState.error;
-      },
-    );
+      result.when(
+        success: (business) {
+          print('[LocationViewModel] loadProfileBusiness: success, business=${business?.businessName ?? 'null'}');
+          _profileBusiness = business;
+          _viewState = business != null ? ViewState.loaded : ViewState.empty;
+        },
+        failure: (exception) {
+          print('[LocationViewModel] loadProfileBusiness: failure, error=${exception.message}');
+          _error = exception.message;
+          _viewState = ViewState.error;
+        },
+      );
+    } catch (e) {
+      print('[LocationViewModel] loadProfileBusiness: exception, error=$e');
+      _error = 'Terjadi kesalahan saat memuat data toko';
+      _viewState = ViewState.error;
+    }
 
     _setLoading(false);
+    print('[LocationViewModel] loadProfileBusiness: done, profileBusiness=${_profileBusiness?.businessName ?? 'null'}');
   }
 
   void _clearError() {
@@ -203,9 +221,74 @@ class LocationViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Cache for ongoing requests to prevent duplicate API calls
+  final Map<String, Future<String?>> _ongoingRequests = {};
+
+  /// Gets business name by owner ID for quick lookups.
+  Future<String?> getBusinessNameByOwner(String ownerId) async {
+    // Check if there's already an ongoing request for this owner
+    if (_ongoingRequests.containsKey(ownerId)) {
+      return _ongoingRequests[ownerId]!;
+    }
+    
+    final cacheKey = 'business_name_$ownerId';
+    
+    // Try cache first
+    if (_cacheService != null) {
+      final cachedName = _cacheService!.load<String>(cacheKey);
+      if (cachedName != null) {
+        print('[LocationViewModel] Cache hit for business name: $ownerId -> $cachedName');
+        return cachedName;
+      }
+    }
+    
+    // Create and store the request future
+    final requestFuture = _fetchBusinessName(ownerId, cacheKey);
+    _ongoingRequests[ownerId] = requestFuture;
+    
+    try {
+      final result = await requestFuture;
+      return result;
+    } finally {
+      // Clean up the ongoing request
+      _ongoingRequests.remove(ownerId);
+    }
+  }
+
+  Future<String?> _fetchBusinessName(String ownerId, String cacheKey) async {
+    try {
+      print('[LocationViewModel] Cache miss, fetching business name for: $ownerId');
+      final result = await _businessRepository.getBusinessByOwner(ownerId).timeout(
+        const Duration(seconds: 5),
+        onTimeout: () => Result.failure(AppException(message: 'Timeout')),
+      );
+      
+      return result.when(
+        success: (business) {
+          final businessName = business?.businessName;
+          // Cache the result if we have a cache service and got a name
+          if (_cacheService != null && businessName != null) {
+            _cacheService!.save(
+              key: cacheKey,
+              data: businessName,
+              ttl: const Duration(minutes: 30), // Cache for 30 minutes
+            );
+            print('[LocationViewModel] Cached business name: $ownerId -> $businessName');
+          }
+          return businessName;
+        },
+        failure: (_) => null,
+      );
+    } catch (e) {
+      print('[LocationViewModel] getBusinessNameByOwner error: $e');
+      return null;
+    }
+  }
+
   @override
   void dispose() {
     _businessesSubscription?.cancel();
+    _ongoingRequests.clear();
     super.dispose();
   }
 }

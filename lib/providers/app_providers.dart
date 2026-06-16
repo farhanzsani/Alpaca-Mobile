@@ -79,10 +79,16 @@ List<SingleChildWidget> getAppProviders(SharedPreferences prefs) {
       create: (_) => MediaViewModel(mediaRepository: mediaRepository),
     ),
     ChangeNotifierProvider<LocationViewModel>(
-      create: (_) => LocationViewModel(businessRepository: businessRepository),
+      create: (_) => LocationViewModel(
+        businessRepository: businessRepository,
+        cacheService: cacheService,
+      ),
     ),
     ChangeNotifierProvider<ProductViewModel>(
-      create: (_) => ProductViewModel(productRepository: productRepository),
+      create: (_) => ProductViewModel(
+        productRepository: productRepository,
+        cacheService: cacheService,
+      ),
     ),
     ChangeNotifierProvider<WasteViewModel>(
       create: (_) => WasteViewModel(wasteRepository: wasteRepository),

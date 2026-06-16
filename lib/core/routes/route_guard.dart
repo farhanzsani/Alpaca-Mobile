@@ -22,79 +22,28 @@ class RouteGuard {
     final bool isAuthenticated = authViewModel.isAuthenticated;
     final UserRole? userRole = authViewModel.userRole;
     final bool isAuthRoute = _isAuthRoute(location);
-    final bool isOwnerRoute = _isOwnerRoute(location);
-    final bool isOnboarding = location == RouteNames.businessOnboarding;
     final bool isSplash = location == RouteNames.splash;
 
-    // --- Splash screen logic ---
-    // If on splash and auth check is still in progress, stay on splash.
-    if (isSplash) {
-      // Still loading auth — stay on splash.
-      if (authViewModel.isLoading) {
-        print('[RouteGuard] Splash: Auth still loading');
-        return null;
-      }
-      // If authenticated as owner and location still loading, stay on splash
-      if (isAuthenticated && 
-          userRole == UserRole.ownerUmkm && 
-          locationViewModel != null &&
-          locationViewModel.isLoading) {
-        print('[RouteGuard] Splash: Location still loading');
-        return null;
-      }
-      // Auth resolved — redirect based on state.
+    // Handle splash screen only
+    if (isSplash && !authViewModel.isLoading) {
       if (isAuthenticated) {
-        print('[RouteGuard] Splash: Authenticated, businessLocation = ${locationViewModel?.businessLocation}');
-        final redirect = _getHomeRoute(userRole, locationViewModel);
-        print('[RouteGuard] Splash: Redirecting to $redirect');
-        return redirect;
+        return userRole == UserRole.ownerUmkm ? RouteNames.ownerDashboard : RouteNames.showcase;
       } else {
         return RouteNames.login;
       }
     }
 
-    // --- Auth routes (login/register) ---
-    // If already authenticated, redirect away from login/register.
+    // If authenticated and on auth routes, go home
     if (isAuthenticated && isAuthRoute) {
-      // For owner, always go to onboarding first (they can skip if already set up)
-      if (userRole == UserRole.ownerUmkm) {
-        return RouteNames.businessOnboarding;
-      }
-      return _getHomeRoute(userRole, locationViewModel);
+      return userRole == UserRole.ownerUmkm ? RouteNames.ownerDashboard : RouteNames.showcase;
     }
 
-    // --- Onboarding logic ---
-    // Allow access to onboarding if authenticated as owner
-    if (isOnboarding && isAuthenticated && userRole == UserRole.ownerUmkm) {
-      return null;
-    }
-
-    // --- Protected routes ---
-    // If not authenticated and trying to access a protected route.
-    if (!isAuthenticated && !_isPublicRoute(location)) {
+    // If not authenticated and on protected routes, go to login
+    if (!isAuthenticated && !_isPublicRoute(location) && !isSplash) {
       return RouteNames.login;
     }
 
-    // --- Owner-only routes ---
-    // If authenticated as owner and trying to access owner routes,
-    // check if business setup is complete
-    if (isAuthenticated && isOwnerRoute && userRole == UserRole.ownerUmkm) {
-      // If locationViewModel is available, check if business exists
-      if (locationViewModel != null && 
-          !locationViewModel.isLoading &&
-          locationViewModel.businessLocation == null &&
-          !isOnboarding) {
-        return RouteNames.businessOnboarding;
-      }
-      return null;
-    }
-
-    // If authenticated but not an owner trying to access owner routes.
-    if (isAuthenticated && isOwnerRoute && userRole != UserRole.ownerUmkm) {
-      return RouteNames.showcase;
-    }
-
-    // Allow navigation to proceed.
+    // Allow all other navigation
     return null;
   }
 
@@ -105,6 +54,9 @@ class RouteGuard {
 
     // Check product detail route pattern
     if (location.startsWith('/showcase/product/')) return true;
+    
+    // Check store profile route pattern  
+    if (location.startsWith('/showcase/store/')) return true;
 
     return false;
   }

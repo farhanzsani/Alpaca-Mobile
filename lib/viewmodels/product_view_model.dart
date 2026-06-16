@@ -1,12 +1,11 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
 import 'package:alpaca_mobile/models/product_model.dart';
 import 'package:alpaca_mobile/repositories/product_repository.dart';
-
-/// Represents the current state of a view.
-enum ViewState { initial, loading, loaded, error, empty }
+import 'package:alpaca_mobile/core/services/cache_service.dart';
+import 'package:alpaca_mobile/core/enums/view_state.dart';
 
 /// ViewModel for product catalog management.
 ///
@@ -15,10 +14,14 @@ enum ViewState { initial, loading, loaded, error, empty }
 /// public product showcase.
 class ProductViewModel extends ChangeNotifier {
   /// Creates a [ProductViewModel] with the given [ProductRepository].
-  ProductViewModel({required ProductRepository productRepository})
-      : _productRepository = productRepository;
+  ProductViewModel({
+    required ProductRepository productRepository,
+    CacheService? cacheService,
+  }) : _productRepository = productRepository,
+       _cacheService = cacheService;
 
   final ProductRepository _productRepository;
+  final CacheService? _cacheService;
 
   // --- State ---
 
@@ -45,6 +48,10 @@ class ProductViewModel extends ChangeNotifier {
   List<ProductModel> _storeProducts = [];
   /// Products belonging to a specific store being viewed in profile.
   List<ProductModel> get storeProducts => List.unmodifiable(_storeProducts);
+
+  ProductModel? _selectedProduct;
+  /// The currently selected product for detail view.
+  ProductModel? get selectedProduct => _selectedProduct;
 
   /// Products where current stock is at or below the minimum threshold.
   List<ProductModel> get lowStockProducts =>
@@ -84,6 +91,26 @@ class ProductViewModel extends ChangeNotifier {
   /// Only includes products where [ProductModel.isAvailable] is true.
   Future<void> loadAllProducts() async {
     print('[ProductViewModel] loadAllProducts called');
+    final cacheKey = 'all_products';
+    
+    // Try cache first
+    if (_cacheService != null) {
+      final cachedProducts = _cacheService!.load<List<dynamic>>(cacheKey);
+      if (cachedProducts != null) {
+        try {
+          _allProducts = cachedProducts
+              .map((json) => ProductModel.fromJson(json as Map<String, dynamic>))
+              .toList();
+          _viewState = _allProducts.isEmpty ? ViewState.empty : ViewState.loaded;
+          print('[ProductViewModel] Cache hit: ${_allProducts.length} products');
+          notifyListeners();
+          return;
+        } catch (e) {
+          print('[ProductViewModel] Cache data corrupted, will fetch fresh: $e');
+        }
+      }
+    }
+    
     _setLoading(true);
     _clearError();
 
@@ -94,6 +121,18 @@ class ProductViewModel extends ChangeNotifier {
         print('[ProductViewModel] Success: ${products.length} products');
         _allProducts = products;
         _viewState = products.isEmpty ? ViewState.empty : ViewState.loaded;
+        
+        // Cache the result
+        if (_cacheService != null && products.isNotEmpty) {
+          final productsJson = products.map((p) => p.toJson()).toList();
+          _cacheService!.save(
+            key: cacheKey,
+            data: productsJson,
+            ttl: const Duration(minutes: 15), // Cache for 15 minutes
+          );
+          print('[ProductViewModel] Cached ${products.length} products');
+        }
+        
         print('[ProductViewModel] viewState: $_viewState, allProducts: ${_allProducts.length}');
       },
       failure: (exception) {
@@ -175,6 +214,29 @@ class ProductViewModel extends ChangeNotifier {
         _products.removeWhere((p) => p.id == productId);
         _allProducts.removeWhere((p) => p.id == productId);
         _viewState = _products.isEmpty ? ViewState.empty : ViewState.loaded;
+      },
+      failure: (exception) {
+        _error = exception.message;
+        _viewState = ViewState.error;
+      },
+    );
+
+    _setLoading(false);
+  }
+
+  /// Loads a single product by its [productId] for the detail view.
+  ///
+  /// Fetches the product directly from the API endpoint.
+  Future<void> loadProductById(String productId) async {
+    _setLoading(true);
+    _clearError();
+
+    final result = await _productRepository.getProduct(productId);
+    
+    result.when(
+      success: (product) {
+        _selectedProduct = product;
+        _viewState = ViewState.loaded;
       },
       failure: (exception) {
         _error = exception.message;

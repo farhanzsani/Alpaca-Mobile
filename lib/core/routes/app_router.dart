@@ -21,6 +21,7 @@ import 'package:alpaca_mobile/views/owner/products_screen.dart';
 import 'package:alpaca_mobile/views/owner/waste_tracking_screen.dart';
 import 'package:alpaca_mobile/views/owner/profile_screen.dart';
 import 'package:alpaca_mobile/views/showcase/public_showcase_screen.dart';
+import 'package:alpaca_mobile/views/showcase/customer_main_screen.dart';
 import 'package:alpaca_mobile/views/showcase/product_detail_screen.dart';
 import 'package:alpaca_mobile/views/showcase/business_map_screen.dart';
 import 'package:alpaca_mobile/views/showcase/store_profile_screen.dart';
@@ -46,7 +47,7 @@ class AppRouter {
     return GoRouter(
       navigatorKey: _rootNavigatorKey,
       initialLocation: RouteNames.splash,
-      debugLogDiagnostics: true,
+      debugLogDiagnostics: false,
       redirect: (BuildContext context, GoRouterState state) {
         final location = state.matchedLocation;
         return RouteGuard.redirect(
@@ -68,7 +69,7 @@ class AppRouter {
     return GoRouter(
       navigatorKey: _rootNavigatorKey,
       initialLocation: RouteNames.splash,
-      debugLogDiagnostics: true,
+      debugLogDiagnostics: false,
       refreshListenable: authViewModel,
       redirect: (BuildContext context, GoRouterState state) {
         final location = state.matchedLocation;
@@ -113,7 +114,7 @@ class AppRouter {
     GoRoute(
       path: RouteNames.ownerDashboard,
       name: 'ownerDashboard',
-      builder: (context, state) => const OwnerMainScreen(),
+      builder: (context, state) => const OwnerMainScreen(initialIndex: 0),
     ),
     GoRoute(
       path: RouteNames.ownerInventory,
@@ -123,7 +124,7 @@ class AppRouter {
     GoRoute(
       path: RouteNames.ownerBookkeeping,
       name: 'ownerBookkeeping',
-      builder: (context, state) => const BookkeepingScreen(),
+      builder: (context, state) => const OwnerMainScreen(initialIndex: 2),
     ),
     GoRoute(
       path: RouteNames.ownerMedia,
@@ -138,12 +139,12 @@ class AppRouter {
     GoRoute(
       path: RouteNames.ownerProducts,
       name: 'ownerProducts',
-      builder: (context, state) => const ProductsScreen(),
+      builder: (context, state) => const OwnerMainScreen(initialIndex: 1),
     ),
     GoRoute(
       path: RouteNames.ownerWaste,
       name: 'ownerWaste',
-      builder: (context, state) => const WasteTrackingScreen(),
+      builder: (context, state) => const OwnerMainScreen(initialIndex: 3),
     ),
     GoRoute(
       path: RouteNames.ownerProfile,
@@ -155,7 +156,12 @@ class AppRouter {
     GoRoute(
       path: RouteNames.showcase,
       name: 'showcase',
-      builder: (context, state) => const PublicShowcaseScreen(),
+      builder: (context, state) => const CustomerMainScreen(initialIndex: 0),
+    ),
+    GoRoute(
+      path: '/showcase/product',
+      name: 'productsList',
+      builder: (context, state) => const CustomerMainScreen(initialIndex: 0),
     ),
     GoRoute(
       path: RouteNames.showcaseProductDetail,
@@ -168,7 +174,7 @@ class AppRouter {
     GoRoute(
       path: RouteNames.showcaseMap,
       name: 'businessMap',
-      builder: (context, state) => const BusinessMapScreen(),
+      builder: (context, state) => const CustomerMainScreen(initialIndex: 1),
     ),
     GoRoute(
       path: RouteNames.showcaseStoreProfile,

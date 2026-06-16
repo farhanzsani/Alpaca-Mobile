@@ -89,12 +89,11 @@ class _InventoryScreenState extends State<InventoryScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddEditDialog(context, inventoryVM),
         backgroundColor: const Color(0xFF22C55E),
         foregroundColor: Colors.white,
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Tambah Item'),
+        child: const Icon(Icons.add_rounded),
       ),
     );
   }

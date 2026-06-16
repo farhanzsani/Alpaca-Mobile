@@ -1,6 +1,7 @@
 ﻿import 'dart:convert';
 import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart' show kIsWeb, kReleaseMode;
 import 'package:http/http.dart' as http;
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:alpaca_mobile/core/exceptions/app_exception.dart';
@@ -8,11 +9,26 @@ import 'package:alpaca_mobile/core/utils/result.dart';
 
 class ApiClient {
   ApiClient({String? baseUrl, http.Client? client, FirebaseAuth? auth})
-      : _baseUrl = (baseUrl ?? defaultBaseUrl).replaceAll(RegExp(r'/$'), ''),
+      : _baseUrl = (baseUrl ?? _getDefaultBaseUrl()).replaceAll(RegExp(r'/$'), ''),
         _client = client ?? http.Client(),
         _auth = auth ?? FirebaseAuth.instance;
 
-  static const String defaultBaseUrl = 'http://localhost:3000/api/v1';
+  static String _getDefaultBaseUrl() {
+    // Untuk production/release build, ganti dengan IP server yang sebenarnya
+    const String productionHost = 'http://192.168.1.100:3000/api/v1'; // Ganti dengan IP komputer kamu
+    
+    if (kIsWeb) {
+      return 'http://localhost:3000/api/v1'; // Web
+    } else if (Platform.isAndroid) {
+      // Check if running in release mode (physical device)
+      if (kReleaseMode) {
+        return productionHost; // Physical device
+      }
+      return 'http://10.0.2.2:3000/api/v1'; // Android emulator (debug mode)
+    } else {
+      return 'http://localhost:3000/api/v1'; // iOS/Windows/macOS/Linux
+    }
+  }
 
   final String _baseUrl;
   final http.Client _client;
@@ -68,6 +84,20 @@ class ApiClient {
           {Map<String, String?>? query}) =>
       _call(() async => _decode(
           await _client.get(_uri(path, query), headers: await _headers()), fromJson));
+
+  /// Performs a GET request without an Authorization header.
+  ///
+  /// Use for public endpoints that are accessible by unauthenticated users
+  /// (e.g. customers browsing the product catalog).
+  Future<Result<T>> getPublic<T>(String path, T Function(dynamic) fromJson,
+          {Map<String, String?>? query}) =>
+      _call(() async {
+        print('[ApiClient] GET PUBLIC $path query: $query');
+        final response = await _client.get(_uri(path, query),
+            headers: const {'Content-Type': 'application/json'});
+        print('[ApiClient] GET PUBLIC response: ${response.statusCode}');
+        return _decode(response, fromJson);
+      });
 
   Future<Result<T>> post<T>(
           String path, Map<String, dynamic> body, T Function(dynamic) fromJson) =>

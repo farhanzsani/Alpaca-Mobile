@@ -85,65 +85,82 @@ class ProductCard extends StatelessWidget {
     return SizedBox(
       width: width,
       height: height,
-      child: Card(
-        elevation: 1,
-        clipBehavior: Clip.antiAlias,
-        margin: EdgeInsets.zero,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFE5E7EB)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
               // Product image
               _buildImage(),
 
               // Product details
-              Expanded(
+              Flexible(
                 child: Padding(
                   padding: const EdgeInsets.all(12),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Category chip
-                      if (category != null) ...[
-                        _buildCategoryChip(),
-                        const SizedBox(height: 6),
-                      ],
-
                       // Product name
-                      Expanded(
-                        child: Text(
-                          name,
-                          style: AppTextStyles.titleSmall,
-                          maxLines: 2,
+                      Text(
+                        name,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF1F2937),
+                          height: 1.2,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+
+                      const SizedBox(height: 4),
+
+                      // Category
+                      if (category != null)
+                        Text(
+                          category!,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: Color(0xFF6B7280),
+                          ),
+                          maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
+
+                      const Spacer(),
+
+                      // Price
+                      Text(
+                        _formatRupiah(price),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF22C55E),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
 
                       const SizedBox(height: 6),
 
-                      // Price and availability
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              _formatRupiah(price),
-                              style: AppTextStyles.price.copyWith(
-                                fontSize: 14,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          _buildAvailabilityBadge(),
-                        ],
-                      ),
+                      // Availability badge
+                      _buildAvailabilityBadge(),
                     ],
                   ),
                 ),
@@ -156,58 +173,65 @@ class ProductCard extends StatelessWidget {
   }
 
   Widget _buildImage() {
-    return AspectRatio(
-      aspectRatio: 4 / 3,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          if (imageUrl != null)
-            Image.network(
-              imageUrl!,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) =>
-                  _buildPlaceholder(),
-              loadingBuilder: (context, child, loadingProgress) {
-                if (loadingProgress == null) return child;
-                return _buildLoadingPlaceholder();
-              },
-            )
-          else
-            _buildPlaceholder(),
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+      child: AspectRatio(
+        aspectRatio: 4 / 3,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (imageUrl != null)
+              Image.network(
+                imageUrl!,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) =>
+                    _buildPlaceholder(),
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return _buildLoadingPlaceholder();
+                },
+              )
+            else
+              _buildPlaceholder(),
 
-          // Unavailable overlay
-          if (!isAvailable)
-            Container(
-              color: AppColors.scrim,
-              alignment: Alignment.center,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.error,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  'Habis',
-                  style: AppTextStyles.badge,
+            // Unavailable overlay
+            if (!isAvailable)
+              Container(
+                color: Colors.black.withValues(alpha: 0.5),
+                alignment: Alignment.center,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFDC2626),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text(
+                    'Habis',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildPlaceholder() {
     return Container(
-      color: AppColors.surfaceVariant,
+      color: const Color(0xFFF3F4F6),
       child: const Center(
         child: Icon(
           Icons.image_outlined,
           size: 40,
-          color: AppColors.onSurfaceVariant,
+          color: Color(0xFF9CA3AF),
         ),
       ),
     );
@@ -215,14 +239,14 @@ class ProductCard extends StatelessWidget {
 
   Widget _buildLoadingPlaceholder() {
     return Container(
-      color: AppColors.shimmerBase,
+      color: const Color(0xFFF3F4F6),
       child: const Center(
         child: SizedBox(
           width: 24,
           height: 24,
           child: CircularProgressIndicator(
             strokeWidth: 2,
-            color: AppColors.onSurfaceVariant,
+            color: Color(0xFF22C55E),
           ),
         ),
       ),
@@ -250,19 +274,31 @@ class ProductCard extends StatelessWidget {
 
   Widget _buildAvailabilityBadge() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: isAvailable
-            ? AppColors.successContainer
-            : AppColors.errorContainer,
-        borderRadius: BorderRadius.circular(4),
+            ? const Color(0xFF22C55E).withValues(alpha: 0.1)
+            : const Color(0xFFDC2626).withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(6),
       ),
-      child: Text(
-        isAvailable ? 'Tersedia' : 'Habis',
-        style: AppTextStyles.badge.copyWith(
-          color: isAvailable ? AppColors.success : AppColors.error,
-          fontSize: 9,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isAvailable ? Icons.check_circle_rounded : Icons.cancel_rounded,
+            size: 12,
+            color: isAvailable ? const Color(0xFF22C55E) : const Color(0xFFDC2626),
+          ),
+          const SizedBox(width: 4),
+          Text(
+            isAvailable ? '100 pcs' : 'Habis',
+            style: TextStyle(
+              color: isAvailable ? const Color(0xFF22C55E) : const Color(0xFFDC2626),
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }

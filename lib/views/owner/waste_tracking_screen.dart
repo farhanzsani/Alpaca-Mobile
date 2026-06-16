@@ -7,6 +7,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:fl_chart/fl_chart.dart';
 
 import 'package:alpaca_mobile/core/theme/app_colors.dart';
 import 'package:alpaca_mobile/models/waste_resource_model.dart';
@@ -177,16 +178,16 @@ class _WasteTrackingScreenState extends State<WasteTrackingScreen> {
       body: Column(
         children: [
           _buildHeader(wasteVm),
+          if (wasteVm.wasteItems.isNotEmpty) _buildWasteChart(wasteVm),
           _buildFilters(context),
           Expanded(child: _buildBody(wasteVm)),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton(
         onPressed: () => _openWasteForm(),
         backgroundColor: const Color(0xFF22C55E),
         foregroundColor: Colors.white,
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Tambah Limbah'),
+        child: const Icon(Icons.add_rounded),
       ),
     );
   }
@@ -270,165 +271,150 @@ class _WasteTrackingScreenState extends State<WasteTrackingScreen> {
     );
   }
 
-  Widget _buildFilters(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+  Widget _buildWasteChart(WasteViewModel wasteVm) {
+    // Calculate category percentages
+    final categoryCount = <String, int>{};
+    for (var waste in wasteVm.wasteItems) {
+      categoryCount[waste.category] = (categoryCount[waste.category] ?? 0) + 1;
+    }
+    
+    final total = wasteVm.wasteItems.length;
+    
+    return Container(
+      margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Category filter chips
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
+          const Text(
+            'Komposisi Limbah',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF1F2937),
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 200,
             child: Row(
               children: [
-                FilterChip(
-                  label: const Text('Semua'),
-                  selected: _selectedCategory == null,
-                  onSelected: (_) {
-                    setState(() => _selectedCategory = null);
-                  },
-                  backgroundColor: Colors.white,
-                  selectedColor: const Color(0xFF22C55E).withValues(alpha: 0.15),
-                  checkmarkColor: const Color(0xFF22C55E),
-                  side: BorderSide(
-                    color: _selectedCategory == null
-                        ? const Color(0xFF22C55E)
-                        : const Color(0xFFE5E7EB),
-                  ),
-                  labelStyle: TextStyle(
-                    color: _selectedCategory == null
-                        ? const Color(0xFF22C55E)
-                        : const Color(0xFF6B7280),
-                    fontSize: 13,
-                    fontWeight: _selectedCategory == null ? FontWeight.w600 : FontWeight.w500,
+                Expanded(
+                  flex: 2,
+                  child: PieChart(
+                    PieChartData(
+                      sectionsSpace: 2,
+                      centerSpaceRadius: 40,
+                      sections: categoryCount.entries.map((entry) {
+                        final percentage = (entry.value / total * 100);
+                        return PieChartSectionData(
+                          value: entry.value.toDouble(),
+                          title: '${percentage.toStringAsFixed(0)}%',
+                          color: _categoryColor(entry.key),
+                          radius: 50,
+                          titleStyle: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        );
+                      }).toList(),
+                    ),
                   ),
                 ),
-                const SizedBox(width: 8),
-                ..._categories.map(
-                  (category) => Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: FilterChip(
-                      label: Text(_categoryLabel(category)),
-                      selected: _selectedCategory == category,
-                      onSelected: (selected) {
-                        setState(() {
-                          _selectedCategory = selected ? category : null;
-                        });
-                      },
-                      backgroundColor: Colors.white,
-                      selectedColor: _categoryColor(category).withValues(alpha: 0.15),
-                      checkmarkColor: _categoryColor(category),
-                      side: BorderSide(
-                        color: _selectedCategory == category
-                            ? _categoryColor(category)
-                            : const Color(0xFFE5E7EB),
-                      ),
-                      labelStyle: TextStyle(
-                        color: _selectedCategory == category
-                            ? _categoryColor(category)
-                            : const Color(0xFF6B7280),
-                        fontSize: 13,
-                        fontWeight: _selectedCategory == category ? FontWeight.w600 : FontWeight.w500,
-                      ),
-                    ),
+                const SizedBox(width: 20),
+                Expanded(
+                  flex: 1,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: categoryCount.entries.map((entry) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 12,
+                              height: 12,
+                              decoration: BoxDecoration(
+                                color: _categoryColor(entry.key),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                _categoryLabel(entry.key),
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: Color(0xFF6B7280),
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 8),
-          // Reusable filter
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                FilterChip(
-                  label: const Text('Semua Status'),
-                  selected: _filterReusable == null,
-                  onSelected: (_) {
-                    setState(() => _filterReusable = null);
-                  },
-                  backgroundColor: Colors.white,
-                  selectedColor: const Color(0xFF22C55E).withValues(alpha: 0.15),
-                  checkmarkColor: const Color(0xFF22C55E),
-                  side: BorderSide(
-                    color: _filterReusable == null
-                        ? const Color(0xFF22C55E)
-                        : const Color(0xFFE5E7EB),
-                  ),
-                  labelStyle: TextStyle(
-                    color: _filterReusable == null
-                        ? const Color(0xFF22C55E)
-                        : const Color(0xFF6B7280),
-                    fontSize: 13,
-                    fontWeight: _filterReusable == null ? FontWeight.w600 : FontWeight.w500,
-                  ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilters(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: DropdownButtonFormField<String?>(
+              value: _selectedCategory,
+              decoration: InputDecoration(
+                labelText: 'Kategori',
+                prefixIcon: const Icon(Icons.category_outlined, size: 20),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                const SizedBox(width: 8),
-                FilterChip(
-                  avatar: Icon(
-                    Icons.recycling_rounded,
-                    size: 16,
-                    color: _filterReusable == true
-                        ? const Color(0xFF22C55E)
-                        : const Color(0xFF6B7280),
-                  ),
-                  label: const Text('Dapat Digunakan Ulang'),
-                  selected: _filterReusable == true,
-                  onSelected: (selected) {
-                    setState(() {
-                      _filterReusable = selected ? true : null;
-                    });
-                  },
-                  backgroundColor: Colors.white,
-                  selectedColor: const Color(0xFF22C55E).withValues(alpha: 0.15),
-                  checkmarkColor: const Color(0xFF22C55E),
-                  side: BorderSide(
-                    color: _filterReusable == true
-                        ? const Color(0xFF22C55E)
-                        : const Color(0xFFE5E7EB),
-                  ),
-                  labelStyle: TextStyle(
-                    color: _filterReusable == true
-                        ? const Color(0xFF22C55E)
-                        : const Color(0xFF6B7280),
-                    fontSize: 13,
-                    fontWeight: _filterReusable == true ? FontWeight.w600 : FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                FilterChip(
-                  avatar: Icon(
-                    Icons.delete_outline_rounded,
-                    size: 16,
-                    color: _filterReusable == false
-                        ? const Color(0xFFDC2626)
-                        : const Color(0xFF6B7280),
-                  ),
-                  label: const Text('Tidak Dapat Digunakan'),
-                  selected: _filterReusable == false,
-                  onSelected: (selected) {
-                    setState(() {
-                      _filterReusable = selected ? false : null;
-                    });
-                  },
-                  backgroundColor: Colors.white,
-                  selectedColor: const Color(0xFFDC2626).withValues(alpha: 0.15),
-                  checkmarkColor: const Color(0xFFDC2626),
-                  side: BorderSide(
-                    color: _filterReusable == false
-                        ? const Color(0xFFDC2626)
-                        : const Color(0xFFE5E7EB),
-                  ),
-                  labelStyle: TextStyle(
-                    color: _filterReusable == false
-                        ? const Color(0xFFDC2626)
-                        : const Color(0xFF6B7280),
-                    fontSize: 13,
-                    fontWeight: _filterReusable == false ? FontWeight.w600 : FontWeight.w500,
-                  ),
-                ),
+              ),
+              items: [
+                const DropdownMenuItem(value: null, child: Text('Semua Kategori')),
+                ..._categories.map((c) => DropdownMenuItem(
+                  value: c,
+                  child: Text(_categoryLabel(c)),
+                )),
               ],
+              onChanged: (value) => setState(() => _selectedCategory = value),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: DropdownButtonFormField<bool?>(
+              value: _filterReusable,
+              decoration: InputDecoration(
+                labelText: 'Status',
+                prefixIcon: const Icon(Icons.recycling_rounded, size: 20),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              items: const [
+                DropdownMenuItem(value: null, child: Text('Semua Status')),
+                DropdownMenuItem(value: true, child: Text('Dapat Digunakan')),
+                DropdownMenuItem(value: false, child: Text('Tidak Dapat')),
+              ],
+              onChanged: (value) => setState(() => _filterReusable = value),
             ),
           ),
         ],

@@ -1,16 +1,13 @@
-/// Store profile screen for the public showcase.
-///
-/// Displays business/store information including name, address,
-/// description, location map, and products available from that store.
+/// Professional store profile with modern storefront design.
 library;
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
-
+import 'package:url_launcher/url_launcher.dart';
 import 'package:alpaca_mobile/core/routes/route_names.dart';
-import 'package:alpaca_mobile/core/theme/app_colors.dart';
 import 'package:alpaca_mobile/core/widgets/platform_map.dart';
 import 'package:alpaca_mobile/models/business_location_model.dart';
 import 'package:alpaca_mobile/models/media_model.dart';
@@ -18,21 +15,11 @@ import 'package:alpaca_mobile/models/product_model.dart';
 import 'package:alpaca_mobile/viewmodels/location_view_model.dart';
 import 'package:alpaca_mobile/viewmodels/media_view_model.dart';
 import 'package:alpaca_mobile/viewmodels/product_view_model.dart';
+import 'package:alpaca_mobile/core/enums/view_state.dart';
 
-/// Screen showing the profile of a store/business.
-///
-/// Features:
-/// - Business info header (name, address, description, image)
-/// - Map showing the business location
-/// - List of products from this store
 class StoreProfileScreen extends StatefulWidget {
-  /// Creates a [StoreProfileScreen] for the given [ownerId].
-  const StoreProfileScreen({
-    super.key,
-    required this.ownerId,
-  });
+  const StoreProfileScreen({super.key, required this.ownerId});
 
-  /// The owner ID whose store profile to display.
   final String ownerId;
 
   @override
@@ -41,29 +28,74 @@ class StoreProfileScreen extends StatefulWidget {
 
 class _StoreProfileScreenState extends State<StoreProfileScreen> {
   int _currentMediaPage = 0;
+  String? _ownerPhone;
 
   @override
   void initState() {
     super.initState();
+    print('[StoreProfileScreen] initState - ownerId: ${widget.ownerId}');
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      print('[StoreProfileScreen] postFrameCallback - loading data');
       _loadData();
     });
   }
 
-  void _loadData() {
-    print('[StoreProfile] Loading data for owner: ${widget.ownerId}');
+  void _loadData() async {
+    print('[StoreProfileScreen] _loadData start');
     context.read<LocationViewModel>().loadProfileBusiness(widget.ownerId);
     context.read<ProductViewModel>().loadStoreProducts(widget.ownerId);
-    print('[StoreProfile] Calling loadMediaByOwner...');
     context.read<MediaViewModel>().loadMediaByOwner(widget.ownerId);
-    print('[StoreProfile] loadMediaByOwner called');
+    await _fetchOwnerPhone();
+    print('[StoreProfileScreen] _loadData end');
+  }
+
+  Future<void> _fetchOwnerPhone() async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.ownerId)
+          .get();
+      
+      if (doc.exists && mounted) {
+        final data = doc.data();
+        setState(() {
+          _ownerPhone = data?['phoneNumber'] as String?;
+        });
+      }
+    } catch (e) {
+      print('[StoreProfile] Error fetching owner phone: $e');
+    }
+  }
+
+  void _openWhatsApp(String phone) async {
+    final cleanPhone = phone.replaceAll(RegExp(r'[^0-9]'), '');
+    String formattedPhone = cleanPhone;
+    if (!cleanPhone.startsWith('62')) {
+      if (cleanPhone.startsWith('0')) {
+        formattedPhone = '62${cleanPhone.substring(1)}';
+      } else {
+        formattedPhone = '62$cleanPhone';
+      }
+    }
+    
+    final url = 'https://wa.me/$formattedPhone';
+    
+    if (await canLaunchUrl(Uri.parse(url))) {
+      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Tidak dapat membuka WhatsApp')),
+        );
+      }
+    }
   }
 
   String _formatPrice(double price) {
     final formatted = price.toStringAsFixed(0).replaceAllMapped(
-          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-          (match) => '${match[1]}.',
-        );
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (match) => '${match[1]}.',
+    );
     return 'Rp $formatted';
   }
 
@@ -73,359 +105,108 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
     final productVm = context.watch<ProductViewModel>();
     final business = locationVm.profileBusiness;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(business?.businessName ?? 'Profil Toko'),
-        actions: [
-          if (business != null)
-            IconButton(
-              icon: const Icon(Icons.map_outlined),
-              tooltip: 'Lihat di Peta',
-              onPressed: () => context.push(RouteNames.showcaseMap),
-            ),
-        ],
-      ),
-      body: locationVm.isLoading && business == null
-          ? const Center(child: CircularProgressIndicator())
-          : business == null
-              ? _buildEmptyState(locationVm)
-              : _buildContent(business, productVm),
-    );
-  }
-
-  Widget _buildEmptyState(LocationViewModel locationVm) {
-    if (locationVm.error != null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
+    // Handle error state
+    if (locationVm.viewState == ViewState.error) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFF8FAFC),
+        appBar: AppBar(
+          backgroundColor: const Color(0xFF14532D),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+            onPressed: () => Navigator.pop(context),
+          ),
+          title: const Text('Profil Toko', style: TextStyle(color: Colors.white)),
+        ),
+        body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.error_outline,
-                size: 64,
-                color: AppColors.error,
-              ),
+              const Icon(Icons.error_outline, size: 64, color: Color(0xFF9CA3AF)),
               const SizedBox(height: 16),
               Text(
-                locationVm.error!,
+                locationVm.error ?? 'Gagal memuat data toko',
+                style: const TextStyle(fontSize: 16, color: Color(0xFF6B7280)),
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium,
               ),
-              const SizedBox(height: 16),
-              FilledButton.icon(
-                onPressed: _loadData,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Coba Lagi'),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () => _loadData(),
+                child: const Text('Coba Lagi'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF22C55E),
+                  foregroundColor: Colors.white,
+                ),
               ),
             ],
           ),
         ),
       );
     }
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.storefront_outlined,
-            size: 80,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
+
+    // Handle loading state
+    if (business == null && locationVm.isLoading) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFF8FAFC),
+        appBar: AppBar(
+          backgroundColor: const Color(0xFF14532D),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+            onPressed: () => Navigator.pop(context),
           ),
-          const SizedBox(height: 16),
-          Text(
-            'Toko tidak ditemukan',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Pemilik ini belum mengatur profil tokonya',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildContent(
-    BusinessLocationModel business,
-    ProductViewModel productVm,
-  ) {
-    final theme = Theme.of(context);
-    final mediaVm = context.watch<MediaViewModel>();
-    
-    print('[StoreProfile] _buildContent: mediaItems=${mediaVm.mediaItems.length}');
-
-    return RefreshIndicator(
-      onRefresh: () async => _loadData(),
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Business info header
-            _buildHeader(business, theme),
-
-            // Map
-            _buildMapSection(business, theme),
-
-            // Media gallery section
-            _buildMediaSection(mediaVm, theme),
-
-            // Products section
-            _buildProductsSection(productVm, theme),
-          ],
+          title: const Text('Profil Toko', style: TextStyle(color: Colors.white)),
         ),
-      ),
-    );
-  }
-
-  Widget _buildHeader(BusinessLocationModel business, ThemeData theme) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 32,
-            backgroundColor: AppColors.primaryContainer,
-            backgroundImage: business.imageUrl != null
-                ? NetworkImage(business.imageUrl!)
-                : null,
-            child: business.imageUrl == null
-                ? const Icon(
-                    Icons.storefront_outlined,
-                    size: 32,
-                    color: AppColors.primary,
-                  )
-                : null,
+        body: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(color: Color(0xFF22C55E)),
+              SizedBox(height: 16),
+              Text('Memuat data toko...', style: TextStyle(color: Color(0xFF6B7280))),
+            ],
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  business.businessName,
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(
-                      Icons.location_on_outlined,
-                      size: 14,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        business.address,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMapSection(BusinessLocationModel business, ThemeData theme) {
-    final position = LatLng(business.latitude, business.longitude);
-
-    return Container(
-      height: 200,
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Stack(
-        children: [
-          PlatformMap(
-            initialCameraPosition: CameraPosition(
-              target: position,
-              zoom: 16,
-            ),
-            markers: {
-              Marker(
-                markerId: const MarkerId('store_location'),
-                position: position,
-                infoWindow: InfoWindow(
-                  title: business.businessName,
-                  snippet: business.address,
-                ),
-              ),
-            },
-            myLocationEnabled: false,
-            myLocationButtonEnabled: false,
-            zoomControlsEnabled: false,
-            mapToolbarEnabled: false,
-            fallbackMarkers: [position],
-          ),
-          if (business.description != null &&
-              business.description!.isNotEmpty)
-            Positioned(
-              left: 8,
-              bottom: 8,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.black54,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  business.description!,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 11,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMediaSection(MediaViewModel mediaVm, ThemeData theme) {
-    print('[StoreProfile] _buildMediaSection called, items: ${mediaVm.mediaItems.length}');
-    print('[StoreProfile] MediaViewModel hashCode: ${mediaVm.hashCode}');
-    
-    if (mediaVm.mediaItems.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Galeri Toko',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              height: 180,
-              decoration: BoxDecoration(
-                color: AppColors.surfaceVariant,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.photo_library_outlined,
-                      size: 48,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Belum ada foto',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
         ),
       );
     }
 
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-      height: 220,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Galeri Toko',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Text(
-                  '${_currentMediaPage + 1}/${mediaVm.mediaItems.length}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
+    // Handle empty state
+    if (business == null) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFF8FAFC),
+        appBar: AppBar(
+          backgroundColor: const Color(0xFF14532D),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+            onPressed: () => Navigator.pop(context),
           ),
-          Expanded(
-            child: Stack(
+          title: const Text('Profil Toko', style: TextStyle(color: Colors.white)),
+        ),
+        body: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.store_outlined, size: 64, color: Color(0xFF9CA3AF)),
+              SizedBox(height: 16),
+              Text('Toko tidak ditemukan', style: TextStyle(fontSize: 16, color: Color(0xFF6B7280))),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
+      body: CustomScrollView(
+        slivers: [
+          _buildAppBar(context, business),
+          SliverToBoxAdapter(
+            child: Column(
               children: [
-                PageView.builder(
-                  itemCount: mediaVm.mediaItems.length,
-                  onPageChanged: (index) {
-                    setState(() => _currentMediaPage = index);
-                  },
-                  itemBuilder: (context, index) {
-                    final media = mediaVm.mediaItems[index];
-                    return GestureDetector(
-                      onTap: () => _showImageDialog(media),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.network(
-                          media.imageUrl,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stack) => Container(
-                            color: AppColors.surfaceVariant,
-                            child: const Icon(Icons.broken_image, size: 64),
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-                if (mediaVm.mediaItems.length > 1)
-                  Positioned(
-                    bottom: 8,
-                    left: 0,
-                    right: 0,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(
-                        mediaVm.mediaItems.length,
-                        (index) => Container(
-                          width: 8,
-                          height: 8,
-                          margin: const EdgeInsets.symmetric(horizontal: 3),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: _currentMediaPage == index
-                                ? Colors.white
-                                : Colors.white.withOpacity(0.4),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
+                _buildStoreHeader(business),
+                const SizedBox(height: 12),
+                _buildLocationCard(business),
+                const SizedBox(height: 12),
+                _buildProductsSection(productVm),
+                const SizedBox(height: 100),
               ],
             ),
           ),
@@ -434,222 +215,383 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
     );
   }
 
-  void _showImageDialog(MediaModel media) {
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Image.network(
-              media.imageUrl,
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stack) => Container(
-                height: 300,
-                color: AppColors.surfaceVariant,
-                child: const Icon(Icons.broken_image, size: 64),
+  Widget _buildAppBar(BuildContext context, BusinessLocationModel business) {
+    final mediaVm = context.watch<MediaViewModel>();
+    final hasMedia = mediaVm.mediaItems.isNotEmpty;
+
+    return SliverAppBar(
+      expandedHeight: 280,
+      pinned: true,
+      backgroundColor: const Color(0xFF14532D),
+      leading: Padding(
+        padding: const EdgeInsets.all(8),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 8,
               ),
-            ),
-            if (media.description != null)
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(media.description!),
-              ),
-          ],
+            ],
+          ),
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF1F2937)),
+            onPressed: () => Navigator.pop(context),
+          ),
         ),
       ),
-    );
-  }
-
-  Widget _buildProductsSection(ProductViewModel productVm, ThemeData theme) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Produk',
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            '${productVm.storeProducts.length} produk tersedia',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 12),
-          if (productVm.isLoading && productVm.storeProducts.isEmpty)
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.all(24),
-                child: CircularProgressIndicator(),
-              ),
-            )
-          else if (productVm.storeProducts.isEmpty)
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text(
-                  'Belum ada produk',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ),
-            )
-          else
-            _buildProductGrid(productVm),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProductGrid(ProductViewModel productVm) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final crossAxisCount = constraints.maxWidth > 600 ? 3 : 2;
-        return GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
-            crossAxisSpacing: 8,
-            mainAxisSpacing: 8,
-            childAspectRatio: 0.72,
-          ),
-          itemCount: productVm.storeProducts.length,
-          itemBuilder: (context, index) {
-            final product = productVm.storeProducts[index];
-            return _StoreProductCard(
-              product: product,
-              formattedPrice: _formatPrice(product.price),
-              onTap: () => context.push(
-                RouteNames.productDetail(product.id),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-}
-
-class _StoreProductCard extends StatelessWidget {
-  const _StoreProductCard({
-    required this.product,
-    required this.formattedPrice,
-    required this.onTap,
-  });
-
-  final ProductModel product;
-  final String formattedPrice;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Card(
-        margin: EdgeInsets.zero,
-        clipBehavior: Clip.antiAlias,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      flexibleSpace: FlexibleSpaceBar(
+        background: Stack(
+          fit: StackFit.expand,
           children: [
-            Expanded(
-              flex: 3,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  if (product.imageUrl != null &&
-                      product.imageUrl!.isNotEmpty)
-                    Image.network(
-                      product.imageUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) =>
-                          _buildPlaceholder(theme),
-                    )
-                  else
-                    _buildPlaceholder(theme),
-                  if (product.isLowStock)
-                    Positioned(
-                      top: 6,
-                      right: 6,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.error,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          'Stok ${product.quantity} ${product.unit}',
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 9,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            Expanded(
-              flex: 2,
-              child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      product.productName,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const Spacer(),
-                    Text(
-                      formattedPrice,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      product.category,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
+            // Media carousel or fallback image
+            if (hasMedia)
+              PageView.builder(
+                itemCount: mediaVm.mediaItems.length,
+                onPageChanged: (index) {
+                  if (mounted) {
+                    setState(() => _currentMediaPage = index);
+                  }
+                },
+                itemBuilder: (context, index) {
+                  final media = mediaVm.mediaItems[index];
+                  return Image.network(
+                    media.imageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => _buildStorePlaceholder(),
+                  );
+                },
+              )
+            else if (business.imageUrl != null && business.imageUrl!.isNotEmpty)
+              Image.network(
+                business.imageUrl!,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => _buildStorePlaceholder(),
+              )
+            else
+              _buildStorePlaceholder(),
+            // Gradient overlay
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withOpacity(0.3),
+                    Colors.transparent,
                   ],
                 ),
               ),
             ),
+            // Page indicator for media carousel
+            if (hasMedia && mediaVm.mediaItems.length > 1)
+              Positioned(
+                bottom: 16,
+                left: 0,
+                right: 0,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(
+                    mediaVm.mediaItems.length,
+                    (index) => Container(
+                      width: 8,
+                      height: 8,
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: _currentMediaPage == index
+                            ? Colors.white
+                            : Colors.white.withOpacity(0.4),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildPlaceholder(ThemeData theme) {
+  Widget _buildStorePlaceholder() {
     return Container(
-      color: AppColors.surfaceVariant,
+      color: const Color(0xFF14532D),
       child: const Center(
-        child: Icon(
-          Icons.image_outlined,
-          size: 40,
-          color: AppColors.onSurfaceVariant,
+        child: Icon(Icons.storefront_rounded, size: 80, color: Color(0xFF86EFAC)),
+      ),
+    );
+  }
+
+  Widget _buildStoreHeader(BusinessLocationModel business) {
+    return Container(
+      margin: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            business.businessName,
+            style: const TextStyle(
+              fontSize: 26,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF14532D),
+              height: 1.2,
+              letterSpacing: -0.5,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.location_on_rounded, size: 20, color: Color(0xFF6B7280)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  business.address,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    color: Color(0xFF6B7280),
+                    height: 1.5,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (business.description != null && business.description!.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Text(
+              business.description!,
+              style: const TextStyle(
+                fontSize: 15,
+                color: Color(0xFF4B5563),
+                height: 1.6,
+              ),
+            ),
+          ],
+          if (_ownerPhone != null && _ownerPhone!.isNotEmpty) ...[
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => _openWhatsApp(_ownerPhone!),
+                icon: const Icon(Icons.phone, size: 20),
+                label: const Text('Hubungi via WhatsApp'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF25D366),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  elevation: 0,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLocationCard(BusinessLocationModel business) {
+    final position = LatLng(business.latitude, business.longitude);
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      height: 200,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: PlatformMap(
+        initialCameraPosition: CameraPosition(target: position, zoom: 16),
+        markers: {
+          Marker(
+            markerId: const MarkerId('store'),
+            position: position,
+            infoWindow: InfoWindow(title: business.businessName),
+          ),
+        },
+        myLocationEnabled: false,
+        myLocationButtonEnabled: false,
+        zoomControlsEnabled: false,
+        mapToolbarEnabled: false,
+        fallbackMarkers: [position],
+      ),
+    );
+  }
+
+  Widget _buildProductsSection(ProductViewModel productVm) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Produk Toko',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF14532D),
+                ),
+              ),
+              Text(
+                '${productVm.storeProducts.length} produk',
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF6B7280),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          if (productVm.storeProducts.isEmpty)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(32),
+                child: Text(
+                  'Belum ada produk',
+                  style: TextStyle(color: Color(0xFF9CA3AF)),
+                ),
+              ),
+            )
+          else
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: 0.75,
+              ),
+              itemCount: productVm.storeProducts.length,
+              itemBuilder: (context, index) {
+                final product = productVm.storeProducts[index];
+                return _ProductCard(
+                  product: product,
+                  onTap: () => context.push(RouteNames.productDetail(product.id)),
+                );
+              },
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProductCard extends StatelessWidget {
+  const _ProductCard({required this.product, required this.onTap});
+
+  final ProductModel product;
+  final VoidCallback onTap;
+
+  String _formatPrice(double price) {
+    final formatted = price.toStringAsFixed(0).replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (match) => '${match[1]}.',
+    );
+    return 'Rp $formatted';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(16),
         ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                child: product.imageUrl != null && product.imageUrl!.isNotEmpty
+                    ? Image.network(
+                        product.imageUrl!,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        errorBuilder: (_, __, ___) => _buildPlaceholder(),
+                      )
+                    : _buildPlaceholder(),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    product.productName,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1F2937),
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    _formatPrice(product.price),
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF14532D),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPlaceholder() {
+    return Container(
+      color: const Color(0xFFF3F4F6),
+      child: const Center(
+        child: Icon(Icons.image_outlined, size: 40, color: Color(0xFF9CA3AF)),
       ),
     );
   }

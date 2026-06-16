@@ -97,11 +97,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       backgroundColor: const Color(0xFFF9FAFB),
       body: user == null
           ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                _buildHeader(context, user),
-                Expanded(
-                  child: SingleChildScrollView(
+          : SingleChildScrollView(
+              child: Column(
+                children: [
+                  _buildHeader(context, user),
+                  Padding(
                     padding: const EdgeInsets.all(20),
                     child: Column(
                       children: [
@@ -129,11 +129,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             color: Colors.grey.shade400,
                           ),
                         ),
+                        const SizedBox(height: 20),
                       ],
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
     );
   }

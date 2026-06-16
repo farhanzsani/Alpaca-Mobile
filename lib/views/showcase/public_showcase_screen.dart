@@ -1,30 +1,15 @@
-/// Public showcase screen for browsing products.
-///
-/// Displays a public-facing product catalog with search,
-/// category filtering, and navigation to product details
-/// and business map.
+/// Modern product showcase screen with exploration-focused design.
 library;
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-
 import 'package:alpaca_mobile/core/routes/route_names.dart';
-import 'package:alpaca_mobile/core/theme/app_colors.dart';
 import 'package:alpaca_mobile/models/product_model.dart';
 import 'package:alpaca_mobile/viewmodels/product_view_model.dart';
-import 'package:alpaca_mobile/viewmodels/auth_view_model.dart';
+import 'package:alpaca_mobile/core/enums/view_state.dart';
 
-/// Public-facing product catalog screen.
-///
-/// Features:
-/// - Grid of product cards with image, name, price
-/// - Search bar
-/// - Category filter chips
-/// - Tap to view product detail
-/// - App bar with map icon to view business locations
 class PublicShowcaseScreen extends StatefulWidget {
-  /// Creates a [PublicShowcaseScreen].
   const PublicShowcaseScreen({super.key});
 
   @override
@@ -36,13 +21,7 @@ class _PublicShowcaseScreenState extends State<PublicShowcaseScreen> {
   String? _selectedCategory;
   String _searchQuery = '';
 
-  static const _categories = [
-    'food',
-    'beverage',
-    'handicraft',
-    'agriculture',
-    'other',
-  ];
+  static const _categories = ['food', 'beverage', 'handicraft', 'agriculture', 'lainnya'];
 
   @override
   void initState() {
@@ -59,380 +38,433 @@ class _PublicShowcaseScreenState extends State<PublicShowcaseScreen> {
   }
 
   String _categoryLabel(String category) {
-    switch (category) {
-      case 'food':
-        return 'Makanan';
-      case 'beverage':
-        return 'Minuman';
-      case 'handicraft':
-        return 'Kerajinan';
-      case 'agriculture':
-        return 'Pertanian';
-      default:
-        return 'Lainnya';
-    }
+    const labels = {
+      'food': 'Makanan',
+      'beverage': 'Minuman',
+      'handicraft': 'Kerajinan',
+      'agriculture': 'Pertanian',
+      'lainnya': 'Lainnya',
+    };
+    return labels[category] ?? 'Lainnya';
   }
 
-  String _getCategoryInBackendFormat(String category) {
-    switch (category) {
-      case 'food':
-        return 'Makanan';
-      case 'beverage':
-        return 'Minuman';
-      case 'handicraft':
-        return 'Kerajinan';
-      case 'agriculture':
-        return 'Pertanian';
-      default:
-        return 'Lainnya';
+  List<ProductModel> _filterProducts(List<ProductModel> products) {
+    var filtered = products.where((p) => p.isAvailable).toList();
+    
+    if (_searchQuery.isNotEmpty) {
+      filtered = filtered.where((p) => 
+        p.productName.toLowerCase().contains(_searchQuery.toLowerCase())
+      ).toList();
     }
+    
+    if (_selectedCategory != null) {
+      filtered = filtered.where((p) => p.category == _selectedCategory).toList();
+    }
+    
+    return filtered;
   }
 
   String _formatPrice(double price) {
     final formatted = price.toStringAsFixed(0).replaceAllMapped(
-          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-          (match) => '${match[1]}.',
-        );
-    return 'Rp $formatted';
-  }
-
-  List<ProductModel> _applyFilters(List<ProductModel> products) {
-    var filtered = products;
-
-    // Apply category filter
-    if (_selectedCategory != null && _selectedCategory!.isNotEmpty) {
-      final backendCategory = _getCategoryInBackendFormat(_selectedCategory!);
-      filtered = filtered
-          .where((p) =>
-              p.category.toLowerCase() == backendCategory.toLowerCase())
-          .toList();
-    }
-
-    // Apply search filter
-    if (_searchQuery.isNotEmpty) {
-      final query = _searchQuery.toLowerCase();
-      filtered = filtered
-          .where((p) =>
-              p.productName.toLowerCase().contains(query) ||
-              (p.description?.toLowerCase().contains(query) ?? false) ||
-              p.category.toLowerCase().contains(query))
-          .toList();
-    }
-
-    return filtered;
-  }
-
-  Future<void> _logout() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Keluar'),
-        content: const Text('Apakah Anda yakin ingin keluar?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Batal'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Keluar'),
-          ),
-        ],
-      ),
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (match) => '${match[1]}.',
     );
-
-    if (confirmed == true && mounted) {
-      await context.read<AuthViewModel>().logout();
-      if (mounted) {
-        context.go(RouteNames.login);
-      }
-    }
+    return 'Rp $formatted';
   }
 
   @override
   Widget build(BuildContext context) {
     final productVm = context.watch<ProductViewModel>();
+    final filteredProducts = _filterProducts(productVm.allProducts);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('ALPACA Showcase'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.map_outlined),
-            tooltip: 'Peta Bisnis',
-            onPressed: () => context.push(RouteNames.showcaseMap),
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Keluar',
-            onPressed: _logout,
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // Search bar
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Cari produk...',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _searchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() => _searchQuery = '');
-                        },
-                      )
-                    : null,
-              ),
-              onChanged: (value) {
-                setState(() => _searchQuery = value.trim());
-              },
-            ),
-          ),
-
-          // Category filter chips
-          SizedBox(
-            height: 48,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: FilterChip(
-                    label: const Text('Semua'),
-                    selected: _selectedCategory == null,
-                    onSelected: (_) {
-                      setState(() => _selectedCategory = null);
-                    },
+      backgroundColor: const Color(0xFFF8FAFC),
+      body: SafeArea(
+        child: CustomScrollView(
+          slivers: [
+            _buildHeader(),
+            _buildSearchBar(),
+            _buildCategories(),
+            if (productVm.viewState == ViewState.error)
+              _buildErrorState(productVm.error, () => context.read<ProductViewModel>().loadAllProducts())
+            else if (productVm.isLoading && productVm.allProducts.isEmpty)
+              const SliverFillRemaining(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircularProgressIndicator(color: Color(0xFF22C55E)),
+                      SizedBox(height: 16),
+                      Text('Memuat produk...', style: TextStyle(color: Color(0xFF6B7280))),
+                    ],
                   ),
                 ),
-                ..._categories.map(
-                  (category) => Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: FilterChip(
-                      label: Text(_categoryLabel(category)),
-                      selected: _selectedCategory == category,
-                      onSelected: (selected) {
-                        setState(() {
-                          _selectedCategory = selected ? category : null;
-                        });
-                      },
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 4),
-
-          // Product grid
-          Expanded(child: _buildProductGrid(productVm)),
-        ],
+              )
+            else if (filteredProducts.isEmpty)
+              _buildEmptyState()
+            else
+              _buildProductGrid(filteredProducts),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildProductGrid(ProductViewModel productVm) {
-    if (productVm.isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (productVm.error != null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.error_outline, size: 64, color: AppColors.error),
-              const SizedBox(height: 16),
-              Text(
-                productVm.error!,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium,
+  Widget _buildHeader() {
+    return SliverToBoxAdapter(
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Jelajahi Produk',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF14532D),
+                letterSpacing: -0.5,
               ),
-              const SizedBox(height: 16),
-              FilledButton.icon(
-                onPressed: () => productVm.loadAllProducts(),
-                icon: const Icon(Icons.refresh),
-                label: const Text('Coba Lagi'),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    final filteredProducts = _applyFilters(productVm.allProducts);
-
-    if (filteredProducts.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                _searchQuery.isNotEmpty || _selectedCategory != null
-                    ? Icons.search_off
-                    : Icons.storefront_outlined,
-                size: 80,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                _searchQuery.isNotEmpty || _selectedCategory != null
-                    ? 'Tidak ada produk yang cocok'
-                    : 'Belum ada produk tersedia',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                _searchQuery.isNotEmpty || _selectedCategory != null
-                    ? 'Coba ubah kata kunci atau filter Anda'
-                    : 'Produk dari UMKM lokal akan ditampilkan di sini',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    return RefreshIndicator(
-      onRefresh: () async => productVm.loadAllProducts(),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final crossAxisCount = constraints.maxWidth > 900
-              ? 4
-              : constraints.maxWidth > 600
-                  ? 3
-                  : 2;
-          return GridView.builder(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: crossAxisCount,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
-              childAspectRatio: 0.72,
             ),
-            itemCount: filteredProducts.length,
-            itemBuilder: (context, index) {
-              final product = filteredProducts[index];
-              return _ShowcaseProductCard(
-                product: product,
-                formattedPrice: _formatPrice(product.price),
-                onTap: () {
-                  context.push(RouteNames.productDetail(product.id));
-                },
-              );
-            },
-          );
-        },
+            const SizedBox(height: 4),
+            Text(
+              'Temukan produk lokal terbaik',
+              style: TextStyle(
+                fontSize: 15,
+                color: const Color(0xFF6B7280).withOpacity(0.8),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 12,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: TextField(
+            controller: _searchController,
+            onChanged: (value) => setState(() => _searchQuery = value),
+            decoration: InputDecoration(
+              hintText: 'Cari produk...',
+              hintStyle: TextStyle(
+                color: const Color(0xFF9CA3AF),
+                fontSize: 15,
+              ),
+              prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFF6B7280), size: 22),
+              suffixIcon: _searchQuery.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.close_rounded, size: 20),
+                      onPressed: () {
+                        _searchController.clear();
+                        setState(() => _searchQuery = '');
+                      },
+                    )
+                  : null,
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCategories() {
+    return SliverToBoxAdapter(
+      child: SizedBox(
+        height: 44,
+        child: ListView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          children: [
+            _buildCategoryChip('Semua', _selectedCategory == null, () {
+              setState(() => _selectedCategory = null);
+            }),
+            const SizedBox(width: 8),
+            ..._categories.map((category) => Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: _buildCategoryChip(
+                _categoryLabel(category),
+                _selectedCategory == category,
+                () => setState(() => _selectedCategory = category),
+              ),
+            )),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCategoryChip(String label, bool selected, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFF14532D) : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(selected ? 0.08 : 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+            color: selected ? Colors.white : const Color(0xFF6B7280),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProductGrid(List<ProductModel> products) {
+    return SliverPadding(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
+      sliver: SliverGrid(
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          childAspectRatio: 0.75,
+          crossAxisSpacing: 14,
+          mainAxisSpacing: 14,
+        ),
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            final product = products[index];
+            return _ProductCard(
+              product: product,
+              onTap: () => context.push(RouteNames.productDetail(product.id)),
+            );
+          },
+          childCount: products.length,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return SliverFillRemaining(
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0FDF4),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.search_off_rounded,
+                size: 48,
+                color: Color(0xFF22C55E),
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'Produk tidak ditemukan',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF1F2937),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Coba kata kunci atau kategori lain',
+              style: TextStyle(
+                fontSize: 14,
+                color: const Color(0xFF6B7280).withOpacity(0.8),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorState(String? errorMessage, VoidCallback onRetry) {
+    return SliverFillRemaining(
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF2F2),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.error_outline,
+                size: 48,
+                color: Color(0xFFDC2626),
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'Gagal memuat produk',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF1F2937),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              errorMessage ?? 'Terjadi kesalahan saat memuat data',
+              style: TextStyle(
+                fontSize: 14,
+                color: const Color(0xFF6B7280).withOpacity(0.8),
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: onRetry,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF22C55E),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text('Coba Lagi'),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-/// A product card for the public showcase grid.
-class _ShowcaseProductCard extends StatelessWidget {
-  const _ShowcaseProductCard({
+class _ProductCard extends StatelessWidget {
+  const _ProductCard({
     required this.product,
-    required this.formattedPrice,
     required this.onTap,
   });
 
   final ProductModel product;
-  final String formattedPrice;
   final VoidCallback onTap;
+
+  String _formatPrice(double price) {
+    final formatted = price.toStringAsFixed(0).replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (match) => '${match[1]}.',
+    );
+    return 'Rp $formatted';
+  }
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Card(
-        margin: EdgeInsets.zero,
-        clipBehavior: Clip.antiAlias,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Product image
             Expanded(
-              flex: 3,
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  if (product.imageUrl != null &&
-                      product.imageUrl!.isNotEmpty)
-                    Image.network(
-                      product.imageUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) =>
-                          _buildPlaceholder(),
-                    )
-                  else
-                    _buildPlaceholder(),
-                  // Category chip
-                  Positioned(
-                    top: 6,
-                    left: 6,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.6),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        product.category,
-                        style:
-                            Theme.of(context).textTheme.labelSmall?.copyWith(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                ),
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                    child: product.imageUrl != null && product.imageUrl!.isNotEmpty
+                        ? Image.network(
+                            product.imageUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => _buildPlaceholder(),
+                          )
+                        : _buildPlaceholder(),
+                  ),
+                  if (product.isLowStock)
+                    Positioned(
+                      top: 10,
+                      right: 10,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFDC2626),
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.15),
+                              blurRadius: 8,
+                            ),
+                          ],
+                        ),
+                        child: Text(
+                          'Stok ${product.quantity}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
                 ],
               ),
             ),
-            // Product info
-            Expanded(
-              flex: 2,
-              child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      product.productName,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+            Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    product.productName,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1F2937),
+                      height: 1.3,
                     ),
-                    const Spacer(),
-                    Text(
-                      formattedPrice,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.bold,
-                          ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _formatPrice(product.price),
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF14532D),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -443,13 +475,9 @@ class _ShowcaseProductCard extends StatelessWidget {
 
   Widget _buildPlaceholder() {
     return Container(
-      color: AppColors.surfaceVariant,
+      color: const Color(0xFFF3F4F6),
       child: const Center(
-        child: Icon(
-          Icons.image_outlined,
-          size: 40,
-          color: AppColors.onSurfaceVariant,
-        ),
+        child: Icon(Icons.image_outlined, size: 48, color: Color(0xFF9CA3AF)),
       ),
     );
   }

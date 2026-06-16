@@ -34,6 +34,7 @@ class RouteNames {
     register,
     businessOnboarding,
     showcase,
+    '/showcase/product',
     showcaseMap,
     showcaseStoreProfile,
   ];

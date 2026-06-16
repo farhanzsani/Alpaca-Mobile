@@ -195,12 +195,11 @@ class _MediaScreenState extends State<MediaScreen> {
           Expanded(child: _buildBody(mediaVm)),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton(
         onPressed: mediaVm.isUploading ? null : _showUploadDialog,
         backgroundColor: const Color(0xFF22C55E),
         foregroundColor: Colors.white,
-        icon: const Icon(Icons.add_a_photo_rounded),
-        label: const Text('Upload'),
+        child: const Icon(Icons.add_rounded),
       ),
     );
   }

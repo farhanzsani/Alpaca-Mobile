@@ -61,30 +61,12 @@ class MediaRepository {
 
   /// Retrieves all media items for a specific [ownerId] from backend API.
   Future<Result<List<MediaModel>>> getMedia(String ownerId) async {
-    return _apiClient.get('/media', (j) {
-      print('[MediaRepository] ===== GET /media =====');
-      print('[MediaRepository] Raw JSON: $j');
-      print('[MediaRepository] JSON type: ${j.runtimeType}');
-      
+    return _apiClient.getPublic('/media', (j) {
       final data = j is Map ? j['data'] : j;
-      print('[MediaRepository] Extracted data: $data');
-      print('[MediaRepository] Data type: ${data.runtimeType}');
-      
       if (data is List) {
-        print('[MediaRepository] List length: ${data.length}');
-        if (data.isNotEmpty) {
-          print('[MediaRepository] First item: ${data[0]}');
-        }
-        final mediaList = data.map((e) {
-          print('[MediaRepository] Parsing item: $e');
-          return MediaModel.fromJson(e as Map<String, dynamic>);
-        }).toList();
-        print('[MediaRepository] Successfully parsed ${mediaList.length} media items');
-        return mediaList;
-      } else {
-        print('[MediaRepository] ⚠️ Data is not a List!');
-        return [];
+        return data.map((e) => MediaModel.fromJson(e as Map<String, dynamic>)).toList();
       }
+      return [];
     }, query: {'owner_id': ownerId});
   }
 

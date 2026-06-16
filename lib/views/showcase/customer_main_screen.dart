@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:alpaca_mobile/views/owner/owner_dashboard_screen.dart';
-import 'package:alpaca_mobile/views/owner/products_screen.dart';
-import 'package:alpaca_mobile/views/owner/bookkeeping_screen.dart';
-import 'package:alpaca_mobile/views/owner/waste_tracking_screen.dart';
+import 'package:alpaca_mobile/views/showcase/public_showcase_screen.dart';
+import 'package:alpaca_mobile/views/showcase/business_map_screen.dart';
+import 'package:alpaca_mobile/views/showcase/favorites_screen.dart';
+import 'package:alpaca_mobile/views/showcase/customer_profile_screen.dart';
 
-class OwnerMainScreen extends StatefulWidget {
+/// Main screen for customers with bottom navigation bar.
+class CustomerMainScreen extends StatefulWidget {
   final int initialIndex;
   
-  const OwnerMainScreen({super.key, this.initialIndex = 0});
+  const CustomerMainScreen({super.key, this.initialIndex = 0});
 
   @override
-  State<OwnerMainScreen> createState() => _OwnerMainScreenState();
+  State<CustomerMainScreen> createState() => _CustomerMainScreenState();
 }
 
-class _OwnerMainScreenState extends State<OwnerMainScreen> {
+class _CustomerMainScreenState extends State<CustomerMainScreen> {
   late int _selectedIndex;
 
   @override
@@ -23,10 +24,10 @@ class _OwnerMainScreenState extends State<OwnerMainScreen> {
   }
 
   static const List<Widget> _screens = [
-    OwnerDashboardScreen(),
-    ProductsScreen(),
-    BookkeepingScreen(),
-    WasteTrackingScreen(),
+    PublicShowcaseScreen(),
+    BusinessMapScreen(),
+    FavoritesScreen(),
+    CustomerProfileScreen(),
   ];
 
   @override
@@ -51,9 +52,9 @@ class _OwnerMainScreenState extends State<OwnerMainScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _buildNavItem(0, Icons.home_rounded, 'Beranda'),
-                _buildNavItem(1, Icons.inventory_2_rounded, 'Produk'),
-                _buildNavItem(2, Icons.account_balance_wallet_rounded, 'Keuangan'),
-                _buildNavItem(3, Icons.recycling_rounded, 'Limbah'),
+                _buildNavItem(1, Icons.map_rounded, 'Peta'),
+                _buildNavItem(2, Icons.favorite_rounded, 'Favorit'),
+                _buildNavItem(3, Icons.person_rounded, 'Profil'),
               ],
             ),
           ),

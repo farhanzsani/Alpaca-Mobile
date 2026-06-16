@@ -127,17 +127,20 @@ class _ProductsScreenState extends State<ProductsScreen> {
           Expanded(child: _buildBody(productVm)),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton(
         onPressed: () => _openProductForm(),
         backgroundColor: const Color(0xFF22C55E),
         foregroundColor: Colors.white,
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Tambah Produk'),
+        child: const Icon(Icons.add_rounded),
       ),
     );
   }
 
   Widget _buildHeader(ProductViewModel productVm) {
+    final totalProducts = productVm.products.length;
+    final availableProducts = productVm.products.where((p) => p.isAvailable).length;
+    final lowStockProducts = productVm.products.where((p) => p.isLowStock).length;
+    
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -211,6 +214,107 @@ class _ProductsScreenState extends State<ProductsScreen> {
                         ),
                       ),
                     ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              // Stats Row
+              Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            '$totalProducts',
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'Total Produk',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF86EFAC),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            '$availableProducts',
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'Tersedia',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF86EFAC),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: lowStockProducts > 0
+                            ? const Color(0xFFD97706).withValues(alpha: 0.3)
+                            : Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            '$lowStockProducts',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w800,
+                              color: lowStockProducts > 0
+                                  ? const Color(0xFFFEF3C7)
+                                  : Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Stok Rendah',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: lowStockProducts > 0
+                                  ? const Color(0xFFFEF3C7)
+                                  : const Color(0xFF86EFAC),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ],
@@ -367,6 +471,22 @@ class _ProductCard extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onDelete;
 
+  Future<void> _adjustStock(BuildContext context, int amount) async {
+    final productVm = context.read<ProductViewModel>();
+    final updatedProduct = product.copyWith(
+      quantity: (product.quantity + amount).clamp(0, 999999),
+      updatedAt: DateTime.now(),
+    );
+    
+    await productVm.updateProduct(updatedProduct);
+    
+    // Reload products
+    final authVm = context.read<AuthViewModel>();
+    if (authVm.currentUser?.id != null) {
+      await productVm.loadProducts(authVm.currentUser!.id);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -498,43 +618,87 @@ class _ProductCard extends StatelessWidget {
                       ),
                     ),
                     const Spacer(),
-                    // Stock info
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: product.isLowStock
-                            ? const Color(0xFFFEE2E2)
-                            : const Color(0xFFF0FDF4),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            product.isLowStock
-                                ? Icons.warning_amber_rounded
-                                : Icons.check_circle_rounded,
-                            size: 12,
-                            color: product.isLowStock
-                                ? const Color(0xFFDC2626)
-                                : const Color(0xFF22C55E),
-                          ),
-                          const SizedBox(width: 4),
-                          Flexible(
-                            child: Text(
-                              '${product.quantity} ${product.unit}',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: product.isLowStock
-                                    ? const Color(0xFFDC2626)
-                                    : const Color(0xFF22C55E),
-                                fontWeight: FontWeight.w600,
-                              ),
-                              overflow: TextOverflow.ellipsis,
+                    // Stock info with adjustment buttons
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: product.isLowStock
+                                  ? const Color(0xFFFEE2E2)
+                                  : const Color(0xFFF0FDF4),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  product.isLowStock
+                                      ? Icons.warning_amber_rounded
+                                      : Icons.check_circle_rounded,
+                                  size: 12,
+                                  color: product.isLowStock
+                                      ? const Color(0xFFDC2626)
+                                      : const Color(0xFF22C55E),
+                                ),
+                                const SizedBox(width: 4),
+                                Flexible(
+                                  child: Text(
+                                    '${product.quantity} ${product.unit}',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: product.isLowStock
+                                          ? const Color(0xFFDC2626)
+                                          : const Color(0xFF22C55E),
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(width: 4),
+                        GestureDetector(
+                          onTap: product.quantity > 0
+                              ? () => _adjustStock(context, -1)
+                              : null,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: product.quantity > 0
+                                  ? const Color(0xFFDC2626)
+                                  : const Color(0xFFE5E7EB),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Icon(
+                              Icons.remove,
+                              size: 14,
+                              color: product.quantity > 0
+                                  ? Colors.white
+                                  : const Color(0xFF9CA3AF),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 2),
+                        GestureDetector(
+                          onTap: () => _adjustStock(context, 1),
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF22C55E),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Icon(
+                              Icons.add,
+                              size: 14,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

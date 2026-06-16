@@ -73,7 +73,7 @@ class ProductModel extends Equatable {
       price: _parseDouble(json['price']),
       imageUrl: json['image_url'] ?? json['imageUrl'],
       ownerId: json['owner_id'] as String? ?? json['ownerId'] as String? ?? '',
-      category: json['category'] as String? ?? 'other',
+      category: json['category'] as String? ?? 'lainnya',
       isAvailable: json['is_available'] as bool? ?? json['isAvailable'] as bool? ?? true,
       quantity: _parseInt(json['quantity']),
       minimumStock: _parseInt(json['minimum_stock'] ?? json['minimumStock']),

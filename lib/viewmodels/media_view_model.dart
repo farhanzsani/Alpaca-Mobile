@@ -5,9 +5,7 @@ import 'package:flutter/foundation.dart';
 
 import 'package:alpaca_mobile/models/media_model.dart';
 import 'package:alpaca_mobile/repositories/media_repository.dart';
-
-/// Represents the current state of a view.
-enum ViewState { initial, loading, loaded, error, empty }
+import 'package:alpaca_mobile/core/enums/view_state.dart';
 
 /// ViewModel for media (image) management.
 ///
