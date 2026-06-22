@@ -1,8 +1,3 @@
-/// Waste tracking screen for business owners.
-///
-/// Manages waste resources for the circular economy feature,
-/// including categorization, filtering, and identification of
-/// reusable materials.
 library;
 
 import 'package:flutter/material.dart';
@@ -13,18 +8,9 @@ import 'package:alpaca_mobile/core/theme/app_theme.dart';
 import 'package:alpaca_mobile/models/waste_resource_model.dart';
 import 'package:alpaca_mobile/viewmodels/auth_view_model.dart';
 import 'package:alpaca_mobile/viewmodels/waste_view_model.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-/// Screen for tracking and managing waste resources.
-///
-/// Features:
-/// - List of waste resources
-/// - FAB to add new waste entry
-/// - Each item shows: name, quantity, category, reusable badge
-/// - Filter by category
-/// - Filter by reusable status
-/// - Add/Edit bottom sheet
 class WasteTrackingScreen extends StatefulWidget {
-  /// Creates a [WasteTrackingScreen].
   const WasteTrackingScreen({super.key});
 
   @override
@@ -32,9 +18,11 @@ class WasteTrackingScreen extends StatefulWidget {
 }
 
 class _WasteTrackingScreenState extends State<WasteTrackingScreen> {
+  // Variabel buat nyimpen pilihan filter aktif dari dropdown
   String? _selectedCategory;
   bool? _filterReusable;
 
+  // Daftar kategori mentah (standar database)
   static const _categories = [
     'organic',
     'packaging',
@@ -51,6 +39,7 @@ class _WasteTrackingScreenState extends State<WasteTrackingScreen> {
     });
   }
 
+  // Viewmodel, request
   void _loadWaste() {
     final authVm = context.read<AuthViewModel>();
     final userId = authVm.currentUser?.id;
@@ -92,6 +81,7 @@ class _WasteTrackingScreenState extends State<WasteTrackingScreen> {
   List<WasteResourceModel> _applyFilters(List<WasteResourceModel> items) {
     var filtered = items;
 
+    // Kalo user milih kategori tertentu, potong datanya
     if (_selectedCategory != null && _selectedCategory!.isNotEmpty) {
       filtered = filtered
           .where((w) =>
@@ -99,6 +89,7 @@ class _WasteTrackingScreenState extends State<WasteTrackingScreen> {
           .toList();
     }
 
+    // Kalo user milih status reusable/nggak, saring lagi
     if (_filterReusable != null) {
       filtered =
           filtered.where((w) => w.reusable == _filterReusable).toList();
@@ -107,36 +98,40 @@ class _WasteTrackingScreenState extends State<WasteTrackingScreen> {
     return filtered;
   }
 
+  // Fungsi buat memunculkan Bottom Sheet (Pop-up dari bawah) buat isi form
   void _openWasteForm({WasteResourceModel? waste}) {
     showModalBottomSheet<void>(
       context: context,
-      isScrollControlled: true,
+      isScrollControlled: true, // Biar bottom sheet-nya bisa tinggi nutupin layar
       useSafeArea: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) => _WasteFormSheet(
-        waste: waste,
+        waste: waste, // Kalo ada isinya berarti lagi Mode Edit, kalo null berarti Tambah Baru
         onSave: (savedWaste) async {
           final wasteVm = context.read<WasteViewModel>();
           final authVm = context.read<AuthViewModel>();
           final userId = authVm.currentUser?.id ?? '';
           
+          // Tembak ke ViewModel sesuai modenya
           if (waste != null) {
             await wasteVm.updateWaste(savedWaste);
           } else {
             await wasteVm.addWaste(savedWaste);
           }
           
-          // Reload waste list
+          // Refresh list datanya
           await wasteVm.loadWaste(userId);
           
+          // Tutup bottom sheet kalo udah sukses
           if (mounted) Navigator.pop(context);
         },
       ),
     );
   }
 
+  // Dialog konfirmasi biar user nggak nggak sengaja kepencet hapus
   Future<void> _confirmDelete(WasteResourceModel waste) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -155,7 +150,7 @@ class _WasteTrackingScreenState extends State<WasteTrackingScreen> {
           ),
           FilledButton(
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFDC2626),
+              backgroundColor: const Color(0xFFDC2626), // Merah tanda bahaya
             ),
             onPressed: () => Navigator.pop(context, true),
             child: const Text('Hapus'),
@@ -164,6 +159,7 @@ class _WasteTrackingScreenState extends State<WasteTrackingScreen> {
       ),
     );
 
+    // Kalo user klik 'Hapus', gas hapus datanya
     if (confirmed == true && mounted) {
       await context.read<WasteViewModel>().deleteWaste(waste.id);
     }
@@ -175,14 +171,16 @@ class _WasteTrackingScreenState extends State<WasteTrackingScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.bg,
+      // Kerangka utama halaman: Header -> Chart (kalo ada) -> Filter -> List Data
       body: Column(
         children: [
           _buildHeader(wasteVm),
           if (wasteVm.wasteItems.isNotEmpty) _buildWasteChart(wasteVm),
           _buildFilters(context),
-          Expanded(child: _buildBody(wasteVm)),
+          Expanded(child: _buildBody(wasteVm)), // Expanded biar list-nya makan sisa ruang
         ],
       ),
+      // Tombol melayang di kanan bawah buat nambah data baru
       floatingActionButton: FloatingActionButton(
         onPressed: () => _openWasteForm(),
         backgroundColor: AppColors.primary,
@@ -194,6 +192,7 @@ class _WasteTrackingScreenState extends State<WasteTrackingScreen> {
     );
   }
 
+  // Blok UI: Banner kotak hijau gradasi di paling atas
   Widget _buildHeader(WasteViewModel wasteVm) {
     return Container(
       decoration: const BoxDecoration(
@@ -233,10 +232,10 @@ class _WasteTrackingScreenState extends State<WasteTrackingScreen> {
                   children: [
                     Text(
                       'Pelacakan Limbah',
-                      style: AppText.ui(
-                        size: 20,
+                      style: GoogleFonts.dmSerifDisplay(
+                        fontSize: 20,
                         color: Colors.white,
-                        weight: FontWeight.w700,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                     Text(
@@ -250,6 +249,7 @@ class _WasteTrackingScreenState extends State<WasteTrackingScreen> {
                   ],
                 ),
               ),
+              // Kalo datanya nggak kosong, munculin badge total item
               if (wasteVm.wasteItems.isNotEmpty)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -273,8 +273,9 @@ class _WasteTrackingScreenState extends State<WasteTrackingScreen> {
     );
   }
 
+  // Blok UI: Visualisasi Grafik Lingkaran (Pie Chart) komposisi limbah
   Widget _buildWasteChart(WasteViewModel wasteVm) {
-    // Calculate category percentages
+    // Ngitung jumlah masing-masing kategori secara manual
     final categoryCount = <String, int>{};
     for (var waste in wasteVm.wasteItems) {
       categoryCount[waste.category] = (categoryCount[waste.category] ?? 0) + 1;
@@ -308,10 +309,11 @@ class _WasteTrackingScreenState extends State<WasteTrackingScreen> {
               children: [
                 Expanded(
                   flex: 2,
+                  // Menggambar grafiknya pake package fl_chart
                   child: PieChart(
                     PieChartData(
                       sectionsSpace: 2,
-                      centerSpaceRadius: 40,
+                      centerSpaceRadius: 40, // Bolongan di tengah donat
                       sections: categoryCount.entries.map((entry) {
                         final percentage = (entry.value / total * 100);
                         return PieChartSectionData(
@@ -332,6 +334,7 @@ class _WasteTrackingScreenState extends State<WasteTrackingScreen> {
                 const SizedBox(width: 20),
                 Expanded(
                   flex: 1,
+                  // Bikin keterangan warna (Legenda) di sebelah kanan chart
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -373,15 +376,19 @@ class _WasteTrackingScreenState extends State<WasteTrackingScreen> {
     );
   }
 
+  // Blok UI: Barisan Dropdown buat nyaring data
   Widget _buildFilters(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
       child: Row(
         children: [
+          // Filter 1: Kategori
           Expanded(
             child: DropdownButtonFormField<String?>(
-              value: _selectedCategory,
+              isExpanded: true,
+              initialValue: _selectedCategory,
               decoration: InputDecoration(
+                isDense: true, // Biar kotaknya nggak kegedean
                 labelText: 'Kategori',
                 prefixIcon: const Icon(Icons.category_outlined, size: 20),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -390,7 +397,7 @@ class _WasteTrackingScreenState extends State<WasteTrackingScreen> {
                 ),
               ),
               items: [
-                const DropdownMenuItem(value: null, child: Text('Kategori')),
+                const DropdownMenuItem(value: null, child: Text('Semua')),
                 ..._categories.map((c) => DropdownMenuItem(
                   value: c,
                   child: Text(_categoryLabel(c)),
@@ -400,10 +407,13 @@ class _WasteTrackingScreenState extends State<WasteTrackingScreen> {
             ),
           ),
           const SizedBox(width: 12),
+          // Filter 2: Status Reusable
           Expanded(
             child: DropdownButtonFormField<bool?>(
-              value: _filterReusable,
+              isExpanded: true,
+              initialValue: _filterReusable,
               decoration: InputDecoration(
+                isDense: true,
                 labelText: 'Status',
                 prefixIcon: const Icon(Icons.recycling_rounded, size: 20),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -412,7 +422,7 @@ class _WasteTrackingScreenState extends State<WasteTrackingScreen> {
                 ),
               ),
               items: const [
-                DropdownMenuItem(value: null, child: Text('Status')),
+                DropdownMenuItem(value: null, child: Text('Semua')),
                 DropdownMenuItem(value: true, child: Text('Dapat Digunakan')),
                 DropdownMenuItem(value: false, child: Text('Tidak Dapat')),
               ],
@@ -424,7 +434,9 @@ class _WasteTrackingScreenState extends State<WasteTrackingScreen> {
     );
   }
 
+  // isian buat Loading, Error, Kosong, Ada
   Widget _buildBody(WasteViewModel wasteVm) {
+    // loading
     if (wasteVm.isLoading) {
       return const Center(
         child: CircularProgressIndicator(
@@ -433,6 +445,7 @@ class _WasteTrackingScreenState extends State<WasteTrackingScreen> {
       );
     }
 
+    // terjadi error saat narik data
     if (wasteVm.error != null) {
       return Center(
         child: Padding(
@@ -482,6 +495,7 @@ class _WasteTrackingScreenState extends State<WasteTrackingScreen> {
       );
     }
 
+    // data berhasil ditarik, tapi emang masih kosong
     if (wasteVm.wasteItems.isEmpty) {
       return Center(
         child: Padding(
@@ -528,6 +542,7 @@ class _WasteTrackingScreenState extends State<WasteTrackingScreen> {
 
     final filteredItems = _applyFilters(wasteVm.wasteItems);
 
+    // data ada, tapi nggak ada yang cocok sama pilihan dropdown
     if (filteredItems.isEmpty) {
       return Center(
         child: Padding(
@@ -566,7 +581,7 @@ class _WasteTrackingScreenState extends State<WasteTrackingScreen> {
       color: const Color(0xFF22C55E),
       onRefresh: () async => _loadWaste(),
       child: ListView.builder(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 100), 
         itemCount: filteredItems.length,
         itemBuilder: (context, index) {
           final waste = filteredItems[index];
@@ -574,7 +589,7 @@ class _WasteTrackingScreenState extends State<WasteTrackingScreen> {
             waste: waste,
             categoryLabel: _categoryLabel(waste.category),
             categoryColor: _categoryColor(waste.category),
-            onTap: () => _openWasteForm(waste: waste),
+            onTap: () => _openWasteForm(waste: waste), // Kalo diklik, mode edit
             onDelete: () => _confirmDelete(waste),
           );
         },
@@ -583,7 +598,6 @@ class _WasteTrackingScreenState extends State<WasteTrackingScreen> {
   }
 }
 
-/// A list item widget displaying waste resource information.
 class _WasteListItem extends StatelessWidget {
   const _WasteListItem({
     required this.waste,
@@ -607,6 +621,7 @@ class _WasteListItem extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFE5E7EB)),
+        // Efek bayangan tipis ala card masa kini
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -622,6 +637,7 @@ class _WasteListItem extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
+              // Ikon kategori di kiri
               Container(
                 width: 48,
                 height: 48,
@@ -636,6 +652,7 @@ class _WasteListItem extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 14),
+              // Bagian teks info di tengah
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -654,6 +671,7 @@ class _WasteListItem extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
+                        // Badge hijau 'Reusable' nempel di kanan teks kalo true
                         if (waste.reusable) ...[
                           const SizedBox(width: 8),
                           Container(
@@ -721,6 +739,7 @@ class _WasteListItem extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
+              // Tombol tong sampah di pojok kanan
               InkWell(
                 onTap: onDelete,
                 borderRadius: BorderRadius.circular(8),
@@ -744,6 +763,7 @@ class _WasteListItem extends StatelessWidget {
     );
   }
 
+  // Nyesuaiin ikon berdasarkan teks kategori database
   IconData _categoryIcon(String category) {
     switch (category.toLowerCase()) {
       case 'organic':
@@ -760,7 +780,6 @@ class _WasteListItem extends StatelessWidget {
   }
 }
 
-/// Bottom sheet form for adding or editing a waste resource.
 class _WasteFormSheet extends StatefulWidget {
   const _WasteFormSheet({
     this.waste,
@@ -776,6 +795,8 @@ class _WasteFormSheet extends StatefulWidget {
 
 class _WasteFormSheetState extends State<_WasteFormSheet> {
   final _formKey = GlobalKey<FormState>();
+  
+  // Controller ini tugasnya nangkep dan nampung ketikan keyboard user
   final _nameController = TextEditingController();
   final _quantityController = TextEditingController();
   final _unitController = TextEditingController();
@@ -839,6 +860,7 @@ class _WasteFormSheetState extends State<_WasteFormSheet> {
     final userId = authVm.currentUser?.id ?? '';
     final now = DateTime.now();
 
+    // Rakit data dari textfield jadi satu cetakan objek Model
     final waste = WasteResourceModel(
       id: widget.waste?.id ?? '',
       wasteName: _nameController.text.trim(),
@@ -850,10 +872,11 @@ class _WasteFormSheetState extends State<_WasteFormSheet> {
           ? _notesController.text.trim()
           : null,
       ownerId: userId,
-      createdAt: widget.waste?.createdAt ?? now,
+      createdAt: widget.waste?.createdAt ?? now, // Kalo mode edit biarin tanggal lamanya
       updatedAt: now,
     );
 
+    // Kirim objeknya ke fungsi _openWasteForm di atas
     await widget.onSave(waste);
 
     if (mounted) {
@@ -865,33 +888,47 @@ class _WasteFormSheetState extends State<_WasteFormSheet> {
   Widget build(BuildContext context) {
     final isEditing = widget.waste != null;
 
+    // DraggableScrollableSheet bikin form-nya bisa ditarik naik-turun pakai jari
     return DraggableScrollableSheet(
       initialChildSize: 0.85,
       minChildSize: 0.5,
       maxChildSize: 0.95,
       expand: false,
       builder: (context, scrollController) => Padding(
+        // Padding bottom ini krusial biar form-nya naik pas keyboard HP nongol
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(context).viewInsets.bottom,
         ),
         child: SingleChildScrollView(
           controller: scrollController,
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+          padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Header
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
                 Center(
                   child: Text(
                     isEditing ? 'Edit Limbah' : 'Tambah Limbah',
-                    style: Theme.of(context).textTheme.titleLarge,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 24),
-
-                // Waste name
+                // Input Nama
                 TextFormField(
                   controller: _nameController,
                   decoration: const InputDecoration(
@@ -902,14 +939,13 @@ class _WasteFormSheetState extends State<_WasteFormSheet> {
                   textCapitalization: TextCapitalization.words,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Nama limbah wajib diisi';
+                      return 'Nama limbah wajib diisi'; 
                     }
                     return null;
                   },
                 ),
                 const SizedBox(height: 16),
-
-                // Quantity and unit row
+                // Input Kuantitas dan Satuan disebelahin pakai Row
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -955,8 +991,7 @@ class _WasteFormSheetState extends State<_WasteFormSheet> {
                   ],
                 ),
                 const SizedBox(height: 16),
-
-                // Category
+                // Dropdown milih Kategori
                 DropdownButtonFormField<String>(
                   initialValue: _categories.contains(_selectedCategory)
                       ? _selectedCategory
@@ -978,8 +1013,6 @@ class _WasteFormSheetState extends State<_WasteFormSheet> {
                   },
                 ),
                 const SizedBox(height: 16),
-
-                // Reusable toggle
                 SwitchListTile(
                   title: const Text('Dapat Digunakan Ulang'),
                   subtitle: Text(
@@ -998,8 +1031,6 @@ class _WasteFormSheetState extends State<_WasteFormSheet> {
                   ),
                 ),
                 const SizedBox(height: 16),
-
-                // Processing notes
                 TextFormField(
                   controller: _notesController,
                   decoration: const InputDecoration(
@@ -1011,10 +1042,8 @@ class _WasteFormSheetState extends State<_WasteFormSheet> {
                   maxLines: 3,
                 ),
                 const SizedBox(height: 24),
-
-                // Save button
                 FilledButton.icon(
-                  onPressed: _isSaving ? null : _save,
+                  onPressed: _isSaving ? null : _save, // Matiin pencetan kalo masih loading nge-save
                   icon: _isSaving
                       ? const SizedBox(
                           width: 18,

@@ -12,7 +12,7 @@ import 'package:provider/provider.dart';
 
 import 'package:alpaca_mobile/core/routes/route_names.dart';
 import 'package:alpaca_mobile/core/theme/app_theme.dart';
-import 'package:alpaca_mobile/core/theme/app_text_styles.dart';
+// import 'package:alpaca_mobile/core/theme/app_text_styles.dart';
 import 'package:alpaca_mobile/models/product_model.dart';
 import 'package:alpaca_mobile/viewmodels/product_view_model.dart';
 import 'package:alpaca_mobile/viewmodels/auth_view_model.dart';
@@ -160,10 +160,9 @@ class _PublicShowcaseScreenState extends State<PublicShowcaseScreen> {
   // ─── Header ──────────────────────────────────────────────────────────────
 
   Widget _buildHeader(String fullName, String firstName) {
-    // Generate initials for Budi Santoso -> BS
     final initials = fullName.isNotEmpty
         ? fullName.trim().split(' ').map((e) => e[0]).take(2).join('').toUpperCase()
-        : 'BS';
+        : 'NA';
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -185,7 +184,7 @@ class _PublicShowcaseScreenState extends State<PublicShowcaseScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '$fullName 👋',
+                  fullName,
                   style: AppText.display(size: 24),
                 ),
               ],
@@ -349,14 +348,22 @@ class _PublicShowcaseScreenState extends State<PublicShowcaseScreen> {
   }
 
   Widget _buildRekomendasiHorizontalList(List<ProductModel> recommendations) {
+    final availableProducts = recommendations.where((product) {
+      return product.isAvailable == true; 
+    }).toList();
+
+    if (availableProducts.isEmpty) {
+      return const SizedBox.shrink(); 
+    }
+
     return SizedBox(
       height: 190,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenH),
-        itemCount: recommendations.length,
+        itemCount: availableProducts.length,
         itemBuilder: (context, index) {
-          final product = recommendations[index];
+          final product = availableProducts[index];
           return Padding(
             padding: const EdgeInsets.only(right: 12),
             child: SizedBox(

@@ -10,7 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:alpaca_mobile/core/routes/route_names.dart';
 import 'package:alpaca_mobile/core/widgets/platform_map.dart';
 import 'package:alpaca_mobile/core/theme/app_theme.dart';
-import 'package:alpaca_mobile/core/theme/app_text_styles.dart';
+// import 'package:alpaca_mobile/core/theme/app_text_styles.dart';
 import 'package:alpaca_mobile/widgets/product_card.dart';
 import 'package:alpaca_mobile/models/business_location_model.dart';
 import 'package:alpaca_mobile/models/product_model.dart';
@@ -587,7 +587,7 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
                 crossAxisCount: 2,
                 crossAxisSpacing: 12,
                 mainAxisSpacing: 12,
-                childAspectRatio: 0.72,
+                childAspectRatio: 0.65,
               ),
               itemCount: productVm.storeProducts.length,
               itemBuilder: (context, index) {

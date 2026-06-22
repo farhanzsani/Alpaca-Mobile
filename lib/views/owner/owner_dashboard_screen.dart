@@ -1,6 +1,3 @@
-/// OwnerDashboardScreen - Main dashboard for UMKM owners.
-///
-/// Modern fintech-style dashboard with dark green theme.
 library;
 
 import 'package:flutter/material.dart';
@@ -14,6 +11,7 @@ import 'package:alpaca_mobile/viewmodels/product_view_model.dart';
 import 'package:alpaca_mobile/viewmodels/location_view_model.dart';
 import 'package:alpaca_mobile/core/routes/route_names.dart';
 import 'package:alpaca_mobile/core/theme/app_theme.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class OwnerDashboardScreen extends StatefulWidget {
   const OwnerDashboardScreen({super.key});
@@ -36,13 +34,18 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
   @override
   void initState() {
     super.initState();
+    // Tarik tips acak pakai class Math
     _currentTip = _businessTips[math.Random().nextInt(_businessTips.length)];
+    
+    // addPostFrameCallback ini ibarat nitip pesan: "Tolong jalanin fungsi ini 
+    // setelah UI selesai digambar pertama kali ya, biar nggak error atau lag."
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkBusinessLocation();
       _loadDashboardData();
     });
   }
 
+  // Fungsi buat ngecek apakah UMKM ini sudah ngisi lokasi GPS-nya belum.
   Future<void> _checkBusinessLocation() async {
     final authVm = context.read<AuthViewModel>();
     final locationVm = context.read<LocationViewModel>();
@@ -57,6 +60,8 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     }
   }
 
+  // Tarik data utama buat nampilin angka-angka di dashboard.
+  // Cuma ambil data bulan berjalan (tanggal 1 sampai akhir bulan).
   Future<void> _loadDashboardData() async {
     final authVm = context.read<AuthViewModel>();
     final userId = authVm.currentUser?.id;
@@ -72,16 +77,21 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Pantau perubahan data (listen) dari ViewModel.
+    // Kalau ada transaksi baru, layar ini bakal otomatis update.
     final authVm = context.watch<AuthViewModel>();
     final financeVm = context.watch<FinanceViewModel>();
     final productVm = context.watch<ProductViewModel>();
     final user = authVm.currentUser;
 
     return Scaffold(
+      // RefreshIndicator buat efek tarik ke bawah
       body: RefreshIndicator(
         onRefresh: _loadDashboardData,
         color: const Color(0xFF86EFAC),
         child: SingleChildScrollView(
+          // AlwaysScrollableScrollPhysics wajib dipasang biar halamannya
+          // tetap bisa ditarik buat refresh, meskipun isinya masih dikit.
           physics: const AlwaysScrollableScrollPhysics(),
           child: Column(
             children: [
@@ -95,6 +105,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     );
   }
 
+  // Bagian Header
   Widget _buildHeaderSection(String name, FinanceViewModel financeVm) {
     final income = financeVm.totalIncome;
     final expense = financeVm.totalExpense;
@@ -105,6 +116,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
         final user = authVm.currentUser;
         
         return Container(
+          // Bikin background kotak hijaunya melengkung cuma di bagian bawah doang
           decoration: const BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
@@ -120,25 +132,11 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
             bottom: false,
             child: Column(
               children: [
-                // Top bar with user info
+                // Top bar
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                   child: Row(
                     children: [
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.15),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.person_rounded,
-                          color: Colors.white,
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -153,10 +151,10 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                             ),
                             Text(
                               name,
-                              style: AppText.ui(
-                                size: 17,
+                              style: GoogleFonts.dmSerifDisplay(
+                                fontSize: 20,
                                 color: Colors.white,
-                                weight: FontWeight.w700,
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
                           ],
@@ -171,7 +169,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                   ),
                 ),
             
-                // Balance section
+                // Area Pamer Saldo dan Rincian Omset/Pengeluaran
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Column(
@@ -186,7 +184,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        _formatCurrencyFull(balance),
+                        _formatCurrencyFull(balance), // Nampilin uang lengkap sampai rupiahnya
                         style: AppText.ui(
                           size: 32,
                           weight: FontWeight.w800,
@@ -195,6 +193,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                         ),
                       ),
                       const SizedBox(height: 20),
+                      // Kotak kecil 2 biji buat misahin angka Pemasukan dan Pengeluaran
                       Row(
                         children: [
                           Expanded(
@@ -231,7 +230,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    _formatCurrency(income),
+                                    _formatCurrency(income), // Format disingkat (Misal: 10jt)
                                     style: AppText.ui(
                                       size: 16,
                                       weight: FontWeight.w700,
@@ -302,9 +301,11 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     );
   }
 
+  // Bagian Tombol Menu Cepat (Quick Actions)
   Widget _buildQuickActions() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+      // spaceAround bikin jarak antar tombol seimbang kanan-kirinya
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
@@ -337,6 +338,8 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     );
   }
 
+  // Fungsi template untuk bikin 1 kotak menu cepat.
+  // Biar kodenya nggak kepanjangan diulang-ulang di atas.
   Widget _buildActionButton(String label, IconData icon, Color color, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
@@ -370,8 +373,12 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     );
   }
 
+  // Bagian Isi Dashboard (Ringkasan & Transaksi) 
   Widget _buildContent(FinanceViewModel financeVm, ProductViewModel productVm) {
+    // Ngefilter produk mana aja yang stoknya sisa dikit
     final lowStockCount = productVm.products.where((p) => p.isLowStock).length;
+    
+    // Ngambil 5 transaksi paling baru aja, nggak usah semuanya diload ke home
     final recentTransactions = financeVm.transactions.take(5).toList();
 
     return Padding(
@@ -382,7 +389,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
           _buildTipsCard(),
           const SizedBox(height: 24),
 
-          // ── Ringkasan (wide 2-column layout) ─────────────────────
+          // Blok Ringkasan Bisnis (Format 2 Kolom) 
           Text(
             'Ringkasan Usaha',
             style: AppText.ui(
@@ -415,13 +422,15 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
               ),
             ],
           ),
+          
+          // Kalau ada produk yang mau habis, munculin kotak alert kuning!
           if (lowStockCount > 0) ...[
             const SizedBox(height: 12),
             _buildAlertCard(lowStockCount),
           ],
           const SizedBox(height: 24),
 
-          // ── Transaksi Terbaru ─────────────────────────────────────
+          // ── Blok List Transaksi Terbaru ──────────────────────────────────
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -433,6 +442,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                   color: AppColors.textPrimary,
                 ),
               ),
+              // Tombol buat pindah ke halaman list transaksi lengkap
               TextButton(
                 onPressed: () => context.go(RouteNames.ownerBookkeeping),
                 child: Text(
@@ -448,6 +458,8 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
           ),
           const SizedBox(height: 12),
 
+          // Logika if/else: Kalau datanya kosong, kasih gambar resi gede biar manis.
+          // Kalau ada datanya, baru di-looping (map) jadi list ke bawah.
           if (recentTransactions.isEmpty)
             Container(
               padding: const EdgeInsets.all(32),
@@ -489,7 +501,9 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     );
   }
 
+  // Desain 1 baris transaksi di list terbaru
   Widget _buildTransactionItem(dynamic transaction) {
+    // Ngecek apakah ini uang masuk atau keluar dari string tipe-nya
     final isIncome = transaction.type.toString().contains('income');
     final amount = transaction.amount as double;
     
@@ -502,6 +516,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
       ),
       child: Row(
         children: [
+          // Bikin ikon panah (hijau ke bawah = uang masuk, merah ke atas = uang keluar)
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
@@ -529,7 +544,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  _formatDate(transaction.date),
+                  _formatDate(transaction.date), // Format tanggal jadi ramah dibaca
                   style: AppText.ui(
                     size: 12,
                     color: AppColors.textSecondary,
@@ -538,6 +553,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
               ],
             ),
           ),
+          // Nominal angkanya
           Text(
             '${isIncome ? '+' : '-'} ${_formatCurrency(amount)}',
             style: AppText.ui(
@@ -551,6 +567,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     );
   }
 
+  // Komponen Kotak-kotak Informasi 
   Widget _buildTipsCard() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -693,6 +710,9 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     );
   }
 
+  // Fungsi Utility / Format Data
+  
+  // Format duit full, contoh: 1.500.000 pakai titik pembatas ribuan regex
   String _formatCurrencyFull(double value) {
     final formatter = value.toStringAsFixed(0).replaceAllMapped(
       RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
@@ -701,6 +721,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     return 'Rp$formatter';
   }
 
+  // Format duit disingkat biar muat di kotak kecil, contoh: Rp1.5jt atau 500rb
   String _formatCurrency(double value) {
     if (value >= 1000000000) {
       return 'Rp${(value / 1000000000).toStringAsFixed(1)}M';
@@ -712,6 +733,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     return 'Rp${value.toStringAsFixed(0)}';
   }
 
+  // Format tanggal jadi tulisan cantik (Hari ini, Kemarin, x hari lalu)
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final diff = now.difference(date);
@@ -727,11 +749,13 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     }
   }
 
+  // Ngecek link fotonya beneran valid atau nge-blank
   bool _isValidUrl(String? url) {
     if (url == null) return false;
     return url.startsWith('http://') || url.startsWith('https://');
   }
 
+  // Avatar Profil
   Widget _buildProfileAvatar(dynamic user) {
     final photoUrl = user?.photoUrl;
     final displayName = user?.displayName ?? '';
@@ -759,10 +783,25 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     );
   }
 
+  // Profil inisial nama
   Widget _buildAvatarFallback(String displayName) {
+    String initials = '?';
+
+    final cleanName = displayName.trim();
+
+    if (cleanName.isNotEmpty) {
+      final words = cleanName.split(RegExp(r'\s+'));
+
+      if (words.length > 1) {
+        initials = '${words[0][0]}${words[1][0]}';
+      } else {
+        initials = words[0].length > 1 ? words[0].substring(0, 2) : words[0];
+      }
+    }
+    
     return Center(
       child: Text(
-        displayName.isNotEmpty ? displayName[0].toUpperCase() : '?',
+        initials.toUpperCase(),
         style: AppText.ui(
           size: 18,
           color: Colors.white,

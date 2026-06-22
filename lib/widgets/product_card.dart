@@ -111,7 +111,7 @@ class ProductCard extends StatelessWidget {
                               style: AppTextStyles.titleSmall.copyWith(
                                 color: AppColors.onSurface,
                               ),
-                              maxLines: 2,
+                              maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                             const SizedBox(height: 2),

@@ -20,6 +20,7 @@ import 'package:alpaca_mobile/core/routes/route_names.dart';
 import 'package:alpaca_mobile/core/validators/form_validators.dart';
 
 import 'package:alpaca_mobile/core/theme/app_theme.dart';
+import 'package:alpaca_mobile/widgets/gradient_button.dart';
 
 /// Login screen with email/password + Google authentication.
 class LoginScreen extends StatefulWidget {
@@ -103,25 +104,25 @@ class _LoginScreenState extends State<LoginScreen>
     }
   }
 
-  Future<void> _handleGoogleSignIn() async {
-    final authViewModel = context.read<AuthViewModel>();
-    await authViewModel.signInWithGoogle();
+  // Future<void> _handleGoogleSignIn() async {
+  //   final authViewModel = context.read<AuthViewModel>();
+  //   await authViewModel.signInWithGoogle();
 
-    if (!mounted) return;
+  //   if (!mounted) return;
 
-    if (authViewModel.isAuthenticated) {
-      if (authViewModel.userRole == UserRole.ownerUmkm) {
-        final userId = authViewModel.currentUser?.id;
-        if (userId != null) {
-          await context.read<LocationViewModel>().getCurrentLocation(userId);
-          await Future.delayed(const Duration(milliseconds: 100));
-        }
-      }
-      _printFirebaseToken();
-    } else {
-      _showError(authViewModel.error ?? 'Login Google gagal.');
-    }
-  }
+  //   if (authViewModel.isAuthenticated) {
+  //     if (authViewModel.userRole == UserRole.ownerUmkm) {
+  //       final userId = authViewModel.currentUser?.id;
+  //       if (userId != null) {
+  //         await context.read<LocationViewModel>().getCurrentLocation(userId);
+  //         await Future.delayed(const Duration(milliseconds: 100));
+  //       }
+  //     }
+  //     _printFirebaseToken();
+  //   } else {
+  //     _showError(authViewModel.error ?? 'Login Google gagal.');
+  //   }
+  // }
 
   Future<void> _printFirebaseToken() async {
     final fcmToken = await FirebaseMessaging.instance.getToken();
@@ -241,10 +242,14 @@ class _LoginScreenState extends State<LoginScreen>
                             const SizedBox(height: 32),
 
                             // Primary CTA
-                            AlpacaPrimaryButton(
+                            AlpacaGradientButton(
                               label: 'Masuk',
                               isLoading: authViewModel.isLoading,
                               onPressed: _handleLogin,
+                              gradientColors: const [
+                                Color(0xFF1E3A2F),
+                                Color(0xFF2A5C45),
+                              ],
                             ),
                           ],
                         ),
@@ -253,17 +258,17 @@ class _LoginScreenState extends State<LoginScreen>
                       const SizedBox(height: 24),
 
                       // ── Divider ───────────────────────────────────
-                      const _OrDivider(),
+                      // const _OrDivider(),
 
                       const SizedBox(height: 24),
 
                       // ── Google Sign-In ────────────────────────────
-                      _GoogleButton(
-                        isLoading: authViewModel.isLoading,
-                        onPressed: _handleGoogleSignIn,
-                      ),
+                      // _GoogleButton(
+                      //   isLoading: authViewModel.isLoading,
+                      //   onPressed: _handleGoogleSignIn,
+                      // ),
 
-                      const SizedBox(height: 36),
+                      // const SizedBox(height: 10),
 
                       // ── Register link ─────────────────────────────
                       Center(
@@ -346,35 +351,40 @@ class _HeroHeader extends StatelessWidget {
 
           // ── Brand mark on top ─────────────────────────────────────────
           Positioned(
-            top: topPad + 20,
-            left: 24,
+            top: topPad + 16,
+            left: 0,
+            right: 0,
             child: const _BrandMarkWhite(),
           ),
 
           // ── Tagline at bottom of hero ─────────────────────────────────
           Positioned(
-            bottom: 24,
+            bottom: 10,
             left: 24,
             right: 24,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  'Platform UMKM Agraris\nIndonesia',
-                  style: GoogleFonts.dmSerifDisplay(
-                    fontSize: 22,
-                    color: Colors.white,
-                    height: 1.3,
+                Center(
+                  child: Text(
+                    'ALPACA',
+                    style: GoogleFonts.dmSerifDisplay(
+                      fontSize: 22,
+                      color: Colors.white,
+                      height: 1.3,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'Terhubung. Berkembang. Berkelanjutan.',
-                  style: AppText.ui(
-                    size: 12,
-                    color: Colors.white.withValues(alpha: 0.70),
-                    letterSpacing: 0.3,
+                const SizedBox(height: 45),
+                Center(
+                  child: Text(
+                    'Terhubung, Berkembang, Berkelanjutan',
+                    style: AppText.ui(
+                      size: 12,
+                      color: Colors.white.withValues(alpha: 0.9),
+                      letterSpacing: 0.5,
+                    ),
                   ),
                 ),
               ],
@@ -394,41 +404,19 @@ class _BrandMarkWhite extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 32,
-          height: 32,
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(9),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.30),
-              width: 1,
-            ),
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.max,
+        mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+          Image.asset(
+            'assets/icons/alpaca_icons_clear.png',
+            width: 120,
+            height: 120,
+            fit: BoxFit.cover,
           ),
-          child: Center(
-            child: Text(
-              'α',
-              style: GoogleFonts.dmSerifDisplay(
-                fontSize: 18,
-                color: Colors.white,
-                height: 1.1,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Text(
-          'ALPACA',
-          style: GoogleFonts.dmSerifDisplay(
-            fontSize: 18,
-            color: Colors.white,
-            letterSpacing: 3,
-          ),
-        ),
-      ],
+        ],
+      )
     );
   }
 }
@@ -535,74 +523,74 @@ class _AlpacaTextField extends StatelessWidget {
 }
 
 /// "atau" divider
-class _OrDivider extends StatelessWidget {
-  const _OrDivider();
+// class _OrDivider extends StatelessWidget {
+//   const _OrDivider();
 
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(child: Container(height: 1, color: AppColors.border)),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text(
-            'atau',
-            style: AppText.ui(size: 12, color: AppColors.textSecondary),
-          ),
-        ),
-        Expanded(child: Container(height: 1, color: AppColors.border)),
-      ],
-    );
-  }
-}
+//   @override
+//   Widget build(BuildContext context) {
+//     return Row(
+//       children: [
+//         Expanded(child: Container(height: 1, color: AppColors.border)),
+//         Padding(
+//           padding: const EdgeInsets.symmetric(horizontal: 16),
+//           child: Text(
+//             'atau',
+//             style: AppText.ui(size: 12, color: AppColors.textSecondary),
+//           ),
+//         ),
+//         Expanded(child: Container(height: 1, color: AppColors.border)),
+//       ],
+//     );
+//   }
+// }
 
-/// Google sign-in outlined button
-class _GoogleButton extends StatelessWidget {
-  final bool isLoading;
-  final VoidCallback? onPressed;
+// /// Google sign-in outlined button
+// class _GoogleButton extends StatelessWidget {
+//   final bool isLoading;
+//   final VoidCallback? onPressed;
 
-  const _GoogleButton({required this.isLoading, this.onPressed});
+//   const _GoogleButton({required this.isLoading, this.onPressed});
 
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 52,
-      child: OutlinedButton(
-        onPressed: isLoading ? null : onPressed,
-        style: OutlinedButton.styleFrom(
-          backgroundColor: AppColors.surface,
-          side: const BorderSide(color: AppColors.border, width: 1),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Google G icon (colored)
-            RichText(
-              text: TextSpan(
-                style: const TextStyle(
-                    fontSize: 16, fontWeight: FontWeight.w700, height: 1),
-                children: [
-                  TextSpan(
-                      text: 'G',
-                      style: TextStyle(color: const Color(0xFF4285F4))),
-                ],
-              ),
-            ),
-            const SizedBox(width: 10),
-            Text(
-              'Masuk dengan Google',
-              style: AppText.ui(
-                size: 14,
-                weight: FontWeight.w500,
-                color: AppColors.textPrimary,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
+//   @override
+//   Widget build(BuildContext context) {
+//     return SizedBox(
+//       height: 52,
+//       child: OutlinedButton(
+//         onPressed: isLoading ? null : onPressed,
+//         style: OutlinedButton.styleFrom(
+//           backgroundColor: AppColors.surface,
+//           side: const BorderSide(color: AppColors.border, width: 1),
+//           shape: RoundedRectangleBorder(
+//             borderRadius: BorderRadius.circular(12),
+//           ),
+//         ),
+//         child: Row(
+//           mainAxisAlignment: MainAxisAlignment.center,
+//           children: [
+//             // Google G icon (colored)
+//             RichText(
+//               text: TextSpan(
+//                 style: const TextStyle(
+//                     fontSize: 16, fontWeight: FontWeight.w700, height: 1),
+//                 children: [
+//                   TextSpan(
+//                       text: 'G',
+//                       style: TextStyle(color: const Color(0xFF4285F4))),
+//                 ],
+//               ),
+//             ),
+//             const SizedBox(width: 10),
+//             Text(
+//               'Masuk dengan Google',
+//               style: AppText.ui(
+//                 size: 14,
+//                 weight: FontWeight.w500,
+//                 color: AppColors.textPrimary,
+//               ),
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+// }

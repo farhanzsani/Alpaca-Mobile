@@ -15,7 +15,7 @@ import 'package:provider/provider.dart';
 import 'package:alpaca_mobile/core/routes/route_names.dart';
 import 'package:alpaca_mobile/core/widgets/platform_map.dart';
 import 'package:alpaca_mobile/core/theme/app_theme.dart';
-import 'package:alpaca_mobile/core/theme/app_text_styles.dart';
+// import 'package:alpaca_mobile/core/theme/app_text_styles.dart';
 import 'package:alpaca_mobile/models/business_location_model.dart';
 import 'package:alpaca_mobile/viewmodels/location_view_model.dart';
 
@@ -38,7 +38,7 @@ class _NearbyStoresScreenState extends State<NearbyStoresScreen>
   late AnimationController _sheetAnimController;
   late Animation<Offset> _sheetSlideAnim;
 
-  static const _defaultCenter = LatLng(-7.5, 110.0); // Tengah Jawa
+  static const _defaultCenter = LatLng(-7.5, 110.0);
 
   @override
   void initState() {
@@ -240,7 +240,7 @@ class _NearbyStoresScreenState extends State<NearbyStoresScreen>
       right: 0,
       child: Container(
         padding: EdgeInsets.only(
-          top: MediaQuery.of(context).padding.top + 8,
+          top: MediaQuery.of(context).padding.top + 10,
           bottom: 12,
           left: 16,
           right: 16,
@@ -250,8 +250,8 @@ class _NearbyStoresScreenState extends State<NearbyStoresScreen>
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Colors.black.withValues(alpha: 0.55),
-              Colors.transparent,
+              Colors.black.withValues(alpha: 0.9),
+              Colors.black.withValues(alpha: 0.0)
             ],
           ),
         ),
@@ -275,7 +275,7 @@ class _NearbyStoresScreenState extends State<NearbyStoresScreen>
                   Text(
                     'Tap pin untuk melihat detail toko',
                     style: TextStyle(
-                      color: Colors.white70,
+                      color: Color.fromARGB(255, 255, 255, 255),
                       fontSize: 12,
                     ),
                   ),
@@ -290,7 +290,7 @@ class _NearbyStoresScreenState extends State<NearbyStoresScreen>
 
   Widget _buildStoreBadge(int count) {
     return Positioned(
-      top: MediaQuery.of(context).padding.top + 70,
+      top: MediaQuery.of(context).padding.top + 80,
       left: 16,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),

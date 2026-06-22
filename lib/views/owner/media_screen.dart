@@ -16,8 +16,6 @@ import 'package:alpaca_mobile/models/media_model.dart';
 import 'package:alpaca_mobile/viewmodels/auth_view_model.dart';
 import 'package:alpaca_mobile/viewmodels/media_view_model.dart';
 
-/// Screen that allows business owners to manage their media gallery.
-///
 /// Features:
 /// - Grid view of uploaded images with category labels
 /// - FAB to upload new images (camera or gallery)

@@ -13,6 +13,7 @@ import 'package:alpaca_mobile/models/transaction_model.dart';
 import 'package:alpaca_mobile/viewmodels/auth_view_model.dart';
 import 'package:alpaca_mobile/viewmodels/finance_view_model.dart';
 import 'package:alpaca_mobile/core/theme/app_theme.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 /// Bookkeeping screen with summary, tabs, and transaction management.
 class BookkeepingScreen extends StatefulWidget {
@@ -197,10 +198,10 @@ class _BookkeepingScreenState extends State<BookkeepingScreen>
                   children: [
                     Text(
                       'Pembukuan',
-                      style: AppText.ui(
-                        size: 20,
+                      style: GoogleFonts.dmSerifDisplay(
+                        fontSize: 20,
                         color: Colors.white,
-                        weight: FontWeight.w700,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                     Text(
@@ -1099,11 +1100,13 @@ class _BookkeepingScreenState extends State<BookkeepingScreen>
                       const SizedBox(height: 20),
 
                       // Title
-                      const Text(
-                        'Tambah Transaksi',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
+                      Center(
+                        child: Text(
+                          'Tambah Transaksi',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 24),

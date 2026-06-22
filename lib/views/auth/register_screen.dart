@@ -307,44 +307,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Divider
-                  const _OrDivider(),
-                  const SizedBox(height: 24),
-
-                  // Google Sign-In button
-                  SizedBox(
-                    height: 52,
-                    child: OutlinedButton.icon(
-                      onPressed: authViewModel.isLoading ? null : _handleGoogleSignIn,
-                      icon: Image.network(
-                        'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
-                        width: 18,
-                        height: 18,
-                        errorBuilder: (_, __, ___) => const Icon(
-                          Icons.g_mobiledata,
-                          size: 24,
-                          color: AppColors.error,
-                        ),
-                      ),
-                      label: Text(
-                        'Daftar dengan Google',
-                        style: AppText.ui(
-                          size: 14,
-                          weight: FontWeight.w500,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        backgroundColor: AppColors.surface,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        side: const BorderSide(color: AppColors.border),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-
                   // Login link
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -462,27 +424,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: AppColors.error, width: 1.5),
       ),
-    );
-  }
-}
-
-class _OrDivider extends StatelessWidget {
-  const _OrDivider();
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(child: Container(height: 1, color: AppColors.border)),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text(
-            'atau',
-            style: AppText.ui(size: 12, color: AppColors.textSecondary),
-          ),
-        ),
-        Expanded(child: Container(height: 1, color: AppColors.border)),
-      ],
     );
   }
 }

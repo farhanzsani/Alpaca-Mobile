@@ -6,12 +6,12 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
+// import 'package:google_fonts/google_fonts.dart';
 
 import 'package:alpaca_mobile/views/showcase/public_showcase_screen.dart';
 import 'package:alpaca_mobile/views/showcase/nearby_stores_screen.dart';
 import 'package:alpaca_mobile/views/showcase/favorites_screen.dart';
-import 'package:alpaca_mobile/views/showcase/customer_profile_screen.dart';
+// import 'package:alpaca_mobile/views/showcase/customer_profile_screen.dart';
 import 'package:alpaca_mobile/core/theme/app_theme.dart';
 import 'package:alpaca_mobile/core/theme/app_text_styles.dart';
 

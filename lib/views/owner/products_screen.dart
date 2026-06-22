@@ -16,17 +16,15 @@ import 'package:alpaca_mobile/models/product_model.dart';
 import 'package:alpaca_mobile/viewmodels/auth_view_model.dart';
 import 'package:alpaca_mobile/viewmodels/product_view_model.dart';
 import 'package:alpaca_mobile/repositories/media_repository.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-/// Screen for managing the product catalog of a business owner.
-///
-/// Features:
-/// - Grid/list of products with image, name, price
-/// - FAB to add new product
-/// - Each product card shows: image, name, price, availability badge
-/// - Tap to edit product
-/// - Add/Edit form: name, description, price, category, image upload, availability toggle
+/// Fitur:
+/// - Grid produk
+/// - Tambah produk baru
+/// - Detail card produk
+/// - Edit produk
+/// - Form tambah/edit produk
 class ProductsScreen extends StatefulWidget {
-  /// Creates a [ProductsScreen].
   const ProductsScreen({super.key});
 
   @override
@@ -178,10 +176,10 @@ class _ProductsScreenState extends State<ProductsScreen> {
                   children: [
                     Text(
                       'Produk',
-                      style: AppText.ui(
-                        size: 20,
+                      style: GoogleFonts.dmSerifDisplay(
+                        fontSize: 20,
                         color: Colors.white,
-                        weight: FontWeight.w700,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                     Text(
@@ -425,7 +423,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
               ),
               const SizedBox(height: 8),
               const Text(
-                'Tap tombol tambah untuk menambahkan\nproduk pertama Anda',
+                'Tap tombol + untuk menambahkan\nproduk pertama Anda',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 14,
@@ -535,7 +533,7 @@ class _ProductCardWithStock extends StatelessWidget {
                               ? Image.network(
                                   product.imageUrl!,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) =>
+                                  errorBuilder: (_, _, _) =>
                                       _buildPlaceholder(),
                                 )
                               : _buildPlaceholder(),
@@ -549,8 +547,8 @@ class _ProductCardWithStock extends StatelessWidget {
                                 horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
                               color: product.isAvailable
-                                  ? const Color(0xFF22C55E)
-                                  : const Color(0xFFDC2626),
+                                  ? const Color.fromARGB(125, 34, 197, 94)
+                                  : const Color.fromARGB(126, 220, 38, 94),
                               borderRadius: BorderRadius.circular(8),
                               boxShadow: [
                                 BoxShadow(
@@ -575,7 +573,7 @@ class _ProductCardWithStock extends StatelessWidget {
                           left: 8,
                           child: Container(
                             decoration: BoxDecoration(
-                              color: const Color(0xFFDC2626),
+                              color: const Color.fromARGB(108, 220, 38, 38),
                               borderRadius: BorderRadius.circular(10),
                               boxShadow: [
                                 BoxShadow(
@@ -630,7 +628,7 @@ class _ProductCardWithStock extends StatelessWidget {
                           Container(
                             width: double.infinity,
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 7, vertical: 4),
+                                horizontal: 7, vertical: 2),
                             decoration: BoxDecoration(
                               color: product.isLowStock
                                   ? const Color(0xFFFEE2E2)
@@ -653,6 +651,7 @@ class _ProductCardWithStock extends StatelessWidget {
                                   child: Text(
                                     '${product.quantity} ${product.unit}',
                                     style: TextStyle(
+                                      height: 1.0,
                                       fontSize: 11,
                                       fontWeight: FontWeight.w700,
                                       color: product.isLowStock
@@ -703,8 +702,8 @@ class _ProductCardWithStock extends StatelessWidget {
                     height: 38,
                     decoration: BoxDecoration(
                       color: product.quantity > 0
-                          ? const Color(0xFFDC2626)
-                          : const Color(0xFFE5E7EB),
+                          ? const Color.fromARGB(121, 255, 255, 255)
+                          : const Color.fromARGB(255, 255, 255, 255),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     alignment: Alignment.center,
@@ -712,7 +711,7 @@ class _ProductCardWithStock extends StatelessWidget {
                       Icons.remove_rounded,
                       size: 20,
                       color: product.quantity > 0
-                          ? Colors.white
+                          ? const Color.fromARGB(255, 255, 0, 0)
                           : const Color(0xFF9CA3AF),
                     ),
                   ),
@@ -738,14 +737,14 @@ class _ProductCardWithStock extends StatelessWidget {
                   child: Container(
                     height: 38,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF16A34A),
+                      color: const Color.fromARGB(255, 255, 255, 255),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     alignment: Alignment.center,
                     child: const Icon(
                       Icons.add_rounded,
                       size: 20,
-                      color: Colors.white,
+                      color: Color.fromARGB(255, 1, 138, 5),
                     ),
                   ),
                 ),
@@ -957,17 +956,32 @@ class _ProductFormSheetState extends State<_ProductFormSheet> {
         ),
         child: SingleChildScrollView(
           controller: scrollController,
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+          padding: const EdgeInsets.fromLTRB(16, 24, 16, 30),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // Handle bar
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
                 // Header
                 Center(
                   child: Text(
                     isEditing ? 'Edit Produk' : 'Tambah Produk',
-                    style: Theme.of(context).textTheme.titleLarge,
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold
+                    ),
                   ),
                 ),
                 const SizedBox(height: 24),

@@ -7,8 +7,8 @@ import 'package:alpaca_mobile/core/theme/app_theme.dart';
 import 'package:alpaca_mobile/models/user_model.dart';
 import 'package:alpaca_mobile/viewmodels/auth_view_model.dart';
 import 'package:alpaca_mobile/viewmodels/location_view_model.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-/// Screen displaying the owner's profile information.
 class ProfileScreen extends StatefulWidget {
   /// Creates a [ProfileScreen].
   const ProfileScreen({super.key});
@@ -112,7 +112,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         title: Text(
           'Profil',
-          style: AppText.sectionHeader(),
+          style: GoogleFonts.dmSerifDisplay(
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary,
+          ),
         ),
         centerTitle: true,
       ),
@@ -168,9 +172,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: user.photoUrl == null || !_isValidUrl(user.photoUrl!)
                 ? Text(
                     user.displayName.isNotEmpty ? user.displayName[0].toUpperCase() : '?',
-                    style: AppText.ui(
-                      size: 36,
-                      weight: FontWeight.w700,
+                    style: GoogleFonts.dmSerifDisplay(
+                      fontSize: 36,
+                      fontWeight: FontWeight.w700,
                       color: AppColors.primary,
                     ),
                   )
@@ -179,9 +183,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: AppSpacing.md),
           Text(
             user.displayName,
-            style: AppText.ui(
-              size: 20,
-              weight: FontWeight.w700,
+            style: GoogleFonts.dmSerifDisplay(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
               color: AppColors.textPrimary,
             ),
           ),
@@ -358,7 +362,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: const Icon(Icons.edit_outlined, size: 20, color: AppColors.primary),
             ),
             title: Text(
-              'Edit Profil',
+              'Edit Informasi Akun',
               style: AppText.ui(
                 size: 14,
                 weight: FontWeight.w600,
@@ -381,7 +385,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: const Icon(Icons.location_on_outlined, size: 20, color: AppColors.primary),
             ),
             title: Text(
-              'Kelola Lokasi',
+              'Edit Informasi Bisnis',
               style: AppText.ui(
                 size: 14,
                 weight: FontWeight.w600,

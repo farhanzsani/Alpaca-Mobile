@@ -270,6 +270,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return Container(
       color: AppColors.surface,
       padding: const EdgeInsets.all(AppSpacing.lg),
+      width: double.infinity,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
