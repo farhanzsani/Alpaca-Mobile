@@ -372,8 +372,47 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
         children: [
           _buildTipsCard(),
           const SizedBox(height: 24),
-          
-          // Recent Transactions Section
+
+          // ── Ringkasan (wide 2-column layout) ─────────────────────
+          const Text(
+            'Ringkasan',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF1F2937),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _buildStatCard(
+                  'Total Produk',
+                  '${productVm.products.length}',
+                  'item terdaftar',
+                  Icons.inventory_2_rounded,
+                  const Color(0xFF22C55E),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildStatCard(
+                  'Transaksi',
+                  '${financeVm.transactions.length}',
+                  'bulan ini',
+                  Icons.receipt_long_rounded,
+                  const Color(0xFF064E3B),
+                ),
+              ),
+            ],
+          ),
+          if (lowStockCount > 0) ...[
+            const SizedBox(height: 12),
+            _buildAlertCard(lowStockCount),
+          ],
+          const SizedBox(height: 24),
+
+          // ── Transaksi Terbaru ─────────────────────────────────────
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -399,7 +438,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          
+
           if (recentTransactions.isEmpty)
             Container(
               padding: const EdgeInsets.all(32),
@@ -434,36 +473,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
               padding: const EdgeInsets.only(bottom: 10),
               child: _buildTransactionItem(transaction),
             )),
-          
-          const SizedBox(height: 24),
-          const Text(
-            'Ringkasan',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF1F2937),
-            ),
-          ),
-          const SizedBox(height: 16),
-          _buildStatCard(
-            'Total Produk',
-            '${productVm.products.length}',
-            'item terdaftar',
-            Icons.inventory_2_rounded,
-            const Color(0xFF22C55E),
-          ),
-          const SizedBox(height: 12),
-          _buildStatCard(
-            'Total Transaksi',
-            '${financeVm.transactions.length}',
-            'transaksi bulan ini',
-            Icons.receipt_long_rounded,
-            const Color(0xFF064E3B),
-          ),
-          if (lowStockCount > 0) ...[
-            const SizedBox(height: 12),
-            _buildAlertCard(lowStockCount),
-          ],
+
           const SizedBox(height: 20),
         ],
       ),
@@ -575,53 +585,55 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
 
   Widget _buildStatCard(String title, String value, String subtitle, IconData icon, Color color) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFE5E7EB)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: color, size: 24),
+            child: Icon(icon, color: color, size: 22),
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: Color(0xFF6B7280),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF1F2937),
-                  ),
-                ),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF9CA3AF),
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-              ],
+          const SizedBox(height: 12),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF1F2937),
+              height: 1,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF374151),
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            subtitle,
+            style: const TextStyle(
+              fontSize: 11,
+              color: Color(0xFF9CA3AF),
             ),
           ),
         ],

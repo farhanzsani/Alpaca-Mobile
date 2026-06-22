@@ -41,8 +41,13 @@ class AuthViewModel extends ChangeNotifier {
   /// The currently authenticated user, or null if not signed in.
   UserModel? get currentUser => _currentUser;
 
-  /// Whether a user is currently authenticated.
+  /// Whether a user is currently authenticated (Firestore data loaded).
   bool get isAuthenticated => _currentUser != null;
+
+  /// Instant sync check: Firebase has a cached session from a previous login.
+  /// True immediately on app start if user was previously logged in.
+  /// Does NOT require Firestore or any network call.
+  bool get hasFirebaseSession => _authRepository.hasActiveSession;
 
   /// The role of the current user, or null if not authenticated.
   UserRole? get userRole => _currentUser?.role;
@@ -200,6 +205,55 @@ class AuthViewModel extends ChangeNotifier {
         _viewState = ViewState.error;
       },
     );
+
+    _setLoading(false);
+  }
+
+  /// Waits until Firestore user data is fully loaded (or times out).
+  /// Use this in splash to ensure [currentUser] and [userRole] are populated.
+  Future<void> waitForAuthResolution() async {
+    // Already have user data — done immediately.
+    if (_currentUser != null) return;
+
+    final completer = Completer<void>();
+    void listener() {
+      // Resolved when we have a user OR when viewState is no longer initial/loading
+      if (_currentUser != null || (_viewState != ViewState.initial && !_isLoading)) {
+        if (!completer.isCompleted) completer.complete();
+      }
+    }
+    addListener(listener);
+
+    await Future.any([
+      completer.future,
+      Future.delayed(const Duration(seconds: 8)), // safety timeout
+    ]);
+
+    removeListener(listener);
+  }
+
+  /// Updates the user's profile information.
+  Future<void> updateProfile({String? displayName, String? photoUrl, String? phoneNumber}) async {
+    _setLoading(true);
+    clearError();
+
+    final result = await _authRepository.updateProfile(
+      displayName: displayName,
+      photoUrl: photoUrl,
+      phoneNumber: phoneNumber,
+    );
+
+    result.when(
+      success: (_) {
+        // We can just rely on checkAuthStatus to reload, or authStateChanges will trigger.
+      },
+      failure: (exception) {
+        _error = exception.message;
+      },
+    );
+    
+    // Refresh user data
+    await checkAuthStatus();
 
     _setLoading(false);
   }

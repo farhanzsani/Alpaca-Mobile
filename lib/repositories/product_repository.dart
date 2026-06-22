@@ -8,20 +8,32 @@ class ProductRepository {
 
   Future<Result<List<ProductModel>>> getProducts(String ownerId) =>
       _api.getPublic('/products', (j) {
-        final data = j is Map ? j['data'] : j;
-        return (data as List).map((e) => ProductModel.fromJson(e as Map<String, dynamic>)).toList();
+        dynamic raw = j;
+        if (raw is Map) raw = raw['data'];
+        if (raw == null) return <ProductModel>[];
+        return (raw as List)
+            .map((e) => ProductModel.fromJson(e as Map<String, dynamic>))
+            .toList();
       }, query: {'owner_id': ownerId});
 
   Future<Result<List<ProductModel>>> getAllProducts() =>
       _api.getPublic('/products', (j) {
-        final data = j is Map ? j['data'] : j;
-        return (data as List).map((e) => ProductModel.fromJson(e as Map<String, dynamic>)).toList();
+        // Backend returns: { status, message, data: [...], meta: { total } }
+        dynamic raw = j;
+        if (raw is Map) {
+          raw = raw['data'];
+        }
+        if (raw == null) return <ProductModel>[];
+        return (raw as List)
+            .map((e) => ProductModel.fromJson(e as Map<String, dynamic>))
+            .toList();
       });
 
   Future<Result<ProductModel>> getProduct(String id) =>
       _api.getPublic('/products/$id', (j) {
-        final data = j is Map ? j['data'] : j;
-        return ProductModel.fromJson(data as Map<String, dynamic>);
+        dynamic raw = j;
+        if (raw is Map) raw = raw['data'] ?? raw;
+        return ProductModel.fromJson(raw as Map<String, dynamic>);
       });
 
   Future<Result<ProductModel>> createProduct(ProductModel product) =>

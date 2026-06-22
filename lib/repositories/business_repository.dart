@@ -1,4 +1,4 @@
-﻿import 'package:alpaca_mobile/core/network/api_client.dart';
+import 'package:alpaca_mobile/core/network/api_client.dart';
 import 'package:alpaca_mobile/core/utils/result.dart';
 import 'package:alpaca_mobile/models/business_location_model.dart';
 import 'package:alpaca_mobile/core/exceptions/app_exception.dart';
@@ -44,6 +44,28 @@ class BusinessRepository {
   }
 
   Future<Result<void>> deleteBusinessLocation(String id) => _api.delete('/business-locations/$id');
+
+  /// Fetches nearby business locations by GPS coordinates.
+  ///
+  /// Calls `GET /business-locations/nearby?latitude=&longitude=` and returns
+  /// the list of [BusinessLocationModel] sorted by proximity.
+  Future<Result<List<BusinessLocationModel>>> getNearbyBusinesses({
+    required double latitude,
+    required double longitude,
+  }) =>
+      _api.getPublic(
+        '/business-locations/nearby',
+        (j) {
+          final data = j is Map ? j['data'] : j;
+          return (data as List)
+              .map((e) => BusinessLocationModel.fromJson(e as Map<String, dynamic>))
+              .toList();
+        },
+        query: {
+          'latitude': latitude.toString(),
+          'longitude': longitude.toString(),
+        },
+      );
 
   /// Get all businesses - prioritizes API but falls back to Firestore stream
   Stream<List<BusinessLocationModel>> getAllBusinesses() {

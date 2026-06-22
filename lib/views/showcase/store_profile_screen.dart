@@ -3,7 +3,8 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:alpaca_mobile/core/routes/route_names.dart';
@@ -511,19 +512,23 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
       ),
       clipBehavior: Clip.antiAlias,
       child: PlatformMap(
-        initialCameraPosition: CameraPosition(target: position, zoom: 16),
-        markers: {
+        initialCameraPosition: (target: position, zoom: 16.0),
+        markers: [
           Marker(
-            markerId: const MarkerId('store'),
-            position: position,
-            infoWindow: InfoWindow(title: business.businessName),
+            point: position,
+            width: 80,
+            height: 80,
+            child: const Icon(
+              Icons.location_on,
+              color: Colors.red,
+              size: 40,
+            ),
           ),
-        },
+        ],
         myLocationEnabled: false,
         myLocationButtonEnabled: false,
         zoomControlsEnabled: false,
         mapToolbarEnabled: false,
-        fallbackMarkers: [position],
       ),
     );
   }

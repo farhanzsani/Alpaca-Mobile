@@ -1,4 +1,4 @@
-﻿import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
 
 /// Represents a user in the ALPACA platform.
@@ -77,10 +77,10 @@ class UserModel extends Equatable {
       email: json['email'] as String? ?? '',
       displayName: json['displayName'] as String? ?? '',
       role: UserRole.fromJson(json['role'] as String? ?? 'customer'),
-      photoUrl: json['photoUrl'] as String?,
-      phoneNumber: json['phoneNumber'] as String?,
-      createdAt: _parseDateTime(json['createdAt']),
-      updatedAt: _parseDateTime(json['updatedAt']),
+      photoUrl: json['photoUrl'] as String? ?? json['photo_url'] as String?,
+      phoneNumber: json['phoneNumber'] as String? ?? json['phone_number'] as String?,
+      createdAt: _parseDateTime(json['createdAt'] ?? json['created_at']),
+      updatedAt: _parseDateTime(json['updatedAt'] ?? json['updated_at']),
     );
   }
 

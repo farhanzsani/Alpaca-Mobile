@@ -7,7 +7,8 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 
 import 'package:alpaca_mobile/core/theme/app_colors.dart';
@@ -15,6 +16,7 @@ import 'package:alpaca_mobile/core/widgets/platform_map.dart';
 import 'package:alpaca_mobile/models/business_location_model.dart';
 import 'package:alpaca_mobile/viewmodels/auth_view_model.dart';
 import 'package:alpaca_mobile/viewmodels/location_view_model.dart';
+import 'package:alpaca_mobile/core/exceptions/app_exception.dart';
 
 /// Screen for managing the business location of an owner.
 ///
@@ -38,7 +40,7 @@ class _LocationScreenState extends State<LocationScreen> {
   final _addressController = TextEditingController();
   final _descriptionController = TextEditingController();
 
-  GoogleMapController? _mapController;
+  final MapController _mapController = MapController();
   LatLng? _selectedPosition;
   bool _isGettingLocation = false;
 
@@ -55,7 +57,7 @@ class _LocationScreenState extends State<LocationScreen> {
     _nameController.dispose();
     _addressController.dispose();
     _descriptionController.dispose();
-    _mapController?.dispose();
+    _mapController.dispose();
     super.dispose();
   }
 
@@ -78,84 +80,31 @@ class _LocationScreenState extends State<LocationScreen> {
     setState(() => _isGettingLocation = true);
 
     try {
-      // Check location service
-      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Layanan lokasi tidak aktif. Aktifkan GPS Anda.'),
-            ),
-          );
-        }
-        setState(() => _isGettingLocation = false);
-        return;
-      }
-
-      // Check permission
-      var permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Izin lokasi ditolak.'),
-              ),
-            );
-          }
-          setState(() => _isGettingLocation = false);
-          return;
-        }
-      }
-
-      if (permission == LocationPermission.deniedForever) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Izin lokasi ditolak secara permanen. '
-                'Buka pengaturan untuk mengaktifkan.',
-              ),
-            ),
-          );
-        }
-        setState(() => _isGettingLocation = false);
-        return;
-      }
-
-      // Get position
-      final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-        ),
-      );
-
+      final pos = await context.read<LocationViewModel>().getCurrentDeviceLocation();
+      setState(() {
+        _selectedPosition = LatLng(pos.latitude, pos.longitude);
+      });
+      _mapController.move(_selectedPosition!, 15);
+      
       if (mounted) {
-        setState(() {
-          _selectedPosition = LatLng(position.latitude, position.longitude);
-        });
-
-        context.read<LocationViewModel>().setCurrentPosition(
-              latitude: position.latitude,
-              longitude: position.longitude,
-            );
-
-        // Animate map to new position
-        _mapController?.animateCamera(
-          CameraUpdate.newLatLngZoom(_selectedPosition!, 16),
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Lokasi berhasil diperbarui'),
+            backgroundColor: AppColors.success,
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal mendapatkan lokasi: $e')),
+          SnackBar(
+            content: Text(e is AppException ? e.message : e.toString()),
+            backgroundColor: AppColors.error,
+          ),
         );
       }
     } finally {
-      if (mounted) {
-        setState(() => _isGettingLocation = false);
-      }
+      if (mounted) setState(() => _isGettingLocation = false);
     }
   }
 
@@ -329,26 +278,25 @@ class _LocationScreenState extends State<LocationScreen> {
               child: SizedBox(
                 height: 240,
                 child: PlatformMap(
-                  initialCameraPosition: CameraPosition(
+                  initialCameraPosition: (
                     target: defaultPosition,
-                    zoom: _selectedPosition != null ? 16 : 10,
+                    zoom: _selectedPosition != null ? 16.0 : 10.0,
                   ),
-                  onMapCreated: (controller) {
-                    _mapController = controller;
-                  },
+                  mapController: _mapController,
                   markers: _selectedPosition != null
-                      ? {
+                      ? [
                           Marker(
-                            markerId: const MarkerId('business_location'),
-                            position: _selectedPosition!,
-                            infoWindow: InfoWindow(
-                              title: _nameController.text.isNotEmpty
-                                  ? _nameController.text
-                                  : 'Lokasi Bisnis',
+                            point: _selectedPosition!,
+                            width: 80,
+                            height: 80,
+                            child: const Icon(
+                              Icons.location_on,
+                              color: Colors.red,
+                              size: 40,
                             ),
                           ),
-                        }
-                      : {},
+                        ]
+                      : [],
                   onTap: (position) {
                     setState(() => _selectedPosition = position);
                     context.read<LocationViewModel>().setCurrentPosition(

@@ -48,6 +48,52 @@ class ProductModel extends Equatable {
   /// Whether the current stock is at or below the minimum threshold.
   bool get isLowStock => quantity <= minimumStock;
 
+  /// Canonical category key used by filters.
+  String get normalizedCategory => normalizeCategory(category);
+
+  static String normalizeCategory(String? value) {
+    final category = (value ?? '').trim().toLowerCase();
+
+    switch (category) {
+      case 'food':
+      case 'makanan':
+      case 'camilan':
+      case 'kue & roti':
+      case 'kue dan roti':
+      case 'oleh-oleh':
+      case 'oleh oleh':
+      case 'bumbu & rempah':
+      case 'bumbu dan rempah':
+        return 'food';
+      case 'beverage':
+      case 'minuman':
+        return 'beverage';
+      case 'handicraft':
+      case 'kerajinan':
+        return 'handicraft';
+      case 'agriculture':
+      case 'pertanian':
+        return 'agriculture';
+      default:
+        return 'other';
+    }
+  }
+
+  static String categoryLabel(String? value) {
+    switch (normalizeCategory(value)) {
+      case 'food':
+        return 'Makanan';
+      case 'beverage':
+        return 'Minuman';
+      case 'handicraft':
+        return 'Kerajinan';
+      case 'agriculture':
+        return 'Pertanian';
+      default:
+        return 'Lainnya';
+    }
+  }
+
   const ProductModel({
     required this.id,
     required this.productName,
@@ -73,7 +119,7 @@ class ProductModel extends Equatable {
       price: _parseDouble(json['price']),
       imageUrl: json['image_url'] ?? json['imageUrl'],
       ownerId: json['owner_id'] as String? ?? json['ownerId'] as String? ?? '',
-      category: json['category'] as String? ?? 'lainnya',
+      category: json['category'] as String? ?? 'other',
       isAvailable: json['is_available'] as bool? ?? json['isAvailable'] as bool? ?? true,
       quantity: _parseInt(json['quantity']),
       minimumStock: _parseInt(json['minimum_stock'] ?? json['minimumStock']),

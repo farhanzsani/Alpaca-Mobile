@@ -5,16 +5,19 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 
 import 'package:alpaca_mobile/core/routes/route_names.dart';
 import 'package:alpaca_mobile/core/theme/app_colors.dart';
 import 'package:alpaca_mobile/core/network/api_client.dart';
+import 'package:alpaca_mobile/core/widgets/platform_map.dart';
 import 'package:alpaca_mobile/models/business_location_model.dart';
 import 'package:alpaca_mobile/viewmodels/auth_view_model.dart';
 import 'package:alpaca_mobile/viewmodels/location_view_model.dart';
+import 'package:alpaca_mobile/core/exceptions/app_exception.dart';
 
 /// Onboarding screen for new UMKM owners to set up their business profile.
 class BusinessOnboardingScreen extends StatefulWidget {
@@ -33,7 +36,7 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
   LatLng _selectedLocation = const LatLng(-6.2088, 106.8456); // Jakarta default
   bool _isSaving = false;
   bool _isCheckingUser = true;
-  GoogleMapController? _mapController;
+  final MapController _mapController = MapController();
 
   @override
   void initState() {
@@ -65,73 +68,17 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
     _nameController.dispose();
     _descriptionController.dispose();
     _addressController.dispose();
-    _mapController?.dispose();
+    _mapController.dispose();
     super.dispose();
   }
 
   Future<void> _getCurrentLocation() async {
-    bool serviceEnabled;
-    LocationPermission permission;
-
-    // Check if location services are enabled
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Layanan lokasi tidak aktif. Silakan aktifkan di pengaturan.'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
-      return;
-    }
-
-    // Check location permissions
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Izin lokasi ditolak.'),
-              backgroundColor: AppColors.error,
-            ),
-          );
-        }
-        return;
-      }
-    }
-
-    if (permission == LocationPermission.deniedForever) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Izin lokasi ditolak permanen. Ubah di pengaturan aplikasi.'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
-      return;
-    }
-
-    // Get current position
     try {
-      final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-        ),
-      );
-
+      final pos = await context.read<LocationViewModel>().getCurrentDeviceLocation();
       setState(() {
-        _selectedLocation = LatLng(position.latitude, position.longitude);
+        _selectedLocation = LatLng(pos.latitude, pos.longitude);
       });
-
-      // Move camera to current location
-      _mapController?.animateCamera(
-        CameraUpdate.newLatLngZoom(_selectedLocation, 15),
-      );
+      _mapController.move(_selectedLocation, 15);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -146,7 +93,7 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Gagal mendapatkan lokasi: $e'),
+            content: Text(e is AppException ? e.message : e.toString()),
             backgroundColor: AppColors.error,
           ),
         );
@@ -376,24 +323,27 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
                 ),
               ),
               clipBehavior: Clip.antiAlias,
-              child: GoogleMap(
-                initialCameraPosition: CameraPosition(
+              child: PlatformMap(
+                initialCameraPosition: (
                   target: _selectedLocation,
-                  zoom: 15,
+                  zoom: 15.0,
                 ),
-                markers: {
+                markers: [
                   Marker(
-                    markerId: const MarkerId('business'),
-                    position: _selectedLocation,
-                    infoWindow: const InfoWindow(title: 'Lokasi Bisnis'),
+                    point: _selectedLocation,
+                    width: 80,
+                    height: 80,
+                    child: const Icon(
+                      Icons.location_on,
+                      color: Colors.red,
+                      size: 40,
+                    ),
                   ),
-                },
+                ],
                 onTap: (latLng) {
                   setState(() => _selectedLocation = latLng);
                 },
-                onMapCreated: (controller) {
-                  _mapController = controller;
-                },
+                mapController: _mapController,
                 myLocationButtonEnabled: false,
                 myLocationEnabled: true,
               ),

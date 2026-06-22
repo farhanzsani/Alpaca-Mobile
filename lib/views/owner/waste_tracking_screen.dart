@@ -388,7 +388,7 @@ class _WasteTrackingScreenState extends State<WasteTrackingScreen> {
                 ),
               ),
               items: [
-                const DropdownMenuItem(value: null, child: Text('Semua Kategori')),
+                const DropdownMenuItem(value: null, child: Text('Kategori')),
                 ..._categories.map((c) => DropdownMenuItem(
                   value: c,
                   child: Text(_categoryLabel(c)),
@@ -410,7 +410,7 @@ class _WasteTrackingScreenState extends State<WasteTrackingScreen> {
                 ),
               ),
               items: const [
-                DropdownMenuItem(value: null, child: Text('Semua Status')),
+                DropdownMenuItem(value: null, child: Text('Status')),
                 DropdownMenuItem(value: true, child: Text('Dapat Digunakan')),
                 DropdownMenuItem(value: false, child: Text('Tidak Dapat')),
               ],

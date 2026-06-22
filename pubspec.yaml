@@ -12,7 +12,7 @@ dependencies:
 
   # UI
   cupertino_icons: ^1.0.8
-  google_fonts: ^6.2.1
+  google_fonts: ^8.1.0
   flutter_svg: ^2.0.10+1
   fl_chart: ^0.69.0
 
@@ -43,7 +43,6 @@ dependencies:
 
   # Location & Maps
   geolocator: ^13.0.2
-  google_maps_flutter: ^2.10.0
   url_launcher: ^6.3.1
 
   # Media
@@ -55,6 +54,8 @@ dependencies:
   uuid: ^4.5.1
   logger: ^2.5.0
   equatable: ^2.0.7
+  flutter_map: ^8.3.0
+  latlong2: ^0.9.1
 
 dev_dependencies:
   flutter_test:

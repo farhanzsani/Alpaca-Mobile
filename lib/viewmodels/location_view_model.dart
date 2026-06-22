@@ -1,6 +1,7 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:geolocator/geolocator.dart';
 
 import 'package:alpaca_mobile/models/business_location_model.dart';
 import 'package:alpaca_mobile/repositories/business_repository.dart';
@@ -54,6 +55,20 @@ class LocationViewModel extends ChangeNotifier {
   ({double latitude, double longitude})? _currentPosition;
   /// The device's current GPS position, or null if not yet retrieved.
   ({double latitude, double longitude})? get currentPosition => _currentPosition;
+
+  // --- Nearby Stores State ---
+
+  List<BusinessLocationModel> _nearbyStores = [];
+  /// List of nearby business locations fetched from the API.
+  List<BusinessLocationModel> get nearbyStores => List.unmodifiable(_nearbyStores);
+
+  bool _nearbyLoading = false;
+  /// Whether the nearby stores request is in progress.
+  bool get nearbyLoading => _nearbyLoading;
+
+  String? _nearbyError;
+  /// Error message from the last nearby stores request, or null.
+  String? get nearbyError => _nearbyError;
 
   StreamSubscription<List<BusinessLocationModel>>? _businessesSubscription;
 
@@ -207,6 +222,108 @@ class LocationViewModel extends ChangeNotifier {
 
     _setLoading(false);
     print('[LocationViewModel] loadProfileBusiness: done, profileBusiness=${_profileBusiness?.businessName ?? 'null'}');
+  }
+
+  // --- Nearby Stores Methods ---
+
+  /// Fetches nearby stores from the API using the given [latitude] and [longitude].
+  ///
+  /// Updates [nearbyStores], [nearbyLoading], and [nearbyError] independently
+  /// so it does not interfere with the owner's [viewState].
+  Future<void> loadNearbyStores({
+    required double latitude,
+    required double longitude,
+  }) async {
+    print('[LocationViewModel] loadNearbyStores: lat=$latitude, lng=$longitude');
+    _nearbyLoading = true;
+    _nearbyError = null;
+    notifyListeners();
+
+    final result = await _businessRepository.getNearbyBusinesses(
+      latitude: latitude,
+      longitude: longitude,
+    );
+
+    result.when(
+      success: (stores) {
+        print('[LocationViewModel] loadNearbyStores: found ${stores.length} stores');
+        _nearbyStores = stores;
+      },
+      failure: (exception) {
+        print('[LocationViewModel] loadNearbyStores: error=${exception.message}');
+        _nearbyError = exception.message;
+      },
+    );
+
+    _nearbyLoading = false;
+    notifyListeners();
+  }
+
+  /// Requests location permission and retrieves the device's current GPS position.
+  ///
+  /// Returns a record of `(latitude, longitude)` on success, or throws an
+  /// [AppException] if permission is denied or location services are disabled.
+  Future<({double latitude, double longitude})> getCurrentDeviceLocation() async {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      throw AppException(message: 'Layanan lokasi tidak aktif. Aktifkan GPS terlebih dahulu.');
+    }
+
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        throw AppException(message: 'Izin lokasi ditolak. Aktifkan izin lokasi di pengaturan.');
+      }
+    }
+    if (permission == LocationPermission.deniedForever) {
+      throw AppException(message: 'Izin lokasi ditolak permanen. Buka pengaturan untuk mengizinkan.');
+    }
+
+    try {
+      // First, try to get last known position for a quick fix
+      final lastPosition = await Geolocator.getLastKnownPosition();
+      if (lastPosition != null) {
+        // We have a last known position, try to get a fresh one with a short timeout
+        try {
+          final position = await Geolocator.getCurrentPosition(
+            locationSettings: const LocationSettings(
+              accuracy: LocationAccuracy.medium,
+              timeLimit: Duration(seconds: 8),
+            ),
+          );
+          final pos = (latitude: position.latitude, longitude: position.longitude);
+          _currentPosition = pos;
+          notifyListeners();
+          return pos;
+        } catch (_) {
+          // If fresh fails, fallback to last known
+          final pos = (latitude: lastPosition.latitude, longitude: lastPosition.longitude);
+          _currentPosition = pos;
+          notifyListeners();
+          return pos;
+        }
+      }
+
+      // No last known position, we MUST get current position
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.medium,
+          timeLimit: Duration(seconds: 20),
+        ),
+      );
+      final pos = (latitude: position.latitude, longitude: position.longitude);
+      _currentPosition = pos;
+      notifyListeners();
+      return pos;
+    } on TimeoutException {
+      throw AppException(message: 'Waktu pencarian lokasi habis. Sinyal GPS Anda mungkin sedang lemah.');
+    } catch (e) {
+      if (e.toString().contains('TimeoutException')) {
+        throw AppException(message: 'Waktu pencarian lokasi habis. Sinyal GPS Anda mungkin sedang lemah.');
+      }
+      throw AppException(message: 'Gagal mendapatkan lokasi: $e');
+    }
   }
 
   void _clearError() {

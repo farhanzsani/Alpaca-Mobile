@@ -64,7 +64,7 @@ class ProductViewModel extends ChangeNotifier {
 
   /// Loads products for the given [ownerId].
   ///
-  /// Fetches the owner's product catalog from Firestore.
+  /// Fetches the owner's product catalog from the API.
   Future<void> loadProducts(String ownerId) async {
     _setLoading(true);
     _clearError();
@@ -85,17 +85,26 @@ class ProductViewModel extends ChangeNotifier {
     _setLoading(false);
   }
 
-  /// Subscribes to all publicly available products in realtime.
+  /// Loads all publicly available products.
   ///
   /// Used by customers/tourists to browse the product catalog.
+  /// Serves cached data instantly while fetching fresh data in background.
   /// Only includes products where [ProductModel.isAvailable] is true.
   Future<void> loadAllProducts() async {
-    print('[ProductViewModel] loadAllProducts called');
-    final cacheKey = 'all_products';
-    
-    // TEMPORARY: Skip cache for debugging
-    print('[ProductViewModel] Skipping cache, fetching fresh data');
-    
+    const cacheKey = 'all_products';
+
+    // Serve cached data first for instant UX while fetching fresh data.
+    if (_cacheService != null && _allProducts.isEmpty) {
+      final cached = _cacheService!.load<List>(cacheKey);
+      if (cached != null) {
+        _allProducts = cached
+            .map((e) => ProductModel.fromJson(e as Map<String, dynamic>))
+            .toList();
+        _viewState = ViewState.loaded;
+        notifyListeners();
+      }
+    }
+
     _setLoading(true);
     _clearError();
 
@@ -103,14 +112,10 @@ class ProductViewModel extends ChangeNotifier {
 
     result.when(
       success: (products) {
-        print('[ProductViewModel] Success: ${products.length} products');
-        if (products.isNotEmpty) {
-          print('[ProductViewModel] First product ID: "${products[0].id}" name: "${products[0].productName}"');
-        }
         _allProducts = products;
         _viewState = products.isEmpty ? ViewState.empty : ViewState.loaded;
-        
-        // Cache the result
+
+        // Cache the result for fast subsequent loads.
         if (_cacheService != null && products.isNotEmpty) {
           final productsJson = products.map((p) => p.toJson()).toList();
           _cacheService!.save(
@@ -118,15 +123,14 @@ class ProductViewModel extends ChangeNotifier {
             data: productsJson,
             ttl: const Duration(minutes: 15),
           );
-          print('[ProductViewModel] Cached ${products.length} products');
         }
-        
-        print('[ProductViewModel] viewState: $_viewState, allProducts: ${_allProducts.length}');
       },
       failure: (exception) {
-        print('[ProductViewModel] Failure: ${exception.message}');
-        _error = exception.message;
-        _viewState = ViewState.error;
+        // Keep cached data visible if available; only show error when no data.
+        if (_allProducts.isEmpty) {
+          _error = exception.message;
+          _viewState = ViewState.error;
+        }
       },
     );
 
@@ -135,7 +139,7 @@ class ProductViewModel extends ChangeNotifier {
 
   /// Adds a new product to the catalog.
   ///
-  /// On success, the product (with the generated Firestore ID) is
+  /// On success, the product (with the generated ID) is
   /// appended to the local owner's product list.
   Future<void> addProduct(ProductModel product) async {
     _setLoading(true);
@@ -216,29 +220,23 @@ class ProductViewModel extends ChangeNotifier {
   ///
   /// Fetches the product directly from the API endpoint.
   Future<void> loadProductById(String productId) async {
-    print('[ProductViewModel] loadProductById: $productId');
     _setLoading(true);
     _clearError();
 
     final result = await _productRepository.getProduct(productId);
-    
-    print('[ProductViewModel] loadProductById result: ${result.isSuccess ? "SUCCESS" : "FAILURE"}');
-    
+
     result.when(
       success: (product) {
-        print('[ProductViewModel] Product loaded: ${product.productName}');
         _selectedProduct = product;
         _viewState = ViewState.loaded;
       },
       failure: (exception) {
-        print('[ProductViewModel] Load failed: ${exception.message}');
         _error = exception.message;
         _viewState = ViewState.error;
       },
     );
 
     _setLoading(false);
-    print('[ProductViewModel] loadProductById done, selectedProduct: ${_selectedProduct?.productName ?? "NULL"}');
   }
 
   /// Filters the all-products list by [category].
@@ -249,8 +247,9 @@ class ProductViewModel extends ChangeNotifier {
     if (category == null || category.isEmpty) {
       return List.unmodifiable(_allProducts);
     }
+    final normalizedCategory = ProductModel.normalizeCategory(category);
     return _allProducts
-        .where((p) => p.category.toLowerCase() == category.toLowerCase())
+        .where((p) => p.normalizedCategory == normalizedCategory)
         .toList();
   }
 
@@ -322,5 +321,3 @@ class ProductViewModel extends ChangeNotifier {
     super.dispose();
   }
 }
-
-

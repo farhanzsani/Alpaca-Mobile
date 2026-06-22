@@ -236,6 +236,10 @@ class AuthService extends FirebaseService {
     return _auth.authStateChanges();
   }
 
+  /// Synchronous check if Firebase has a cached current user.
+  /// Returns true instantly from local cache — no network call needed.
+  bool get hasCurrentUser => _auth.currentUser != null;
+
   /// Sends a password reset email to the specified [email].
   ///
   /// Returns `void` wrapped in [Result] on success.

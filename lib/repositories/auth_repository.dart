@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:alpaca_mobile/core/constants/firebase_constants.dart';
 import 'package:alpaca_mobile/core/exceptions/app_exception.dart';
@@ -20,6 +20,10 @@ class AuthRepository {
   final AuthService _authService;
   final FirestoreService _firestoreService;
   final ApiClient _api;
+
+  /// Synchronous check: does Firebase have a cached logged-in user?
+  /// This returns true instantly without any network call.
+  bool get hasActiveSession => _authService.hasCurrentUser;
 
   /// Sync user: simpan ke Firestore (primary) + backend (secondary)
   Future<UserModel> _syncUser(User firebaseUser, {String? role}) async {
@@ -160,13 +164,15 @@ class AuthRepository {
   Future<Result<void>> logout() => _authService.signOut();
   Future<Result<void>> resetPassword(String email) => _authService.resetPassword(email);
 
-  Future<Result<void>> updateProfile({String? displayName, String? photoUrl}) async {
+  Future<Result<void>> updateProfile({String? displayName, String? photoUrl, String? phoneNumber}) async {
     final authResult = await _authService.updateProfile(displayName: displayName, photoUrl: photoUrl);
     return authResult.when(
       success: (user) async {
         final data = <String, dynamic>{};
         if (displayName != null) data['displayName'] = displayName;
         if (photoUrl != null) data['photoUrl'] = photoUrl;
+        if (phoneNumber != null) data['phoneNumber'] = phoneNumber;
+        
         if (data.isEmpty) return Result<void>.success(null);
         return _firestoreService.updateDocument(
           collection: FirebaseCollections.users,

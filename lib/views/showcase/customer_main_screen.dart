@@ -1,13 +1,23 @@
+/// CustomerMainScreen — Bottom navigation shell for customer flow.
+///
+/// Redesigned following ALPACA design guidelines:
+/// primary green #2A5C45, Plus Jakarta Sans typography.
+library;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
+
 import 'package:alpaca_mobile/views/showcase/public_showcase_screen.dart';
-import 'package:alpaca_mobile/views/showcase/business_map_screen.dart';
+import 'package:alpaca_mobile/views/showcase/nearby_stores_screen.dart';
 import 'package:alpaca_mobile/views/showcase/favorites_screen.dart';
 import 'package:alpaca_mobile/views/showcase/customer_profile_screen.dart';
+import 'package:alpaca_mobile/core/theme/app_theme.dart';
 
 /// Main screen for customers with bottom navigation bar.
 class CustomerMainScreen extends StatefulWidget {
   final int initialIndex;
-  
+
   const CustomerMainScreen({super.key, this.initialIndex = 0});
 
   @override
@@ -25,70 +35,125 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
 
   static const List<Widget> _screens = [
     PublicShowcaseScreen(),
-    BusinessMapScreen(),
+    NearbyStoresScreen(),
     FavoritesScreen(),
     CustomerProfileScreen(),
   ];
 
+  static const _navItems = [
+    (icon: Icons.home_outlined, activeIcon: Icons.home_rounded, label: 'Beranda'),
+    (icon: Icons.near_me_outlined, activeIcon: Icons.near_me_rounded, label: 'Terdekat'),
+    (icon: Icons.favorite_outline_rounded, activeIcon: Icons.favorite_rounded, label: 'Favorit'),
+    (icon: Icons.person_outline_rounded, activeIcon: Icons.person_rounded, label: 'Profil'),
+  ];
+
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+    ));
+
     return Scaffold(
-      body: _screens[_selectedIndex],
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, -2),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildNavItem(0, Icons.home_rounded, 'Beranda'),
-                _buildNavItem(1, Icons.map_rounded, 'Peta'),
-                _buildNavItem(2, Icons.favorite_rounded, 'Favorit'),
-                _buildNavItem(3, Icons.person_rounded, 'Profil'),
-              ],
-            ),
-          ),
-        ),
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: _screens,
+      ),
+      bottomNavigationBar: _AlpacaBottomNav(
+        selectedIndex: _selectedIndex,
+        items: _navItems,
+        onTap: (i) => setState(() => _selectedIndex = i),
       ),
     );
   }
+}
 
-  Widget _buildNavItem(int index, IconData icon, String label) {
-    final isSelected = _selectedIndex == index;
-    return Expanded(
-      child: InkWell(
-        onTap: () => setState(() => _selectedIndex = index),
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                icon,
-                color: isSelected ? const Color(0xFF22C55E) : const Color(0xFF9CA3AF),
-                size: 24,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                  color: isSelected ? const Color(0xFF22C55E) : const Color(0xFF9CA3AF),
+// ─── Bottom Navigation ───────────────────────────────────────────────────────
+
+class _AlpacaBottomNav extends StatelessWidget {
+  final int selectedIndex;
+  final List<({IconData icon, IconData activeIcon, String label})> items;
+  final ValueChanged<int> onTap;
+
+  const _AlpacaBottomNav({
+    required this.selectedIndex,
+    required this.items,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        border: Border(
+          top: BorderSide(color: AppColors.border, width: 1),
+        ),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          child: Row(
+            children: items.asMap().entries.map((entry) {
+              final i = entry.key;
+              final item = entry.value;
+              final isSelected = i == selectedIndex;
+
+              return Expanded(
+                child: GestureDetector(
+                  onTap: () => onTap(i),
+                  behavior: HitTestBehavior.opaque,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Icon with active indicator dot
+                        Stack(
+                          alignment: Alignment.bottomCenter,
+                          clipBehavior: Clip.none,
+                          children: [
+                            Icon(
+                              isSelected ? item.activeIcon : item.icon,
+                              size: 24,
+                              color: isSelected
+                                  ? AppColors.primary
+                                  : AppColors.textTertiary,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          item.label,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 10,
+                            fontWeight: isSelected
+                                ? FontWeight.w700
+                                : FontWeight.w400,
+                            color: isSelected
+                                ? AppColors.primary
+                                : AppColors.textTertiary,
+                          ),
+                        ),
+                        // Active indicator
+                        const SizedBox(height: 2),
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          width: isSelected ? 16 : 0,
+                          height: 2,
+                          decoration: BoxDecoration(
+                            color: AppColors.primary,
+                            borderRadius: BorderRadius.circular(1),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-            ],
+              );
+            }).toList(),
           ),
         ),
       ),

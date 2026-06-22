@@ -390,11 +390,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             trailing: const Icon(Icons.chevron_right, color: Color(0xFF9CA3AF)),
             onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Fitur edit profil akan segera hadir.'),
-                ),
-              );
+              context.push(RouteNames.profileEdit);
             },
           ),
           const Divider(height: 1, indent: 16, endIndent: 16),

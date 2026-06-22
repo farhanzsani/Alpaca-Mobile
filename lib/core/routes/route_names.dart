@@ -24,8 +24,11 @@ class RouteNames {
   // Public showcase routes
   static const String showcase = '/showcase';
   static const String showcaseProductDetail = '/showcase/product/:id';
-  static const String showcaseMap = '/showcase/map';
+  static const String showcaseNearby = '/showcase/nearby';
   static const String showcaseStoreProfile = '/showcase/store/:ownerId';
+  
+  // Shared
+  static const String profileEdit = '/profile/edit';
 
   /// Routes that do not require authentication.
   static const List<String> publicRoutes = [
@@ -35,7 +38,7 @@ class RouteNames {
     businessOnboarding,
     showcase,
     '/showcase/product',
-    showcaseMap,
+    showcaseNearby,
     showcaseStoreProfile,
   ];
 
@@ -61,6 +64,7 @@ class RouteNames {
 
   /// Checks whether the given [route] is restricted to owners.
   static bool isOwnerOnly(String route) {
+    if (route == profileEdit) return false; // shared
     return ownerOnlyRoutes.contains(route) ||
         route.startsWith('/owner/');
   }

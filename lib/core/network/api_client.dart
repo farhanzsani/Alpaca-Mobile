@@ -1,7 +1,7 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart' show kIsWeb, kReleaseMode;
+
 import 'package:http/http.dart' as http;
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:alpaca_mobile/core/exceptions/app_exception.dart';
@@ -14,20 +14,7 @@ class ApiClient {
         _auth = auth ?? FirebaseAuth.instance;
 
   static String _getDefaultBaseUrl() {
-    // Untuk production/release build, ganti dengan IP server yang sebenarnya
-    const String productionHost = 'http://192.168.1.100:3000/api/v1'; // Ganti dengan IP komputer kamu
-    
-    if (kIsWeb) {
-      return 'http://localhost:3000/api/v1'; // Web
-    } else if (Platform.isAndroid) {
-      // Check if running in release mode (physical device)
-      if (kReleaseMode) {
-        return productionHost; // Physical device
-      }
-      return 'http://10.0.2.2:3000/api/v1'; // Android emulator (debug mode)
-    } else {
-      return 'http://localhost:3000/api/v1'; // iOS/Windows/macOS/Linux
-    }
+    return 'https://api-alpaca-zeta.vercel.app/api/v1';
   }
 
   final String _baseUrl;
@@ -37,6 +24,11 @@ class ApiClient {
   Future<Map<String, String>> _headers() async {
     print('[ApiClient] Getting headers...');
     var user = _auth.currentUser;
+    if (user == null) {
+      print('[ApiClient] currentUser is null, waiting for authStateChanges...');
+      user = await _auth.authStateChanges().first;
+    }
+    
     print('[ApiClient] currentUser: ${user?.uid ?? "NULL"}');
     if (user == null) {
       print('[ApiClient] ❌ User is null - session expired');

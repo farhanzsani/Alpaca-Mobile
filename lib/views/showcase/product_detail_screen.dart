@@ -1,7 +1,17 @@
+/// ProductDetailScreen — Immersive product detail with sticky WhatsApp CTA.
+///
+/// Redesigned following ALPACA design guidelines:
+/// large hero photo, DM Serif Display product name, amber pricing,
+/// flat clean sections, no gradients.
+library;
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 import 'package:alpaca_mobile/core/routes/route_names.dart';
+import 'package:alpaca_mobile/core/theme/app_theme.dart';
 import 'package:alpaca_mobile/models/product_model.dart';
 import 'package:alpaca_mobile/services/favorites_service.dart';
 import 'package:alpaca_mobile/viewmodels/product_view_model.dart';
@@ -19,7 +29,7 @@ class ProductDetailScreen extends StatefulWidget {
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   final FavoritesService _favoritesService = FavoritesService();
   String? _businessName;
-  String? _currentOwnerId; // Track current owner to avoid stale data
+  String? _currentOwnerId;
   bool _isFavorite = false;
   bool _isFavoriteLoading = false;
 
@@ -33,79 +43,55 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   Future<void> _loadFavoriteStatus() async {
-    final isFavorite = await _favoritesService.isFavoriteItem(
-      widget.productId,
-      'product',
-    );
+    final isFav =
+        await _favoritesService.isFavoriteItem(widget.productId, 'product');
     if (!mounted) return;
-    setState(() => _isFavorite = isFavorite);
+    setState(() => _isFavorite = isFav);
   }
 
   Future<void> _toggleFavorite() async {
     if (_isFavoriteLoading) return;
-
     setState(() => _isFavoriteLoading = true);
-    final result = await _favoritesService.toggleFavoriteItem(
-      widget.productId,
-      'product',
-    );
 
+    final result = await _favoritesService.toggleFavoriteItem(
+        widget.productId, 'product');
     if (!mounted) return;
 
     result.when(
-      success: (isFavorite) {
-        setState(() {
-          _isFavorite = isFavorite;
-          _isFavoriteLoading = false;
-        });
-      },
-      failure: (exception) {
+      success: (isFav) => setState(() {
+        _isFavorite = isFav;
+        _isFavoriteLoading = false;
+      }),
+      failure: (e) {
         setState(() => _isFavoriteLoading = false);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(exception.message)));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(e.message)));
       },
     );
   }
 
   Future<void> _loadBusinessName(String ownerId) async {
-    // Reset if owner changed
     if (_currentOwnerId != ownerId) {
       setState(() {
         _businessName = null;
         _currentOwnerId = ownerId;
       });
     }
-
-    final businessName = await context
-        .read<LocationViewModel>()
-        .getBusinessNameByOwner(ownerId);
+    final name =
+        await context.read<LocationViewModel>().getBusinessNameByOwner(ownerId);
     if (mounted && _currentOwnerId == ownerId) {
-      setState(() {
-        _businessName = businessName;
-      });
+      setState(() => _businessName = name);
     }
   }
 
-  String _formatPrice(double price) {
-    final formatted = price
-        .toStringAsFixed(0)
-        .replaceAllMapped(
-          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-          (match) => '${match[1]}.',
-        );
-    return 'Rp $formatted';
-  }
-
-  String _categoryLabel(String category) {
-    const labels = {
-      'food': 'Makanan',
-      'beverage': 'Minuman',
-      'handicraft': 'Kerajinan',
-      'agriculture': 'Pertanian',
-      'other': 'Lainnya',
-    };
-    return labels[category] ?? 'Lainnya';
+  Future<void> _openWhatsApp(String? phone) async {
+    final number = (phone ?? '').replaceAll(RegExp(r'[^0-9]'), '');
+    if (number.isEmpty) return;
+    final wa = '62${number.startsWith('0') ? number.substring(1) : number}';
+    final uri = Uri.parse('https://wa.me/$wa');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 
   @override
@@ -113,102 +99,89 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     final productVm = context.watch<ProductViewModel>();
     final product = productVm.selectedProduct;
 
-    // Load business name when product is loaded
     if (product != null && _businessName == null) {
       _loadBusinessName(product.ownerId);
     }
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      body: product == null
-          ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFF22C55E)),
-            )
-          : CustomScrollView(
-              slivers: [
-                _buildAppBar(context, product),
-                SliverToBoxAdapter(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildProductHeader(product),
-                      _buildDivider(),
-                      _buildDescription(product),
-                      if (product.description != null) _buildDivider(),
-                      _buildStockInfo(product),
-                      _buildDivider(),
-                      _buildStoreSection(context, product),
-                      const SizedBox(height: 100),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-    );
-  }
+    if (product == null) {
+      return const Scaffold(
+        backgroundColor: AppColors.bg,
+        body: Center(
+          child: CircularProgressIndicator(
+              strokeWidth: 2, color: AppColors.primary),
+        ),
+      );
+    }
 
-  Widget _buildAppBar(BuildContext context, ProductModel product) {
-    return SliverAppBar(
-      expandedHeight: 320,
-      pinned: true,
-      backgroundColor: const Color(0xFF14532D),
-      leading: Padding(
-        padding: const EdgeInsets.all(8),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
-                blurRadius: 8,
+    return Scaffold(
+      backgroundColor: AppColors.bg,
+      body: Stack(
+        children: [
+          // ── Scrollable content ─────────────────────────────────────────
+          CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              _buildAppBar(product),
+              SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildProductHeader(product),
+                    _buildSectionDivider(),
+                    if (product.description != null &&
+                        product.description!.isNotEmpty) ...[
+                      _buildDescription(product),
+                      _buildSectionDivider(),
+                    ],
+                    _buildStockSection(product),
+                    _buildSectionDivider(),
+                    _buildStoreCard(product),
+                    const SizedBox(height: 100), // bottom CTA spacing
+                  ],
+                ),
               ),
             ],
           ),
-          child: IconButton(
-            icon: const Icon(
-              Icons.arrow_back_rounded,
-              color: Color(0xFF1F2937),
-            ),
-            onPressed: () => Navigator.pop(context),
+
+          // ── Sticky bottom CTA ──────────────────────────────────────────
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: _buildBottomCTA(product),
           ),
+        ],
+      ),
+    );
+  }
+
+  // ─── App bar with hero image ──────────────────────────────────────────────
+
+  Widget _buildAppBar(ProductModel product) {
+    return SliverAppBar(
+      expandedHeight: 300,
+      pinned: true,
+      backgroundColor: AppColors.primaryDark,
+      elevation: 0,
+      leading: Padding(
+        padding: const EdgeInsets.all(8),
+        child: _CircleButton(
+          icon: Icons.arrow_back_rounded,
+          onPressed: () => Navigator.pop(context),
         ),
       ),
       actions: [
         Padding(
           padding: const EdgeInsets.all(8),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: 8,
-                ),
-              ],
-            ),
-            child: IconButton(
-              tooltip: _isFavorite ? 'Hapus dari favorit' : 'Tambah ke favorit',
-              icon: _isFavoriteLoading
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Color(0xFF22C55E),
-                      ),
-                    )
-                  : Icon(
-                      _isFavorite
-                          ? Icons.favorite_rounded
-                          : Icons.favorite_border_rounded,
-                      color: _isFavorite
-                          ? const Color(0xFFDC2626)
-                          : const Color(0xFF1F2937),
-                    ),
-              onPressed: _toggleFavorite,
-            ),
+          child: _CircleButton(
+            icon: _isFavoriteLoading
+                ? null
+                : _isFavorite
+                    ? Icons.favorite_rounded
+                    : Icons.favorite_border_rounded,
+            iconColor: _isFavorite ? AppColors.error : AppColors.textPrimary,
+            isLoading: _isFavoriteLoading,
+            onPressed: _toggleFavorite,
           ),
         ),
       ],
@@ -219,7 +192,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               ? Image.network(
                   product.imageUrl!,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) => _buildImagePlaceholder(),
+                  errorBuilder: (ctx, err, stack) => _buildImagePlaceholder(),
                 )
               : _buildImagePlaceholder(),
         ),
@@ -229,72 +202,60 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   Widget _buildImagePlaceholder() {
     return Container(
-      color: const Color(0xFFF3F4F6),
+      color: AppColors.surfaceMuted,
       child: const Center(
-        child: Icon(Icons.image_outlined, size: 80, color: Color(0xFF9CA3AF)),
+        child: Icon(Icons.image_outlined, size: 72, color: AppColors.textTertiary),
       ),
     );
   }
 
+  // ─── Product header ───────────────────────────────────────────────────────
+
   Widget _buildProductHeader(ProductModel product) {
     return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.all(24),
+      color: AppColors.surface,
+      padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Category pill
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: const Color(0xFFF0FDF4),
-              borderRadius: BorderRadius.circular(8),
+              color: AppColors.successLight,
+              borderRadius: BorderRadius.circular(AppRadius.pill),
               border: Border.all(
-                color: const Color(0xFF22C55E).withValues(alpha: 0.2),
-              ),
+                  color: AppColors.primary.withValues(alpha: 0.2)),
             ),
             child: Text(
-              _categoryLabel(product.category),
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF14532D),
-              ),
+              ProductModel.categoryLabel(product.category),
+              style: AppText.label(color: AppColors.primary),
             ),
           ),
-          const SizedBox(height: 16),
+
+          const SizedBox(height: AppSpacing.md),
+
+          // Product name
           Text(
             product.productName,
-            style: const TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF14532D),
-              height: 1.2,
-              letterSpacing: -0.5,
-            ),
+            style: AppText.display(size: 26, height: 1.2),
           ),
-          const SizedBox(height: 16),
+
+          const SizedBox(height: AppSpacing.md),
+
+          // Price row
           Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
             children: [
               Text(
-                _formatPrice(product.price),
-                style: const TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF14532D),
-                  letterSpacing: -1,
-                ),
+                formatRupiah(product.price),
+                style: AppText.price(size: 28),
               ),
-              const SizedBox(width: 8),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Text(
-                  '/ ${product.unit}',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: const Color(0xFF6B7280).withValues(alpha: 0.8),
-                  ),
-                ),
+              const SizedBox(width: 6),
+              Text(
+                '/ ${product.unit}',
+                style: AppText.ui(size: 14, color: AppColors.textSecondary),
               ),
             ],
           ),
@@ -303,177 +264,256 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
-  Widget _buildDescription(ProductModel product) {
-    if (product.description == null || product.description!.isEmpty) {
-      return const SizedBox.shrink();
-    }
+  // ─── Description ──────────────────────────────────────────────────────────
 
+  Widget _buildDescription(ProductModel product) {
     return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.all(24),
+      color: AppColors.surface,
+      padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Deskripsi Produk',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF1F2937),
-            ),
-          ),
-          const SizedBox(height: 12),
+          Text('Deskripsi Produk', style: AppText.sectionHeader()),
+          const SizedBox(height: AppSpacing.md),
           Text(
             product.description!,
-            style: const TextStyle(
-              fontSize: 15,
-              color: Color(0xFF4B5563),
-              height: 1.6,
-            ),
+            style: AppText.ui(
+                size: 14, color: AppColors.textSecondary, height: 1.7),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildStockInfo(ProductModel product) {
+  // ─── Stock info ───────────────────────────────────────────────────────────
+
+  Widget _buildStockSection(ProductModel product) {
+    final isLow = product.isLowStock;
     return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.all(24),
+      color: AppColors.surface,
+      padding: const EdgeInsets.all(AppSpacing.lg),
       child: Row(
         children: [
           Container(
-            width: 48,
-            height: 48,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
-              color: product.isLowStock
-                  ? const Color(0xFFFEE2E2)
-                  : const Color(0xFFF0FDF4),
-              borderRadius: BorderRadius.circular(12),
+              color: isLow ? AppColors.errorLight : AppColors.successLight,
+              borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: Icon(
-              product.isLowStock
+              isLow
                   ? Icons.warning_amber_rounded
-                  : Icons.check_circle_rounded,
-              color: product.isLowStock
-                  ? const Color(0xFFDC2626)
-                  : const Color(0xFF22C55E),
-              size: 24,
+                  : Icons.check_circle_outline_rounded,
+              color: isLow ? AppColors.error : AppColors.success,
+              size: 22,
             ),
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  product.isLowStock ? 'Stok Terbatas' : 'Stok Tersedia',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: product.isLowStock
-                        ? const Color(0xFFDC2626)
-                        : const Color(0xFF22C55E),
-                  ),
+          const SizedBox(width: AppSpacing.md),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                isLow ? 'Stok Terbatas' : 'Stok Tersedia',
+                style: AppText.ui(
+                  size: 14,
+                  weight: FontWeight.w700,
+                  color: isLow ? AppColors.error : AppColors.success,
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  '${product.quantity} ${product.unit} tersedia',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF6B7280),
-                  ),
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                '${product.quantity} ${product.unit} tersisa',
+                style: AppText.ui(size: 13, color: AppColors.textSecondary),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _buildStoreSection(BuildContext context, ProductModel product) {
+  // ─── Store card ───────────────────────────────────────────────────────────
+
+  Widget _buildStoreCard(ProductModel product) {
     return Container(
-      margin: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF14532D), Color(0xFF166534)],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF14532D).withValues(alpha: 0.3),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => context.push(RouteNames.storeProfile(product.ownerId)),
-          borderRadius: BorderRadius.circular(20),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              children: [
-                Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(16),
+      color: AppColors.surface,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Penjual', style: AppText.sectionHeader()),
+          const SizedBox(height: AppSpacing.md),
+          GestureDetector(
+            onTap: () => context.push(RouteNames.storeProfile(product.ownerId)),
+            child: Container(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                color: AppColors.bg,
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceMuted,
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                    ),
+                    child: const Icon(
+                      Icons.storefront_outlined,
+                      size: 22,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
-                  child: const Icon(
-                    Icons.storefront_rounded,
-                    color: Colors.white,
-                    size: 28,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _businessName ?? 'Kunjungi Toko',
-                        style: const TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _businessName ?? 'Memuat...',
+                          style: AppText.ui(
+                              size: 14, weight: FontWeight.w600),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        _businessName != null
-                            ? 'Lihat produk lainnya'
-                            : 'Memuat info toko...',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Color(0xFF86EFAC),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Lihat profil toko',
+                          style: AppText.label(color: AppColors.primary),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                const Icon(
-                  Icons.arrow_forward_rounded,
-                  color: Colors.white,
-                  size: 24,
-                ),
-              ],
+                  const Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 14,
+                    color: AppColors.textTertiary,
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
 
-  Widget _buildDivider() {
-    return Container(height: 8, color: const Color(0xFFF8FAFC));
+  // ─── Bottom CTA ───────────────────────────────────────────────────────────
+
+  Widget _buildBottomCTA(ProductModel product) {
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.md,
+        AppSpacing.lg,
+        AppSpacing.lg + MediaQuery.of(context).padding.bottom,
+      ),
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        border: Border(top: BorderSide(color: AppColors.border)),
+      ),
+      child: Row(
+        children: [
+          // Favorite icon button
+          GestureDetector(
+            onTap: _toggleFavorite,
+            child: Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: AppColors.bg,
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: Icon(
+                _isFavorite
+                    ? Icons.favorite_rounded
+                    : Icons.favorite_border_rounded,
+                size: 22,
+                color:
+                    _isFavorite ? AppColors.error : AppColors.textSecondary,
+              ),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          // WhatsApp CTA
+          Expanded(
+            child: SizedBox(
+              height: 52,
+              child: FilledButton.icon(
+                onPressed: () => _openWhatsApp(null),
+                icon: const Icon(Icons.chat_rounded, size: 18),
+                label: Text(
+                  'Hubungi via WhatsApp',
+                  style: AppText.ui(
+                    size: 14,
+                    weight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF25D366),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionDivider() {
+    return Container(height: 8, color: AppColors.bg);
+  }
+}
+
+// ─── Circle action button ─────────────────────────────────────────────────────
+
+class _CircleButton extends StatelessWidget {
+  final IconData? icon;
+  final Color? iconColor;
+  final VoidCallback? onPressed;
+  final bool isLoading;
+
+  const _CircleButton({
+    this.icon,
+    this.iconColor,
+    this.onPressed,
+    this.isLoading = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 36,
+      height: 36,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        shape: BoxShape.circle,
+        boxShadow: AppShadows.card(),
+      ),
+      child: isLoading
+          ? const Center(
+              child: SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                    strokeWidth: 2, color: AppColors.primary),
+              ),
+            )
+          : IconButton(
+              padding: EdgeInsets.zero,
+              icon: Icon(icon, size: 18,
+                  color: iconColor ?? AppColors.textPrimary),
+              onPressed: onPressed,
+            ),
+    );
   }
 }

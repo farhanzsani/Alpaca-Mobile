@@ -28,19 +28,12 @@ class RouteGuard {
 
     print('[RouteGuard] isAuth: $isAuthenticated, role: $userRole, isAuthRoute: $isAuthRoute, isSplash: $isSplash');
 
-    // Handle splash screen only
-    if (isSplash && !authViewModel.isLoading) {
-      if (isAuthenticated) {
-        final redirect = userRole == UserRole.ownerUmkm ? RouteNames.ownerDashboard : RouteNames.showcase;
-        print('[RouteGuard] Splash redirect to: $redirect');
-        return redirect;
-      } else {
-        print('[RouteGuard] Splash redirect to login');
-        return RouteNames.login;
-      }
+    // Splash navigates imperatively after auth resolves — just wait here.
+    if (isSplash) {
+      return null;
     }
 
-    // If authenticated and on auth routes, go home
+    // If authenticated and on auth routes (login/register), go to home
     if (isAuthenticated && isAuthRoute) {
       final redirect = userRole == UserRole.ownerUmkm ? RouteNames.ownerDashboard : RouteNames.showcase;
       print('[RouteGuard] Auth route redirect to: $redirect');

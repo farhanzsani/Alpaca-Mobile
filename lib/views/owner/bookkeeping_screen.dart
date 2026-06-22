@@ -37,9 +37,6 @@ class _BookkeepingScreenState extends State<BookkeepingScreen>
   /// Date formatter for transaction display.
   final _dateFormat = DateFormat('dd MMM yyyy', 'id_ID');
 
-  /// Month/year formatter for the filter.
-  final _monthFormat = DateFormat('MMMM yyyy', 'id_ID');
-
   @override
   void initState() {
     super.initState();
@@ -69,34 +66,6 @@ class _BookkeepingScreenState extends State<BookkeepingScreen>
       startDate: startDate,
       endDate: endDate,
     );
-  }
-
-  /// Opens month picker for filtering transactions.
-  Future<void> _selectMonth() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedMonth,
-      firstDate: DateTime(2020),
-      lastDate: DateTime.now(),
-      initialDatePickerMode: DatePickerMode.year,
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Color(0xFF2E7D32),
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-
-    if (picked != null) {
-      setState(() {
-        _selectedMonth = picked;
-      });
-      _loadTransactions();
-    }
   }
 
   /// Filters transactions by type based on current tab.
@@ -155,18 +124,23 @@ class _BookkeepingScreenState extends State<BookkeepingScreen>
       body: Column(
         children: [
           _buildHeader(),
+          _buildTabBarRow(),
           Expanded(
-            child: Column(
-              children: [
-                _buildSummaryCard(dailySummary),
-                _buildDateSlider(),
-                _buildMonthFilter(),
-                Expanded(
-                  child: _buildTransactionList(
-                    _getFilteredTransactions(financeVM.transactions),
-                    financeVM,
-                  ),
+            child: CustomScrollView(
+              slivers: [
+                // Summary card
+                SliverToBoxAdapter(child: _buildSummaryCard(dailySummary)),
+                // Date slider
+                SliverToBoxAdapter(child: _buildDateSlider()),
+                // Month filter title row
+                SliverToBoxAdapter(child: _buildMonthFilter()),
+                // Transaction list
+                _buildTransactionSliver(
+                  _getFilteredTransactions(financeVM.transactions),
+                  financeVM,
                 ),
+                // FAB spacing at bottom
+                const SliverToBoxAdapter(child: SizedBox(height: 100)),
               ],
             ),
           ),
@@ -196,93 +170,92 @@ class _BookkeepingScreenState extends State<BookkeepingScreen>
       ),
       child: SafeArea(
         bottom: false,
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-              child: Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF86EFAC).withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(
-                      Icons.receipt_long_rounded,
-                      color: Color(0xFF86EFAC),
-                      size: 22,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Pembukuan',
-                          style: TextStyle(
-                            fontSize: 20,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        Text(
-                          'Kelola transaksi keuangan',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Color(0xFF86EFAC),
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // Tab bar
-            Container(
-              margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: TabBar(
-                controller: _tabController,
-                indicator: BoxDecoration(
-                  color: const Color(0xFF86EFAC),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF86EFAC).withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                indicatorSize: TabBarIndicatorSize.tab,
-                labelColor: const Color(0xFF064E3B),
-                unselectedLabelColor: Colors.white.withValues(alpha: 0.7),
-                labelStyle: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
+                child: const Icon(
+                  Icons.receipt_long_rounded,
+                  color: Color(0xFF86EFAC),
+                  size: 22,
                 ),
-                dividerColor: Colors.transparent,
-                padding: const EdgeInsets.all(4),
-                onTap: (_) => setState(() {}),
-                tabs: const [
-                  Tab(
-                    height: 40,
-                    child: Center(child: Text('Semua')),
-                  ),
-                  Tab(
-                    height: 40,
-                    child: Center(child: Text('Pemasukan')),
-                  ),
-                  Tab(
-                    height: 40,
-                    child: Center(child: Text('Pengeluaran')),
-                  ),
-                ],
               ),
-            ),
-          ],
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Pembukuan',
+                      style: TextStyle(
+                        fontSize: 20,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Text(
+                      'Kelola transaksi keuangan',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF86EFAC),
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildTabBarRow() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: TabBar(
+        controller: _tabController,
+        indicator: BoxDecoration(
+          color: const Color(0xFF22C55E),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        indicatorSize: TabBarIndicatorSize.tab,
+        labelColor: Colors.white,
+        unselectedLabelColor: const Color(0xFF6B7280),
+        labelStyle: const TextStyle(
+          fontWeight: FontWeight.w600,
+          fontSize: 13,
+        ),
+        dividerColor: Colors.transparent,
+        padding: const EdgeInsets.all(4),
+        onTap: (_) => setState(() {}),
+        tabs: const [
+          Tab(
+            height: 40,
+            child: Center(child: Text('Semua')),
+          ),
+          Tab(
+            height: 40,
+            child: Center(child: Text('Pemasukan')),
+          ),
+          Tab(
+            height: 40,
+            child: Center(child: Text('Pengeluaran')),
+          ),
+        ],
       ),
     );
   }
@@ -905,53 +878,42 @@ class _BookkeepingScreenState extends State<BookkeepingScreen>
   }
 
   /// Builds the transaction list view.
-  Widget _buildTransactionList(
+  /// Builds transaction section as a Sliver for use inside CustomScrollView.
+  Widget _buildTransactionSliver(
     List<TransactionModel> transactions,
     FinanceViewModel financeVM,
   ) {
     if (financeVM.isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(
-          color: Color(0xFF22C55E),
+      return const SliverToBoxAdapter(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 40),
+          child: Center(
+            child: CircularProgressIndicator(color: Color(0xFF22C55E)),
+          ),
         ),
       );
     }
 
     if (transactions.isEmpty) {
-      return Center(
+      return const SliverToBoxAdapter(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.symmetric(vertical: 40, horizontal: 24),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF0FDF4),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Icon(
-                  Icons.receipt_long_rounded,
-                  size: 56,
-                  color: Color(0xFF22C55E),
-                ),
-              ),
-              const SizedBox(height: 20),
-              const Text(
+              Icon(Icons.receipt_long_rounded, size: 56, color: Color(0xFFD1D5DB)),
+              SizedBox(height: 16),
+              Text(
                 'Belum ada transaksi',
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 16,
                   fontWeight: FontWeight.w700,
                   color: Color(0xFF1F2937),
                 ),
               ),
-              const SizedBox(height: 8),
-              const Text(
+              SizedBox(height: 6),
+              Text(
                 'Tap tombol + untuk mencatat transaksi',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF6B7280),
-                ),
+                style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
               ),
             ],
           ),
@@ -959,131 +921,136 @@ class _BookkeepingScreenState extends State<BookkeepingScreen>
       );
     }
 
-    return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
-      itemCount: transactions.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
-      itemBuilder: (context, index) {
-        final transaction = transactions[index];
-        final isIncome = transaction.type == TransactionType.income;
+    return SliverPadding(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+      sliver: SliverList.separated(
+        separatorBuilder: (_, __) => const SizedBox(height: 10),
+        itemCount: transactions.length,
+        itemBuilder: (context, index) {
+          final transaction = transactions[index];
+          final isIncome = transaction.type == TransactionType.income;
 
-        return Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFE5E7EB)),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: isIncome
-                      ? const Color(0xFF22C55E).withValues(alpha: 0.1)
-                      : const Color(0xFFDC2626).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
+          return Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE5E7EB)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: isIncome
+                        ? const Color(0xFF22C55E).withValues(alpha: 0.1)
+                        : const Color(0xFFDC2626).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    isIncome
+                        ? Icons.arrow_downward_rounded
+                        : Icons.arrow_upward_rounded,
+                    color: isIncome
+                        ? const Color(0xFF22C55E)
+                        : const Color(0xFFDC2626),
+                    size: 22,
+                  ),
                 ),
-                child: Icon(
-                  isIncome
-                      ? Icons.arrow_downward_rounded
-                      : Icons.arrow_upward_rounded,
-                  color: isIncome
-                      ? const Color(0xFF22C55E)
-                      : const Color(0xFFDC2626),
-                  size: 22,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        transaction.title,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                          color: Color(0xFF1F2937),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _dateFormat.format(transaction.date),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF9CA3AF),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      transaction.title,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                        color: Color(0xFF1F2937),
+                      '${isIncome ? '+' : '-'} ${_currencyFormat.format(transaction.amount)}',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: isIncome
+                            ? const Color(0xFF22C55E)
+                            : const Color(0xFFDC2626),
                       ),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      _dateFormat.format(transaction.date),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF9CA3AF),
+                    const SizedBox(height: 4),
+                    InkWell(
+                      onTap: () async {
+                        final confirmed = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            title: const Text('Hapus Transaksi'),
+                            content: Text(
+                              'Apakah Anda yakin ingin menghapus "${transaction.title}"?',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, false),
+                                child: const Text('Batal'),
+                              ),
+                              FilledButton(
+                                onPressed: () => Navigator.pop(context, true),
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: const Color(0xFFDC2626),
+                                ),
+                                child: const Text('Hapus'),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (confirmed == true) {
+                          if (context.mounted) {
+                            await context.read<FinanceViewModel>().deleteTransaction(transaction.id);
+                          }
+                        }
+                      },
+                      borderRadius: BorderRadius.circular(6),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEE2E2),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Icon(
+                          Icons.delete_outline_rounded,
+                          size: 16,
+                          color: Color(0xFFDC2626),
+                        ),
                       ),
                     ),
                   ],
                 ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    '${isIncome ? '+' : '-'} ${_currencyFormat.format(transaction.amount)}',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: isIncome
-                          ? const Color(0xFF22C55E)
-                          : const Color(0xFFDC2626),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  InkWell(
-                    onTap: () async {
-                      final confirmed = await showDialog<bool>(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          title: const Text('Hapus Transaksi'),
-                          content: Text(
-                            'Apakah Anda yakin ingin menghapus "${transaction.title}"?',
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, false),
-                              child: const Text('Batal'),
-                            ),
-                            FilledButton(
-                              onPressed: () => Navigator.pop(context, true),
-                              style: FilledButton.styleFrom(
-                                backgroundColor: const Color(0xFFDC2626),
-                              ),
-                              child: const Text('Hapus'),
-                            ),
-                          ],
-                        ),
-                      );
-                      if (confirmed == true) {
-                        await context.read<FinanceViewModel>().deleteTransaction(transaction.id);
-                      }
-                    },
-                    borderRadius: BorderRadius.circular(6),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFEE2E2),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: const Icon(
-                        Icons.delete_outline_rounded,
-                        size: 16,
-                        color: Color(0xFFDC2626),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        );
-      },
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 
