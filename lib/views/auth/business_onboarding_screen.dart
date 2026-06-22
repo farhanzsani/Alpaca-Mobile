@@ -11,7 +11,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 
 import 'package:alpaca_mobile/core/routes/route_names.dart';
-import 'package:alpaca_mobile/core/theme/app_colors.dart';
+import 'package:alpaca_mobile/core/theme/app_theme.dart';
 import 'package:alpaca_mobile/core/network/api_client.dart';
 import 'package:alpaca_mobile/core/widgets/platform_map.dart';
 import 'package:alpaca_mobile/models/business_location_model.dart';
@@ -191,183 +191,214 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.bg,
       appBar: AppBar(
-        title: const Text('Setup Bisnis Anda'),
+        title: Text(
+          'Setup Bisnis Anda',
+          style: AppText.ui(size: 17, weight: FontWeight.w700),
+        ),
         automaticallyImplyLeading: false,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
       ),
       body: _isCheckingUser
           ? const Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  CircularProgressIndicator(),
+                  CircularProgressIndicator(color: AppColors.primary),
                   SizedBox(height: 16),
                   Text('Menyiapkan akun Anda...'),
                 ],
               ),
             )
-          : Form(
-              key: _formKey,
-              child: ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-            // Header
-            const Icon(
-              Icons.storefront_outlined,
-              size: 64,
-              color: AppColors.primary,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Lengkapi Profil Bisnis',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Informasi ini akan ditampilkan di showcase publik',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 32),
-
-            // Business Name
-            TextFormField(
-              controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'Nama Usaha',
-                hintText: 'Contoh: Warung Kopi Ibu Ani',
-                prefixIcon: Icon(Icons.business),
-              ),
-              textCapitalization: TextCapitalization.words,
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Nama usaha wajib diisi';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-
-            // Description
-            TextFormField(
-              controller: _descriptionController,
-              decoration: const InputDecoration(
-                labelText: 'Deskripsi (Opsional)',
-                hintText: 'Ceritakan tentang bisnis Anda',
-                prefixIcon: Icon(Icons.description_outlined),
-              ),
-              textCapitalization: TextCapitalization.sentences,
-              maxLines: 3,
-            ),
-            const SizedBox(height: 16),
-
-            // Address
-            TextFormField(
-              controller: _addressController,
-              decoration: const InputDecoration(
-                labelText: 'Alamat',
-                hintText: 'Masukkan alamat lengkap',
-                prefixIcon: Icon(Icons.location_on_outlined),
-              ),
-              textCapitalization: TextCapitalization.words,
-              maxLines: 2,
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Alamat wajib diisi';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 24),
-
-            // Map
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'Lokasi Bisnis',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                  ),
-                ),
-                FilledButton.tonalIcon(
-                  onPressed: _getCurrentLocation,
-                  icon: const Icon(Icons.my_location, size: 18),
-                  label: const Text('Dapatkan Koordinat'),
-                  style: FilledButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Tap pada peta untuk menandai lokasi bisnis Anda',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              height: 300,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: Theme.of(context).colorScheme.outlineVariant,
-                ),
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: PlatformMap(
-                initialCameraPosition: (
-                  target: _selectedLocation,
-                  zoom: 15.0,
-                ),
-                markers: [
-                  Marker(
-                    point: _selectedLocation,
-                    width: 80,
-                    height: 80,
-                    child: const Icon(
-                      Icons.location_on,
-                      color: Colors.red,
-                      size: 40,
-                    ),
-                  ),
-                ],
-                onTap: (latLng) {
-                  setState(() => _selectedLocation = latLng);
-                },
-                mapController: _mapController,
-                myLocationButtonEnabled: false,
-                myLocationEnabled: true,
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Save button
-            FilledButton.icon(
-              onPressed: _isSaving ? null : _saveAndContinue,
-              icon: _isSaving
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
+          : Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 500),
+                child: Form(
+                  key: _formKey,
+                  child: ListView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                    children: [
+                      // Header
+                      const Icon(
+                        Icons.storefront_outlined,
+                        size: 64,
+                        color: AppColors.primary,
                       ),
-                    )
-                  : const Icon(Icons.check),
-              label: const Text('Simpan dan Lanjutkan'),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Lengkapi Profil Bisnis',
+                        style: AppText.display(
+                          size: 28,
+                          color: AppColors.textPrimary,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Informasi ini akan ditampilkan di showcase publik',
+                        style: AppText.ui(
+                          size: 14,
+                          color: AppColors.textSecondary,
+                          height: 1.5,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 32),
+
+                      // Business Name
+                      Text(
+                        'Nama Usaha',
+                        style: AppText.ui(size: 13, weight: FontWeight.w600, color: AppColors.textPrimary),
+                      ),
+                      const SizedBox(height: 6),
+                      TextFormField(
+                        controller: _nameController,
+                        style: AppText.ui(size: 14, color: AppColors.textPrimary),
+                        decoration: InputDecoration(
+                          hintText: 'Contoh: Warung Kopi Ibu Ani',
+                          hintStyle: AppText.ui(size: 14, color: AppColors.textSecondary.withValues(alpha: 0.6)),
+                          prefixIcon: const Icon(Icons.business_outlined, size: 20),
+                        ),
+                        textCapitalization: TextCapitalization.words,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Nama usaha wajib diisi';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Description
+                      Text(
+                        'Deskripsi (Opsional)',
+                        style: AppText.ui(size: 13, weight: FontWeight.w600, color: AppColors.textPrimary),
+                      ),
+                      const SizedBox(height: 6),
+                      TextFormField(
+                        controller: _descriptionController,
+                        style: AppText.ui(size: 14, color: AppColors.textPrimary),
+                        decoration: InputDecoration(
+                          hintText: 'Ceritakan tentang bisnis Anda',
+                          hintStyle: AppText.ui(size: 14, color: AppColors.textSecondary.withValues(alpha: 0.6)),
+                          prefixIcon: const Icon(Icons.description_outlined, size: 20),
+                        ),
+                        textCapitalization: TextCapitalization.sentences,
+                        maxLines: 3,
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Address
+                      Text(
+                        'Alamat',
+                        style: AppText.ui(size: 13, weight: FontWeight.w600, color: AppColors.textPrimary),
+                      ),
+                      const SizedBox(height: 6),
+                      TextFormField(
+                        controller: _addressController,
+                        style: AppText.ui(size: 14, color: AppColors.textPrimary),
+                        decoration: InputDecoration(
+                          hintText: 'Masukkan alamat lengkap',
+                          hintStyle: AppText.ui(size: 14, color: AppColors.textSecondary.withValues(alpha: 0.6)),
+                          prefixIcon: const Icon(Icons.location_on_outlined, size: 20),
+                        ),
+                        textCapitalization: TextCapitalization.words,
+                        maxLines: 2,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Alamat wajib diisi';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Map
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Lokasi Bisnis',
+                              style: AppText.ui(
+                                size: 15,
+                                weight: FontWeight.w600,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                          ),
+                          OutlinedButton.icon(
+                            onPressed: _getCurrentLocation,
+                            icon: const Icon(Icons.my_location, size: 16),
+                            label: Text(
+                              'Dapatkan Koordinat',
+                              style: AppText.ui(size: 12, weight: FontWeight.w600, color: AppColors.primary),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Tap pada peta untuk menandai lokasi bisnis Anda',
+                        style: AppText.ui(
+                          size: 12,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Container(
+                        height: 240,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: AppColors.border,
+                          ),
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: PlatformMap(
+                          initialCameraPosition: (
+                            target: _selectedLocation,
+                            zoom: 15.0,
+                          ),
+                          markers: [
+                            Marker(
+                              point: _selectedLocation,
+                              width: 80,
+                              height: 80,
+                              child: const Icon(
+                                Icons.location_on,
+                                color: Colors.red,
+                                size: 40,
+                              ),
+                            ),
+                          ],
+                          onTap: (latLng) {
+                            setState(() => _selectedLocation = latLng);
+                          },
+                          mapController: _mapController,
+                          myLocationButtonEnabled: false,
+                          myLocationEnabled: true,
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+
+                      // Save button
+                      AlpacaPrimaryButton(
+                        label: 'Simpan dan Lanjutkan',
+                        isLoading: _isSaving,
+                        onPressed: _saveAndContinue,
+                      ),
+                      const SizedBox(height: 24),
+                    ],
+                  ),
+                ),
+              ),
             ),
-          ],
-        ),
-      ),
     );
   }
 }

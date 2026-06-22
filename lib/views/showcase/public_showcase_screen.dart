@@ -12,10 +12,12 @@ import 'package:provider/provider.dart';
 
 import 'package:alpaca_mobile/core/routes/route_names.dart';
 import 'package:alpaca_mobile/core/theme/app_theme.dart';
+import 'package:alpaca_mobile/core/theme/app_text_styles.dart';
 import 'package:alpaca_mobile/models/product_model.dart';
 import 'package:alpaca_mobile/viewmodels/product_view_model.dart';
 import 'package:alpaca_mobile/viewmodels/auth_view_model.dart';
 import 'package:alpaca_mobile/core/enums/view_state.dart' as vs;
+import 'package:alpaca_mobile/widgets/product_card.dart';
 
 class PublicShowcaseScreen extends StatefulWidget {
   const PublicShowcaseScreen({super.key});
@@ -189,43 +191,19 @@ class _PublicShowcaseScreenState extends State<PublicShowcaseScreen> {
               ],
             ),
           ),
-          // Bell Icon with notification dot
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              IconButton(
-                icon: const Icon(
-                  Icons.notifications_none_rounded,
-                  color: AppColors.textPrimary,
-                  size: 26,
+          // Profile Avatar Circle - Tapping routes to customer profile
+          GestureDetector(
+            onTap: () => context.push(RouteNames.customerProfile),
+            child: CircleAvatar(
+              radius: 18,
+              backgroundColor: AppColors.primary,
+              child: Text(
+                initials,
+                style: AppText.ui(
+                  size: 13,
+                  weight: FontWeight.w700,
+                  color: Colors.white,
                 ),
-                onPressed: () {},
-              ),
-              Positioned(
-                right: 12,
-                top: 12,
-                child: Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                    color: AppColors.error,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(width: 8),
-          // Profile Avatar Circle
-          CircleAvatar(
-            radius: 18,
-            backgroundColor: AppColors.primary,
-            child: Text(
-              initials,
-              style: AppText.ui(
-                size: 13,
-                weight: FontWeight.w700,
-                color: Colors.white,
               ),
             ),
           ),
@@ -485,8 +463,12 @@ class _PublicShowcaseScreenState extends State<PublicShowcaseScreen> {
         delegate: SliverChildBuilderDelegate(
           (context, index) {
             final product = products[index];
-            return _ProductCard(
-              product: product,
+            return ProductCard(
+              name: product.productName,
+              price: product.price.toInt(),
+              imageUrl: product.imageUrl,
+              category: _categoryLabel(product.normalizedCategory),
+              isAvailable: product.isAvailable,
               onTap: () => context.push(RouteNames.productDetail(product.id)),
             );
           },
@@ -546,111 +528,13 @@ class _PublicShowcaseScreenState extends State<PublicShowcaseScreen> {
   }
 }
 
-// ─── Product Card ─────────────────────────────────────────────────────────────
-
-class _ProductCard extends StatelessWidget {
-  final ProductModel product;
-  final VoidCallback onTap;
-
-  const _ProductCard({required this.product, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(color: AppColors.border, width: 1),
-          boxShadow: AppShadows.card(),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Product image ─────────────────────────────────────────
-            Expanded(
-              flex: 5,
-              child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(AppRadius.lg)),
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    // Image
-                    product.imageUrl != null && product.imageUrl!.isNotEmpty
-                        ? Image.network(
-                            product.imageUrl!,
-                            fit: BoxFit.cover,
-                            errorBuilder: (ctx, err, stack) => _ImagePlaceholder(),
-                          )
-                        : _ImagePlaceholder(),
-
-                    // Low stock badge
-                    if (product.isLowStock)
-                      Positioned(
-                        top: 8,
-                        left: 8,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: AppColors.errorLight,
-                            borderRadius: BorderRadius.circular(AppRadius.sm),
-                            border: Border.all(
-                                color: AppColors.error.withValues(alpha: 0.2)),
-                          ),
-                          child: Text(
-                            'Stok ${product.quantity}',
-                            style: AppText.micro(color: AppColors.error),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-
-            // ── Product info ──────────────────────────────────────────
-            Expanded(
-              flex: 3,
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      product.productName,
-                      style: AppText.ui(
-                          size: 13,
-                          weight: FontWeight.w600,
-                          height: 1.3),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    Text(
-                      formatRupiah(product.price),
-                      style: AppText.price(size: 15),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _ImagePlaceholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
       color: AppColors.surfaceMuted,
       child: const Center(
-        child: Icon(Icons.image_outlined, size: 36, color: AppColors.textTertiary),
+        child: Icon(Icons.image_outlined, size: 28, color: AppColors.textTertiary),
       ),
     );
   }

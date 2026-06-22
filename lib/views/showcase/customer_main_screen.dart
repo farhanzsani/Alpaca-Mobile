@@ -13,6 +13,7 @@ import 'package:alpaca_mobile/views/showcase/nearby_stores_screen.dart';
 import 'package:alpaca_mobile/views/showcase/favorites_screen.dart';
 import 'package:alpaca_mobile/views/showcase/customer_profile_screen.dart';
 import 'package:alpaca_mobile/core/theme/app_theme.dart';
+import 'package:alpaca_mobile/core/theme/app_text_styles.dart';
 
 /// Main screen for customers with bottom navigation bar.
 class CustomerMainScreen extends StatefulWidget {
@@ -37,14 +38,12 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
     PublicShowcaseScreen(),
     NearbyStoresScreen(),
     FavoritesScreen(),
-    CustomerProfileScreen(),
   ];
 
   static const _navItems = [
     (icon: Icons.home_outlined, activeIcon: Icons.home_rounded, label: 'Beranda'),
     (icon: Icons.near_me_outlined, activeIcon: Icons.near_me_rounded, label: 'Terdekat'),
     (icon: Icons.favorite_outline_rounded, activeIcon: Icons.favorite_rounded, label: 'Favorit'),
-    (icon: Icons.person_outline_rounded, activeIcon: Icons.person_rounded, label: 'Profil'),
   ];
 
   @override
@@ -127,11 +126,11 @@ class _AlpacaBottomNav extends StatelessWidget {
                         const SizedBox(height: 4),
                         Text(
                           item.label,
-                          style: GoogleFonts.plusJakartaSans(
+                          style: AppTextStyles.labelSmall.copyWith(
                             fontSize: 10,
                             fontWeight: isSelected
                                 ? FontWeight.w700
-                                : FontWeight.w400,
+                                : FontWeight.w500,
                             color: isSelected
                                 ? AppColors.primary
                                 : AppColors.textTertiary,
@@ -141,7 +140,7 @@ class _AlpacaBottomNav extends StatelessWidget {
                         const SizedBox(height: 2),
                         AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
-                          width: isSelected ? 16 : 0,
+                          width: isSelected ? 12 : 0,
                           height: 2,
                           decoration: BoxDecoration(
                             color: AppColors.primary,

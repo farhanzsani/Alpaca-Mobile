@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:alpaca_mobile/core/network/api_client.dart';
 import 'package:alpaca_mobile/viewmodels/auth_view_model.dart';
-import 'package:alpaca_mobile/core/theme/app_colors.dart';
+import 'package:alpaca_mobile/core/theme/app_theme.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -79,7 +79,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         );
       }
       
-      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -110,60 +109,90 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final user = context.read<AuthViewModel>().currentUser;
     
     return Scaffold(
+      backgroundColor: AppColors.bg,
       appBar: AppBar(
-        title: const Text('Edit Profil'),
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Container(
+            decoration: const BoxDecoration(
+              color: AppColors.surface,
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary, size: 20),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ),
+        ),
+        title: Text(
+          'Edit Profil',
+          style: AppText.ui(size: 17, weight: FontWeight.w700),
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
       ),
       body: user == null
           ? const Center(child: Text('Sesi berakhir'))
           : Form(
               key: _formKey,
               child: ListView(
-                padding: const EdgeInsets.all(20),
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
                 children: [
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 10),
                   // Avatar placeholder
                   Center(
                     child: Container(
-                      width: 100,
-                      height: 100,
+                      width: 90,
+                      height: 90,
                       decoration: BoxDecoration(
                         color: AppColors.primaryContainer,
                         shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.primary, width: 2),
+                        border: Border.all(color: AppColors.primary, width: 1.5),
                       ),
                       child: Center(
                         child: Text(
                           _nameController.text.isNotEmpty ? _nameController.text[0].toUpperCase() : 'U',
-                          style: const TextStyle(
-                            fontSize: 36,
-                            fontWeight: FontWeight.bold,
+                          style: AppText.display(
+                            size: 32,
                             color: AppColors.primary,
                           ),
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 36),
                   
                   // Email (Read-only)
+                  Text(
+                    'Email',
+                    style: AppText.ui(size: 13, weight: FontWeight.w600, color: AppColors.textPrimary),
+                  ),
+                  const SizedBox(height: 6),
                   TextFormField(
                     initialValue: user.email,
                     readOnly: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Email',
-                      prefixIcon: Icon(Icons.email_outlined),
+                    style: AppText.ui(size: 14, color: AppColors.textSecondary),
+                    decoration: InputDecoration(
+                      prefixIcon: const Icon(Icons.email_outlined, size: 20),
                       filled: true,
-                      fillColor: Color(0xFFF3F4F6),
+                      fillColor: AppColors.surfaceMuted,
                     ),
                   ),
                   const SizedBox(height: 16),
                   
                   // Name
+                  Text(
+                    'Nama Lengkap',
+                    style: AppText.ui(size: 13, weight: FontWeight.w600, color: AppColors.textPrimary),
+                  ),
+                  const SizedBox(height: 6),
                   TextFormField(
                     controller: _nameController,
+                    style: AppText.ui(size: 14, color: AppColors.textPrimary),
                     decoration: const InputDecoration(
-                      labelText: 'Nama Lengkap',
-                      prefixIcon: Icon(Icons.person_outline),
+                      prefixIcon: Icon(Icons.person_outline, size: 20),
+                      hintText: 'Masukkan nama lengkap',
                     ),
                     textCapitalization: TextCapitalization.words,
                     validator: (value) {
@@ -176,33 +205,27 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   const SizedBox(height: 16),
                   
                   // Phone
+                  Text(
+                    'Nomor Telepon',
+                    style: AppText.ui(size: 13, weight: FontWeight.w600, color: AppColors.textPrimary),
+                  ),
+                  const SizedBox(height: 6),
                   TextFormField(
                     controller: _phoneController,
+                    style: AppText.ui(size: 14, color: AppColors.textPrimary),
                     decoration: const InputDecoration(
-                      labelText: 'Nomor Telepon',
-                      prefixIcon: Icon(Icons.phone_outlined),
+                      prefixIcon: Icon(Icons.phone_outlined, size: 20),
                       hintText: 'Contoh: 081234567890',
                     ),
                     keyboardType: TextInputType.phone,
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 36),
                   
                   // Submit
-                  FilledButton(
-                    onPressed: _isLoading ? null : _saveProfile,
-                    style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                    ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text('Simpan Perubahan', style: TextStyle(fontSize: 16)),
+                  AlpacaPrimaryButton(
+                    label: 'Simpan Perubahan',
+                    isLoading: _isLoading,
+                    onPressed: _saveProfile,
                   ),
                 ],
               ),

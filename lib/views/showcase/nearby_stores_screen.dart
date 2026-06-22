@@ -14,6 +14,8 @@ import 'package:provider/provider.dart';
 
 import 'package:alpaca_mobile/core/routes/route_names.dart';
 import 'package:alpaca_mobile/core/widgets/platform_map.dart';
+import 'package:alpaca_mobile/core/theme/app_theme.dart';
+import 'package:alpaca_mobile/core/theme/app_text_styles.dart';
 import 'package:alpaca_mobile/models/business_location_model.dart';
 import 'package:alpaca_mobile/viewmodels/location_view_model.dart';
 
@@ -112,8 +114,8 @@ class _NearbyStoresScreenState extends State<NearbyStoresScreen>
           child: Icon(
             Icons.location_on,
             size: isSelected ? 48 : 36,
-            color: isSelected ? Colors.green : Colors.orange,
-            shadows: const [Shadow(color: Colors.black45, blurRadius: 4)],
+            color: isSelected ? AppColors.primary : AppColors.secondary,
+            shadows: const [Shadow(color: AppColors.shadow, blurRadius: 4)],
           ),
         ),
       );
@@ -546,13 +548,14 @@ class _StoreBottomSheet extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [
+        border: Border.all(color: AppColors.border),
+        boxShadow: const [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.14),
+            color: AppColors.shadow,
             blurRadius: 24,
-            offset: const Offset(0, -4),
+            offset: Offset(0, -4),
           ),
         ],
       ),
@@ -565,7 +568,7 @@ class _StoreBottomSheet extends StatelessWidget {
             height: 4,
             margin: const EdgeInsets.only(top: 12, bottom: 8),
             decoration: BoxDecoration(
-              color: const Color(0xFFE5E7EB),
+              color: AppColors.border,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -601,12 +604,7 @@ class _StoreBottomSheet extends StatelessWidget {
                         children: [
                           Text(
                             store.businessName,
-                            style: const TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF14532D),
-                              height: 1.2,
-                            ),
+                            style: AppText.display(size: 18),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -616,15 +614,15 @@ class _StoreBottomSheet extends StatelessWidget {
                               const Icon(
                                 Icons.location_on_rounded,
                                 size: 14,
-                                color: Color(0xFF6B7280),
+                                color: AppColors.textSecondary,
                               ),
                               const SizedBox(width: 4),
                               Expanded(
                                 child: Text(
                                   store.address,
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Color(0xFF6B7280),
+                                  style: AppText.ui(
+                                    size: 12,
+                                    color: AppColors.textSecondary,
                                     height: 1.4,
                                   ),
                                   maxLines: 2,
@@ -638,7 +636,7 @@ class _StoreBottomSheet extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFDCFCE7),
+                                color: AppColors.successLight,
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Row(
@@ -647,15 +645,15 @@ class _StoreBottomSheet extends StatelessWidget {
                                   const Icon(
                                     Icons.near_me_rounded,
                                     size: 12,
-                                    color: Color(0xFF16A34A),
+                                    color: AppColors.primary,
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
                                     distance,
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      color: Color(0xFF16A34A),
+                                    style: AppText.ui(
+                                      size: 11,
+                                      weight: FontWeight.w700,
+                                      color: AppColors.primary,
                                     ),
                                   ),
                                 ],
@@ -669,7 +667,7 @@ class _StoreBottomSheet extends StatelessWidget {
                     // Close button
                     IconButton(
                       icon: const Icon(Icons.close_rounded, size: 20),
-                      color: const Color(0xFF9CA3AF),
+                      color: AppColors.textTertiary,
                       onPressed: onClose,
                       visualDensity: VisualDensity.compact,
                     ),
@@ -681,9 +679,9 @@ class _StoreBottomSheet extends StatelessWidget {
                   const SizedBox(height: 12),
                   Text(
                     store.description!,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: Color(0xFF4B5563),
+                    style: AppText.ui(
+                      size: 13,
+                      color: AppColors.textSecondary,
                       height: 1.5,
                     ),
                     maxLines: 2,
@@ -701,7 +699,7 @@ class _StoreBottomSheet extends StatelessWidget {
                     icon: const Icon(Icons.storefront_rounded, size: 18),
                     label: const Text('Lihat Profil Toko'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF14532D),
+                      backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
@@ -724,10 +722,10 @@ class _StoreBottomSheet extends StatelessWidget {
       width: 64,
       height: 64,
       decoration: BoxDecoration(
-        color: const Color(0xFFDCFCE7),
+        color: AppColors.successLight,
         borderRadius: BorderRadius.circular(14),
       ),
-      child: const Icon(Icons.storefront_rounded, size: 30, color: Color(0xFF16A34A)),
+      child: const Icon(Icons.storefront_rounded, size: 30, color: AppColors.primary),
     );
   }
 }

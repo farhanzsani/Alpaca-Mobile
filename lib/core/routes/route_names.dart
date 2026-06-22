@@ -29,6 +29,7 @@ class RouteNames {
   
   // Shared
   static const String profileEdit = '/profile/edit';
+  static const String customerProfile = '/customer/profile';
 
   /// Routes that do not require authentication.
   static const List<String> publicRoutes = [

@@ -22,6 +22,7 @@ import 'package:alpaca_mobile/views/owner/waste_tracking_screen.dart';
 import 'package:alpaca_mobile/views/owner/profile_screen.dart';
 import 'package:alpaca_mobile/views/showcase/public_showcase_screen.dart';
 import 'package:alpaca_mobile/views/showcase/customer_main_screen.dart';
+import 'package:alpaca_mobile/views/showcase/customer_profile_screen.dart';
 import 'package:alpaca_mobile/views/showcase/product_detail_screen.dart';
 import 'package:alpaca_mobile/views/showcase/store_profile_screen.dart';
 import 'package:alpaca_mobile/views/profile/edit_profile_screen.dart';
@@ -188,6 +189,11 @@ class AppRouter {
       path: RouteNames.profileEdit,
       name: 'profileEdit',
       builder: (context, state) => const EditProfileScreen(),
+    ),
+    GoRoute(
+      path: RouteNames.customerProfile,
+      name: 'customerProfile',
+      builder: (context, state) => const CustomerProfileScreen(),
     ),
   ];
 }

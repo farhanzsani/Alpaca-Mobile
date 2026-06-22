@@ -13,6 +13,7 @@ import 'package:alpaca_mobile/viewmodels/finance_view_model.dart';
 import 'package:alpaca_mobile/viewmodels/product_view_model.dart';
 import 'package:alpaca_mobile/viewmodels/location_view_model.dart';
 import 'package:alpaca_mobile/core/routes/route_names.dart';
+import 'package:alpaca_mobile/core/theme/app_theme.dart';
 
 class OwnerDashboardScreen extends StatefulWidget {
   const OwnerDashboardScreen({super.key});
@@ -108,11 +109,11 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [Color(0xFF064E3B), Color(0xFF065F46)],
+              colors: [AppColors.primaryDark, AppColors.primary],
             ),
             borderRadius: BorderRadius.only(
-              bottomLeft: Radius.circular(40),
-              bottomRight: Radius.circular(40),
+              bottomLeft: Radius.circular(24),
+              bottomRight: Radius.circular(24),
             ),
           ),
           child: SafeArea(
@@ -128,12 +129,12 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                         width: 44,
                         height: 44,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF86EFAC).withValues(alpha: 0.2),
+                          color: Colors.white.withValues(alpha: 0.15),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
                           Icons.person_rounded,
-                          color: Color(0xFF86EFAC),
+                          color: Colors.white,
                           size: 24,
                         ),
                       ),
@@ -142,20 +143,20 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'Halo,',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Color(0xFF86EFAC),
-                                fontWeight: FontWeight.w400,
+                              style: AppText.ui(
+                                size: 13,
+                                color: Colors.white.withValues(alpha: 0.70),
+                                weight: FontWeight.w400,
                               ),
                             ),
                             Text(
                               name,
-                              style: const TextStyle(
-                                fontSize: 17,
+                              style: AppText.ui(
+                                size: 17,
                                 color: Colors.white,
-                                fontWeight: FontWeight.w700,
+                                weight: FontWeight.w700,
                               ),
                             ),
                           ],
@@ -170,121 +171,129 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                   ),
                 ),
             
-            // Balance section
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                children: [
-                  const Text(
-                    'Saldo Saat Ini',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Color(0xFF86EFAC),
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _formatCurrencyFull(balance),
-                    style: const TextStyle(
-                      fontSize: 36,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                      letterSpacing: -1,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
+                // Balance section
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
                     children: [
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Column(
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.trending_up_rounded,
-                                    size: 16,
-                                    color: const Color(0xFF86EFAC),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  const Text(
-                                    'Omset',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Color(0xFF86EFAC),
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                _formatCurrency(income),
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
-                          ),
+                      Text(
+                        'Saldo Saat Ini',
+                        style: AppText.ui(
+                          size: 13,
+                          color: Colors.white.withValues(alpha: 0.70),
+                          weight: FontWeight.w500,
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Column(
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
+                      const SizedBox(height: 8),
+                      Text(
+                        _formatCurrencyFull(balance),
+                        style: AppText.ui(
+                          size: 32,
+                          weight: FontWeight.w800,
+                          color: Colors.white,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.10),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.15),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Column(
                                 children: [
-                                  Icon(
-                                    Icons.trending_down_rounded,
-                                    size: 16,
-                                    color: const Color(0xFF86EFAC),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const Icon(
+                                        Icons.trending_up_rounded,
+                                        size: 16,
+                                        color: Colors.white,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        'Omset',
+                                        style: AppText.ui(
+                                          size: 12,
+                                          color: Colors.white.withValues(alpha: 0.80),
+                                          weight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  const SizedBox(width: 6),
-                                  const Text(
-                                    'Pengeluaran',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Color(0xFF86EFAC),
-                                      fontWeight: FontWeight.w500,
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    _formatCurrency(income),
+                                    style: AppText.ui(
+                                      size: 16,
+                                      weight: FontWeight.w700,
+                                      color: Colors.white,
                                     ),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 8),
-                              Text(
-                                _formatCurrency(expense),
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.10),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.15),
+                                  width: 1,
                                 ),
                               ),
-                            ],
+                              child: Column(
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const Icon(
+                                        Icons.trending_down_rounded,
+                                        size: 16,
+                                        color: Colors.white,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        'Pengeluaran',
+                                        style: AppText.ui(
+                                          size: 12,
+                                          color: Colors.white.withValues(alpha: 0.80),
+                                          weight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    _formatCurrency(expense),
+                                    style: AppText.ui(
+                                      size: 16,
+                                      weight: FontWeight.w700,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
                     ],
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
+                ),
+                const SizedBox(height: 24),
               ],
             ),
           ),
@@ -301,26 +310,26 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
         children: [
           _buildActionButton(
             'Produk',
-            Icons.inventory_2_rounded,
-            const Color(0xFF22C55E),
+            Icons.inventory_2_outlined,
+            AppColors.primary,
             () => context.go(RouteNames.ownerProducts),
           ),
           _buildActionButton(
             'Transaksi',
-            Icons.receipt_long_rounded,
-            const Color(0xFFDC2626),
+            Icons.receipt_long_outlined,
+            AppColors.error,
             () => context.go(RouteNames.ownerBookkeeping),
           ),
           _buildActionButton(
             'Limbah',
-            Icons.recycling_rounded,
-            const Color(0xFF2563EB),
+            Icons.recycling_outlined,
+            AppColors.info,
             () => context.go(RouteNames.ownerWaste),
           ),
           _buildActionButton(
             'Lokasi',
-            Icons.store_rounded,
-            const Color(0xFFD97706),
+            Icons.store_outlined,
+            AppColors.warning,
             () => context.go(RouteNames.ownerLocation),
           ),
         ],
@@ -338,22 +347,22 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
+              color: AppColors.surface,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: color.withValues(alpha: 0.2),
+                color: AppColors.border,
                 width: 1,
               ),
             ),
-            child: Icon(icon, color: color, size: 26),
+            child: Icon(icon, color: color, size: 24),
           ),
           const SizedBox(height: 8),
           Text(
             label,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF4B5563),
+            style: AppText.ui(
+              size: 12,
+              weight: FontWeight.w600,
+              color: AppColors.textSecondary,
             ),
           ),
         ],
@@ -374,12 +383,12 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
           const SizedBox(height: 24),
 
           // ── Ringkasan (wide 2-column layout) ─────────────────────
-          const Text(
-            'Ringkasan',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF1F2937),
+          Text(
+            'Ringkasan Usaha',
+            style: AppText.ui(
+              size: 16,
+              weight: FontWeight.w700,
+              color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 12),
@@ -390,8 +399,8 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                   'Total Produk',
                   '${productVm.products.length}',
                   'item terdaftar',
-                  Icons.inventory_2_rounded,
-                  const Color(0xFF22C55E),
+                  Icons.inventory_2_outlined,
+                  AppColors.primary,
                 ),
               ),
               const SizedBox(width: 12),
@@ -400,8 +409,8 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                   'Transaksi',
                   '${financeVm.transactions.length}',
                   'bulan ini',
-                  Icons.receipt_long_rounded,
-                  const Color(0xFF064E3B),
+                  Icons.receipt_long_outlined,
+                  AppColors.primary,
                 ),
               ),
             ],
@@ -416,22 +425,22 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Transaksi Terbaru',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF1F2937),
+                style: AppText.ui(
+                  size: 16,
+                  weight: FontWeight.w700,
+                  color: AppColors.textPrimary,
                 ),
               ),
               TextButton(
                 onPressed: () => context.go(RouteNames.ownerBookkeeping),
-                child: const Text(
+                child: Text(
                   'Lihat Semua',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF22C55E),
+                  style: AppText.ui(
+                    size: 13,
+                    weight: FontWeight.w600,
+                    color: AppColors.primary,
                   ),
                 ),
               ),
@@ -443,25 +452,25 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
             Container(
               padding: const EdgeInsets.all(32),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.surface,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE5E7EB)),
+                border: Border.all(color: AppColors.border),
               ),
               child: Center(
                 child: Column(
                   children: [
                     Icon(
-                      Icons.receipt_long_rounded,
+                      Icons.receipt_long_outlined,
                       size: 48,
-                      color: Colors.grey.shade300,
+                      color: AppColors.textTertiary,
                     ),
                     const SizedBox(height: 12),
                     Text(
                       'Belum ada transaksi',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey.shade500,
-                        fontWeight: FontWeight.w500,
+                      style: AppText.ui(
+                        size: 14,
+                        color: AppColors.textSecondary,
+                        weight: FontWeight.w500,
                       ),
                     ),
                   ],
@@ -487,23 +496,21 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: isIncome
-                  ? const Color(0xFF22C55E).withValues(alpha: 0.1)
-                  : const Color(0xFFDC2626).withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
+              color: (isIncome ? AppColors.success : AppColors.error).withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
               isIncome ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded,
-              color: isIncome ? const Color(0xFF22C55E) : const Color(0xFFDC2626),
+              color: isIncome ? AppColors.success : AppColors.error,
               size: 20,
             ),
           ),
@@ -514,18 +521,18 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
               children: [
                 Text(
                   transaction.title ?? 'Transaksi',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF1F2937),
+                  style: AppText.ui(
+                    size: 14,
+                    weight: FontWeight.w600,
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   _formatDate(transaction.date),
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF9CA3AF),
+                  style: AppText.ui(
+                    size: 12,
+                    color: AppColors.textSecondary,
                   ),
                 ),
               ],
@@ -533,10 +540,10 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
           ),
           Text(
             '${isIncome ? '+' : '-'} ${_formatCurrency(amount)}',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              color: isIncome ? const Color(0xFF22C55E) : const Color(0xFFDC2626),
+            style: AppText.ui(
+              size: 15,
+              weight: FontWeight.w700,
+              color: isIncome ? AppColors.success : AppColors.error,
             ),
           ),
         ],
@@ -546,18 +553,18 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
 
   Widget _buildTipsCard() {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF0FDF4),
+        color: AppColors.primaryContainer,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF86EFAC)),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: const Color(0xFF22C55E),
+              color: AppColors.primary,
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(
@@ -570,10 +577,10 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
           Expanded(
             child: Text(
               _currentTip,
-              style: const TextStyle(
-                fontSize: 13,
-                color: Color(0xFF065F46),
-                fontWeight: FontWeight.w500,
+              style: AppText.ui(
+                size: 13,
+                color: AppColors.onPrimaryContainer,
+                weight: FontWeight.w500,
                 height: 1.5,
               ),
             ),
@@ -587,16 +594,9 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -612,28 +612,28 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
           const SizedBox(height: 12),
           Text(
             value,
-            style: const TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF1F2937),
+            style: AppText.ui(
+              size: 24,
+              weight: FontWeight.w800,
+              color: AppColors.textPrimary,
               height: 1,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             title,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF374151),
+            style: AppText.ui(
+              size: 13,
+              weight: FontWeight.w600,
+              color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 2),
           Text(
             subtitle,
-            style: const TextStyle(
-              fontSize: 11,
-              color: Color(0xFF9CA3AF),
+            style: AppText.ui(
+              size: 11,
+              color: AppColors.textSecondary,
             ),
           ),
         ],
@@ -643,18 +643,18 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
 
   Widget _buildAlertCard(int count) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFFEF3C7),
+        color: AppColors.warningContainer,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFD97706)),
+        border: Border.all(color: AppColors.warning.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: const Color(0xFFD97706),
+              color: AppColors.warning,
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(
@@ -663,32 +663,29 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
               size: 22,
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(width: 14),
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(left: 14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Perhatian',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Color(0xFF92400E),
-                      fontWeight: FontWeight.w600,
-                    ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Perhatian',
+                  style: AppText.ui(
+                    size: 13,
+                    color: AppColors.onSecondaryContainer,
+                    weight: FontWeight.w600,
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '$count produk stok menipis',
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF78350F),
-                    ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '$count produk stok menipis',
+                  style: AppText.ui(
+                    size: 15,
+                    weight: FontWeight.w700,
+                    color: AppColors.onSecondaryContainer,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ],
@@ -743,11 +740,11 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
       width: 44,
       height: 44,
       decoration: BoxDecoration(
-        color: const Color(0xFF86EFAC).withValues(alpha: 0.3),
+        color: Colors.white.withValues(alpha: 0.15),
         shape: BoxShape.circle,
         border: Border.all(
-          color: const Color(0xFF86EFAC).withValues(alpha: 0.5),
-          width: 2,
+          color: Colors.white.withValues(alpha: 0.25),
+          width: 1.5,
         ),
       ),
       child: ClipOval(
@@ -766,10 +763,10 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     return Center(
       child: Text(
         displayName.isNotEmpty ? displayName[0].toUpperCase() : '?',
-        style: const TextStyle(
-          fontSize: 18,
-          color: Color(0xFF86EFAC),
-          fontWeight: FontWeight.w700,
+        style: AppText.ui(
+          size: 18,
+          color: Colors.white,
+          weight: FontWeight.w700,
         ),
       ),
     );

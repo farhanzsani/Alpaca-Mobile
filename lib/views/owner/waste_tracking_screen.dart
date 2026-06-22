@@ -9,7 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:fl_chart/fl_chart.dart';
 
-import 'package:alpaca_mobile/core/theme/app_colors.dart';
+import 'package:alpaca_mobile/core/theme/app_theme.dart';
 import 'package:alpaca_mobile/models/waste_resource_model.dart';
 import 'package:alpaca_mobile/viewmodels/auth_view_model.dart';
 import 'package:alpaca_mobile/viewmodels/waste_view_model.dart';
@@ -174,7 +174,7 @@ class _WasteTrackingScreenState extends State<WasteTrackingScreen> {
     final wasteVm = context.watch<WasteViewModel>();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
+      backgroundColor: AppColors.bg,
       body: Column(
         children: [
           _buildHeader(wasteVm),
@@ -185,8 +185,10 @@ class _WasteTrackingScreenState extends State<WasteTrackingScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _openWasteForm(),
-        backgroundColor: const Color(0xFF22C55E),
+        backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
+        elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: const Icon(Icons.add_rounded),
       ),
     );
@@ -198,11 +200,11 @@ class _WasteTrackingScreenState extends State<WasteTrackingScreen> {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF064E3B), Color(0xFF065F46)],
+          colors: [AppColors.primaryDark, AppColors.primary],
         ),
         borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(40),
-          bottomRight: Radius.circular(40),
+          bottomLeft: Radius.circular(24),
+          bottomRight: Radius.circular(24),
         ),
       ),
       child: SafeArea(
@@ -215,34 +217,34 @@ class _WasteTrackingScreenState extends State<WasteTrackingScreen> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF86EFAC).withValues(alpha: 0.2),
+                  color: Colors.white.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
-                  Icons.recycling_rounded,
-                  color: Color(0xFF86EFAC),
+                  Icons.recycling_outlined,
+                  color: Colors.white,
                   size: 22,
                 ),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Pelacakan Limbah',
-                      style: TextStyle(
-                        fontSize: 20,
+                      style: AppText.ui(
+                        size: 20,
                         color: Colors.white,
-                        fontWeight: FontWeight.w700,
+                        weight: FontWeight.w700,
                       ),
                     ),
                     Text(
                       'Kelola limbah bisnis',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Color(0xFF86EFAC),
-                        fontWeight: FontWeight.w400,
+                      style: AppText.ui(
+                        size: 13,
+                        color: Colors.white.withValues(alpha: 0.70),
+                        weight: FontWeight.w400,
                       ),
                     ),
                   ],

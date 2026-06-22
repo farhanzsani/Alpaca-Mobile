@@ -11,7 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
-import 'package:alpaca_mobile/core/theme/app_colors.dart';
+import 'package:alpaca_mobile/core/theme/app_theme.dart';
 import 'package:alpaca_mobile/models/product_model.dart';
 import 'package:alpaca_mobile/viewmodels/auth_view_model.dart';
 import 'package:alpaca_mobile/viewmodels/product_view_model.dart';
@@ -120,7 +120,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
     final productVm = context.watch<ProductViewModel>();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
+      backgroundColor: AppColors.bg,
       body: Column(
         children: [
           _buildHeader(productVm),
@@ -130,8 +130,10 @@ class _ProductsScreenState extends State<ProductsScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _openProductForm(),
-        backgroundColor: const Color(0xFF22C55E),
+        backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
+        elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: const Icon(Icons.add_rounded),
       ),
     );
@@ -143,11 +145,11 @@ class _ProductsScreenState extends State<ProductsScreen> {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF064E3B), Color(0xFF065F46)],
+          colors: [AppColors.primaryDark, AppColors.primary],
         ),
         borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(40),
-          bottomRight: Radius.circular(40),
+          bottomLeft: Radius.circular(24),
+          bottomRight: Radius.circular(24),
         ),
       ),
       child: SafeArea(
@@ -160,34 +162,34 @@ class _ProductsScreenState extends State<ProductsScreen> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF86EFAC).withValues(alpha: 0.2),
+                  color: Colors.white.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
-                  Icons.inventory_2_rounded,
-                  color: Color(0xFF86EFAC),
+                  Icons.inventory_2_outlined,
+                  color: Colors.white,
                   size: 22,
                 ),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Produk',
-                      style: TextStyle(
-                        fontSize: 20,
+                      style: AppText.ui(
+                        size: 20,
                         color: Colors.white,
-                        fontWeight: FontWeight.w700,
+                        weight: FontWeight.w700,
                       ),
                     ),
                     Text(
                       'Kelola produk Anda',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Color(0xFF86EFAC),
-                        fontWeight: FontWeight.w400,
+                      style: AppText.ui(
+                        size: 13,
+                        color: Colors.white.withValues(alpha: 0.70),
+                        weight: FontWeight.w400,
                       ),
                     ),
                   ],
@@ -202,10 +204,10 @@ class _ProductsScreenState extends State<ProductsScreen> {
                   ),
                   child: Text(
                     '${productVm.products.length} produk',
-                    style: const TextStyle(
-                      fontSize: 13,
+                    style: AppText.ui(
+                      size: 13,
                       color: Colors.white,
-                      fontWeight: FontWeight.w600,
+                      weight: FontWeight.w600,
                     ),
                   ),
                 ),
@@ -229,34 +231,27 @@ class _ProductsScreenState extends State<ProductsScreen> {
             child: Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE5E7EB)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.02),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.border),
               ),
               child: Column(
                 children: [
                   Text(
                     '$totalProducts',
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF1F2937),
+                    style: AppText.ui(
+                      size: 20,
+                      weight: FontWeight.w800,
+                      color: AppColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
+                  Text(
                     'Total Produk',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Color(0xFF6B7280),
-                      fontWeight: FontWeight.w500,
+                    style: AppText.ui(
+                      size: 11,
+                      color: AppColors.textSecondary,
+                      weight: FontWeight.w500,
                     ),
                   ),
                 ],
@@ -268,34 +263,27 @@ class _ProductsScreenState extends State<ProductsScreen> {
             child: Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE5E7EB)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.02),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.border),
               ),
               child: Column(
                 children: [
                   Text(
                     '$availableProducts',
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF10B981),
+                    style: AppText.ui(
+                      size: 20,
+                      weight: FontWeight.w800,
+                      color: AppColors.primary,
                     ),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
+                  Text(
                     'Tersedia',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Color(0xFF6B7280),
-                      fontWeight: FontWeight.w500,
+                    style: AppText.ui(
+                      size: 11,
+                      color: AppColors.textSecondary,
+                      weight: FontWeight.w500,
                     ),
                   ),
                 ],
@@ -308,43 +296,36 @@ class _ProductsScreenState extends State<ProductsScreen> {
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 color: lowStockProducts > 0
-                    ? const Color(0xFFFEF3C7)
-                    : Colors.white,
-                borderRadius: BorderRadius.circular(12),
+                    ? AppColors.warningContainer
+                    : AppColors.surface,
+                borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: lowStockProducts > 0
-                      ? const Color(0xFFFDE68A)
-                      : const Color(0xFFE5E7EB),
+                      ? AppColors.warning.withValues(alpha: 0.2)
+                      : AppColors.border,
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.02),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
               ),
               child: Column(
                 children: [
                   Text(
                     '$lowStockProducts',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
+                    style: AppText.ui(
+                      size: 20,
+                      weight: FontWeight.w800,
                       color: lowStockProducts > 0
-                          ? const Color(0xFFD97706)
-                          : const Color(0xFF1F2937),
+                          ? AppColors.warning
+                          : AppColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     'Stok Rendah',
-                    style: TextStyle(
-                      fontSize: 11,
+                    style: AppText.ui(
+                      size: 11,
                       color: lowStockProducts > 0
-                          ? const Color(0xFFB45309)
-                          : const Color(0xFF6B7280),
-                      fontWeight: FontWeight.w500,
+                          ? AppColors.onSecondaryContainer
+                          : AppColors.textSecondary,
+                      weight: FontWeight.w500,
                     ),
                   ),
                 ],

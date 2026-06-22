@@ -6,6 +6,8 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'app_colors.dart';
+export 'app_colors.dart';
 
 // ─── Material ThemeData ───────────────────────────────────────────────────────
 /// Provides [AppTheme.light] and [AppTheme.dark] for use in [MaterialApp].
@@ -23,14 +25,14 @@ class AppTheme {
           brightness: Brightness.light,
         ),
         scaffoldBackgroundColor: AppColors.bg,
-        textTheme: GoogleFonts.plusJakartaSansTextTheme(),
+        textTheme: GoogleFonts.interTextTheme(),
         appBarTheme: AppBarTheme(
           backgroundColor: AppColors.surface,
           foregroundColor: AppColors.textPrimary,
           elevation: 0,
           scrolledUnderElevation: 0,
           centerTitle: false,
-          titleTextStyle: GoogleFonts.plusJakartaSans(
+          titleTextStyle: GoogleFonts.inter(
             fontSize: 17,
             fontWeight: FontWeight.w700,
             color: AppColors.textPrimary,
@@ -98,47 +100,10 @@ class AppTheme {
           brightness: Brightness.dark,
         ),
         scaffoldBackgroundColor: const Color(0xFF141210),
-        textTheme: GoogleFonts.plusJakartaSansTextTheme(
+        textTheme: GoogleFonts.interTextTheme(
           ThemeData.dark().textTheme,
         ),
       );
-}
-
-
-// ─── Color Palette ───────────────────────────────────────────────────────────
-class AppColors {
-  AppColors._();
-
-  // Brand
-  static const primary = Color(0xFF2A5C45);
-  static const primaryDark = Color(0xFF1E3A2F);
-  static const primaryMuted = Color(0xFF4A7C64); // for secondary elements
-
-  // Accent
-  static const amber = Color(0xFFC4813A); // pricing, metrics, warnings
-  static const amberLight = Color(0xFFF5E9D8);
-
-  // Background
-  static const bg = Color(0xFFF7F5F0);
-  static const surface = Color(0xFFFFFFFF);
-  static const surfaceMuted = Color(0xFFF0EDE8);
-
-  // Text
-  static const textPrimary = Color(0xFF1C1917);
-  static const textSecondary = Color(0xFF6B6560);
-  static const textTertiary = Color(0xFF9E9890);
-
-  // Border
-  static const border = Color(0xFFE2DDD8);
-  static const borderFocus = Color(0xFF2A5C45);
-
-  // Status
-  static const success = Color(0xFF2A5C45);
-  static const successLight = Color(0xFFE8F2EC);
-  static const error = Color(0xFFB04A3A);
-  static const errorLight = Color(0xFFFAECEA);
-  static const warning = Color(0xFFC4813A);
-  static const warningLight = Color(0xFFF5E9D8);
 }
 
 // ─── Typography ───────────────────────────────────────────────────────────────
@@ -150,7 +115,7 @@ class AppText {
           {double size = 32, Color color = AppColors.textPrimary, double height = 1.2}) =>
       GoogleFonts.dmSerifDisplay(fontSize: size, color: color, height: height);
 
-  // Plus Jakarta Sans — all UI
+  // Inter — all UI
   static TextStyle ui({
     double size = 14,
     FontWeight weight = FontWeight.w400,
@@ -158,7 +123,7 @@ class AppText {
     double? height,
     double? letterSpacing,
   }) =>
-      GoogleFonts.plusJakartaSans(
+      GoogleFonts.inter(
         fontSize: size,
         fontWeight: weight,
         color: color,

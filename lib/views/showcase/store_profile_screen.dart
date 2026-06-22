@@ -9,6 +9,9 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:alpaca_mobile/core/routes/route_names.dart';
 import 'package:alpaca_mobile/core/widgets/platform_map.dart';
+import 'package:alpaca_mobile/core/theme/app_theme.dart';
+import 'package:alpaca_mobile/core/theme/app_text_styles.dart';
+import 'package:alpaca_mobile/widgets/product_card.dart';
 import 'package:alpaca_mobile/models/business_location_model.dart';
 import 'package:alpaca_mobile/models/product_model.dart';
 import 'package:alpaca_mobile/services/favorites_service.dart';
@@ -538,13 +541,14 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [
+        border: Border.all(color: AppColors.border),
+        boxShadow: const [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
+            color: AppColors.shadow,
             blurRadius: 16,
-            offset: const Offset(0, 4),
+            offset: Offset(0, 4),
           ),
         ],
       ),
@@ -554,28 +558,24 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Produk Toko',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF14532D),
-                ),
+                style: AppText.sectionHeader(),
               ),
               Text(
                 '${productVm.storeProducts.length} produk',
-                style: const TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+                style: AppText.label(),
               ),
             ],
           ),
           const SizedBox(height: 20),
           if (productVm.storeProducts.isEmpty)
-            const Center(
+            Center(
               child: Padding(
-                padding: EdgeInsets.all(32),
+                padding: const EdgeInsets.all(32),
                 child: Text(
                   'Belum ada produk',
-                  style: TextStyle(color: Color(0xFF9CA3AF)),
+                  style: AppText.label(color: AppColors.textTertiary),
                 ),
               ),
             )
@@ -587,105 +587,23 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
                 crossAxisCount: 2,
                 crossAxisSpacing: 12,
                 mainAxisSpacing: 12,
-                childAspectRatio: 0.75,
+                childAspectRatio: 0.72,
               ),
               itemCount: productVm.storeProducts.length,
               itemBuilder: (context, index) {
                 final product = productVm.storeProducts[index];
-                return _ProductCard(
-                  product: product,
+                return ProductCard(
+                  name: product.productName,
+                  price: product.price.toInt(),
+                  imageUrl: product.imageUrl,
+                  category: ProductModel.categoryLabel(product.category),
+                  isAvailable: product.isAvailable,
                   onTap: () =>
                       context.push(RouteNames.productDetail(product.id)),
                 );
               },
             ),
         ],
-      ),
-    );
-  }
-}
-
-class _ProductCard extends StatelessWidget {
-  const _ProductCard({required this.product, required this.onTap});
-
-  final ProductModel product;
-  final VoidCallback onTap;
-
-  String _formatPrice(double price) {
-    final formatted = price
-        .toStringAsFixed(0)
-        .replaceAllMapped(
-          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-          (match) => '${match[1]}.',
-        );
-    return 'Rp $formatted';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFFF8FAFC),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(16),
-                ),
-                child: product.imageUrl != null && product.imageUrl!.isNotEmpty
-                    ? Image.network(
-                        product.imageUrl!,
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                        errorBuilder: (_, _, _) => _buildPlaceholder(),
-                      )
-                    : _buildPlaceholder(),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    product.productName,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF1F2937),
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    _formatPrice(product.price),
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF14532D),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPlaceholder() {
-    return Container(
-      color: const Color(0xFFF3F4F6),
-      child: const Center(
-        child: Icon(Icons.image_outlined, size: 40, color: Color(0xFF9CA3AF)),
       ),
     );
   }

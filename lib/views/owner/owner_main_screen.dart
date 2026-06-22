@@ -3,6 +3,7 @@ import 'package:alpaca_mobile/views/owner/owner_dashboard_screen.dart';
 import 'package:alpaca_mobile/views/owner/products_screen.dart';
 import 'package:alpaca_mobile/views/owner/bookkeeping_screen.dart';
 import 'package:alpaca_mobile/views/owner/waste_tracking_screen.dart';
+import 'package:alpaca_mobile/core/theme/app_theme.dart';
 
 class OwnerMainScreen extends StatefulWidget {
   final int initialIndex;
@@ -34,15 +35,14 @@ class _OwnerMainScreenState extends State<OwnerMainScreen> {
     return Scaffold(
       body: _screens[_selectedIndex],
       bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, -2),
+        decoration: const BoxDecoration(
+          color: AppColors.surface,
+          border: Border(
+            top: BorderSide(
+              color: AppColors.border,
+              width: 1,
             ),
-          ],
+          ),
         ),
         child: SafeArea(
           child: Padding(
@@ -50,10 +50,10 @@ class _OwnerMainScreenState extends State<OwnerMainScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildNavItem(0, Icons.home_rounded, 'Beranda'),
-                _buildNavItem(1, Icons.inventory_2_rounded, 'Produk'),
-                _buildNavItem(2, Icons.account_balance_wallet_rounded, 'Keuangan'),
-                _buildNavItem(3, Icons.recycling_rounded, 'Limbah'),
+                _buildNavItem(0, Icons.home_rounded, Icons.home_outlined, 'Beranda'),
+                _buildNavItem(1, Icons.inventory_2_rounded, Icons.inventory_2_outlined, 'Produk'),
+                _buildNavItem(2, Icons.account_balance_wallet_rounded, Icons.account_balance_wallet_outlined, 'Keuangan'),
+                _buildNavItem(3, Icons.recycling_rounded, Icons.recycling_outlined, 'Limbah'),
               ],
             ),
           ),
@@ -62,29 +62,39 @@ class _OwnerMainScreenState extends State<OwnerMainScreen> {
     );
   }
 
-  Widget _buildNavItem(int index, IconData icon, String label) {
+  Widget _buildNavItem(int index, IconData activeIcon, IconData inactiveIcon, String label) {
     final isSelected = _selectedIndex == index;
     return Expanded(
       child: InkWell(
         onTap: () => setState(() => _selectedIndex = index),
         borderRadius: BorderRadius.circular(12),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 8),
+          padding: const EdgeInsets.symmetric(vertical: 4),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                icon,
-                color: isSelected ? const Color(0xFF22C55E) : const Color(0xFF9CA3AF),
+                isSelected ? activeIcon : inactiveIcon,
+                color: isSelected ? AppColors.primary : AppColors.textTertiary,
                 size: 24,
               ),
               const SizedBox(height: 4),
               Text(
                 label,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                  color: isSelected ? const Color(0xFF22C55E) : const Color(0xFF9CA3AF),
+                style: AppText.ui(
+                  size: 10,
+                  weight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: isSelected ? AppColors.primary : AppColors.textTertiary,
+                ),
+              ),
+              const SizedBox(height: 2),
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: isSelected ? 12 : 0,
+                height: 2,
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.circular(1),
                 ),
               ),
             ],

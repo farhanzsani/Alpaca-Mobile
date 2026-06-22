@@ -12,6 +12,7 @@ import 'package:intl/intl.dart';
 import 'package:alpaca_mobile/models/transaction_model.dart';
 import 'package:alpaca_mobile/viewmodels/auth_view_model.dart';
 import 'package:alpaca_mobile/viewmodels/finance_view_model.dart';
+import 'package:alpaca_mobile/core/theme/app_theme.dart';
 
 /// Bookkeeping screen with summary, tabs, and transaction management.
 class BookkeepingScreen extends StatefulWidget {
@@ -120,7 +121,7 @@ class _BookkeepingScreenState extends State<BookkeepingScreen>
     final dailySummary = _getDailySummary(financeVM.transactions);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
+      backgroundColor: AppColors.bg,
       body: Column(
         children: [
           _buildHeader(),
@@ -148,8 +149,10 @@ class _BookkeepingScreenState extends State<BookkeepingScreen>
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddTransactionSheet(context, financeVM),
-        backgroundColor: const Color(0xFF22C55E),
+        backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
+        elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: const Icon(Icons.add_rounded),
       ),
     );
@@ -161,11 +164,11 @@ class _BookkeepingScreenState extends State<BookkeepingScreen>
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF064E3B), Color(0xFF065F46)],
+          colors: [AppColors.primaryDark, AppColors.primary],
         ),
         borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(40),
-          bottomRight: Radius.circular(40),
+          bottomLeft: Radius.circular(24),
+          bottomRight: Radius.circular(24),
         ),
       ),
       child: SafeArea(
@@ -178,34 +181,34 @@ class _BookkeepingScreenState extends State<BookkeepingScreen>
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF86EFAC).withValues(alpha: 0.2),
+                  color: Colors.white.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
-                  Icons.receipt_long_rounded,
-                  color: Color(0xFF86EFAC),
+                  Icons.receipt_long_outlined,
+                  color: Colors.white,
                   size: 22,
                 ),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Pembukuan',
-                      style: TextStyle(
-                        fontSize: 20,
+                      style: AppText.ui(
+                        size: 20,
                         color: Colors.white,
-                        fontWeight: FontWeight.w700,
+                        weight: FontWeight.w700,
                       ),
                     ),
                     Text(
                       'Kelola transaksi keuangan',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Color(0xFF86EFAC),
-                        fontWeight: FontWeight.w400,
+                      style: AppText.ui(
+                        size: 13,
+                        color: Colors.white.withValues(alpha: 0.70),
+                        weight: FontWeight.w400,
                       ),
                     ),
                   ],
@@ -222,22 +225,22 @@ class _BookkeepingScreenState extends State<BookkeepingScreen>
     return Container(
       margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
       ),
       child: TabBar(
         controller: _tabController,
         indicator: BoxDecoration(
-          color: const Color(0xFF22C55E),
+          color: AppColors.primary,
           borderRadius: BorderRadius.circular(12),
         ),
         indicatorSize: TabBarIndicatorSize.tab,
         labelColor: Colors.white,
-        unselectedLabelColor: const Color(0xFF6B7280),
-        labelStyle: const TextStyle(
-          fontWeight: FontWeight.w600,
-          fontSize: 13,
+        unselectedLabelColor: AppColors.textSecondary,
+        labelStyle: AppText.ui(
+          weight: FontWeight.w600,
+          size: 13,
         ),
         dividerColor: Colors.transparent,
         padding: const EdgeInsets.all(4),
@@ -272,16 +275,9 @@ class _BookkeepingScreenState extends State<BookkeepingScreen>
       margin: const EdgeInsets.fromLTRB(20, 20, 20, 0),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         children: [
@@ -291,27 +287,27 @@ class _BookkeepingScreenState extends State<BookkeepingScreen>
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFF064E3B), Color(0xFF065F46)],
+                colors: [AppColors.primaryDark, AppColors.primary],
               ),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Column(
               children: [
-                const Text(
+                Text(
                   'Total Saldo',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Color(0xFF86EFAC),
-                    fontWeight: FontWeight.w500,
+                  style: AppText.ui(
+                    size: 13,
+                    color: Colors.white.withValues(alpha: 0.70),
+                    weight: FontWeight.w500,
                   ),
                 ),
                 const SizedBox(height: 6),
                 Text(
                   _currencyFormat.format(financeVM.balance),
-                  style: const TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -1,
+                  style: AppText.ui(
+                    size: 28,
+                    weight: FontWeight.w800,
+                    letterSpacing: -0.5,
                     color: Colors.white,
                   ),
                 ),
@@ -321,24 +317,24 @@ class _BookkeepingScreenState extends State<BookkeepingScreen>
           const SizedBox(height: 20),
           
           // Daily Balance
-          const Text(
+          Text(
             'Saldo Hari Ini',
-            style: TextStyle(
-              fontSize: 13,
-              color: Color(0xFF6B7280),
-              fontWeight: FontWeight.w500,
+            style: AppText.ui(
+              size: 13,
+              color: AppColors.textSecondary,
+              weight: FontWeight.w500,
             ),
           ),
           const SizedBox(height: 6),
           Text(
             _currencyFormat.format(balance),
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
+            style: AppText.ui(
+              size: 24,
+              weight: FontWeight.w700,
               letterSpacing: -0.5,
               color: balance >= 0
-                  ? const Color(0xFF064E3B)
-                  : const Color(0xFFDC2626),
+                  ? AppColors.primary
+                  : AppColors.error,
             ),
           ),
           const SizedBox(height: 20),

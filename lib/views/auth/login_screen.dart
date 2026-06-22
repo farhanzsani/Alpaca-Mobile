@@ -19,15 +19,7 @@ import 'package:alpaca_mobile/models/user_model.dart';
 import 'package:alpaca_mobile/core/routes/route_names.dart';
 import 'package:alpaca_mobile/core/validators/form_validators.dart';
 
-// ─── Design Tokens ──────────────────────────────────────────────────────────
-const _primary = Color(0xFF2A5C45);
-const _bg = Color(0xFFF7F5F0);
-const _surface = Color(0xFFFFFFFF);
-const _textPrimary = Color(0xFF1C1917);
-const _textSecondary = Color(0xFF6B6560);
-const _border = Color(0xFFE2DDD8);
-const _borderFocus = Color(0xFF2A5C45);
-const _error = Color(0xFFB04A3A);
+import 'package:alpaca_mobile/core/theme/app_theme.dart';
 
 /// Login screen with email/password + Google authentication.
 class LoginScreen extends StatefulWidget {
@@ -141,9 +133,9 @@ class _LoginScreenState extends State<LoginScreen>
       SnackBar(
         content: Text(
           message,
-          style: GoogleFonts.plusJakartaSans(fontSize: 13, color: Colors.white),
+          style: AppText.ui(size: 13, color: Colors.white),
         ),
-        backgroundColor: _error,
+        backgroundColor: AppColors.error,
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.all(16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -158,7 +150,7 @@ class _LoginScreenState extends State<LoginScreen>
     final authViewModel = context.watch<AuthViewModel>();
 
     return Scaffold(
-      backgroundColor: _bg,
+      backgroundColor: AppColors.bg,
       body: FadeTransition(
         opacity: _contentFade,
         child: SlideTransition(
@@ -182,18 +174,18 @@ class _LoginScreenState extends State<LoginScreen>
                       // Page heading
                       Text(
                         'Selamat\nDatang Kembali',
-                        style: GoogleFonts.dmSerifDisplay(
-                          fontSize: 32,
-                          color: _textPrimary,
+                        style: AppText.display(
+                          size: 32,
+                          color: AppColors.textPrimary,
                           height: 1.2,
                         ),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         'Masuk untuk melanjutkan perjalanan\nbisnis agraris Anda.',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 14,
-                          color: _textSecondary,
+                        style: AppText.ui(
+                          size: 14,
+                          color: AppColors.textSecondary,
                           height: 1.6,
                         ),
                       ),
@@ -241,7 +233,7 @@ class _LoginScreenState extends State<LoginScreen>
                                       ? Icons.visibility_outlined
                                       : Icons.visibility_off_outlined,
                                   size: 18,
-                                  color: _textSecondary,
+                                  color: AppColors.textSecondary,
                                 ),
                               ),
                             ),
@@ -249,7 +241,7 @@ class _LoginScreenState extends State<LoginScreen>
                             const SizedBox(height: 32),
 
                             // Primary CTA
-                            _PrimaryButton(
+                            AlpacaPrimaryButton(
                               label: 'Masuk',
                               isLoading: authViewModel.isLoading,
                               onPressed: _handleLogin,
@@ -277,9 +269,9 @@ class _LoginScreenState extends State<LoginScreen>
                       Center(
                         child: RichText(
                           text: TextSpan(
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 13,
-                              color: _textSecondary,
+                            style: AppText.ui(
+                              size: 13,
+                              color: AppColors.textSecondary,
                             ),
                             children: [
                               const TextSpan(text: 'Belum punya akun? '),
@@ -291,10 +283,10 @@ class _LoginScreenState extends State<LoginScreen>
                                       context.push(RouteNames.register),
                                   child: Text(
                                     'Daftar Sekarang',
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                      color: _primary,
+                                    style: AppText.ui(
+                                      size: 13,
+                                      weight: FontWeight.w600,
+                                      color: AppColors.primary,
                                     ),
                                   ),
                                 ),
@@ -379,8 +371,8 @@ class _HeroHeader extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   'Terhubung. Berkembang. Berkelanjutan.',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12,
+                  style: AppText.ui(
+                    size: 12,
                     color: Colors.white.withValues(alpha: 0.70),
                     letterSpacing: 0.3,
                   ),
@@ -451,10 +443,10 @@ class _FieldLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       label,
-      style: GoogleFonts.plusJakartaSans(
-        fontSize: 13,
-        fontWeight: FontWeight.w600,
-        color: _textPrimary,
+      style: AppText.ui(
+        size: 13,
+        weight: FontWeight.w600,
+        color: AppColors.textPrimary,
         letterSpacing: 0.1,
       ),
     );
@@ -495,18 +487,18 @@ class _AlpacaTextField extends StatelessWidget {
       textInputAction: textInputAction,
       validator: validator,
       onEditingComplete: onEditingComplete,
-      style: GoogleFonts.plusJakartaSans(
-        fontSize: 14,
-        color: _textPrimary,
-        fontWeight: FontWeight.w400,
+      style: AppText.ui(
+        size: 14,
+        color: AppColors.textPrimary,
+        weight: FontWeight.w400,
       ),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: GoogleFonts.plusJakartaSans(
-          fontSize: 14,
-          color: _textSecondary.withValues(alpha: 0.6),
+        hintStyle: AppText.ui(
+          size: 14,
+          color: AppColors.textSecondary.withValues(alpha: 0.6),
         ),
-        errorStyle: GoogleFonts.plusJakartaSans(fontSize: 12, color: _error),
+        errorStyle: AppText.ui(size: 12, color: AppColors.error),
         suffixIcon: suffixIcon != null
             ? Padding(
                 padding: const EdgeInsets.only(right: 14),
@@ -520,69 +512,23 @@ class _AlpacaTextField extends StatelessWidget {
           vertical: 14,
         ),
         filled: true,
-        fillColor: _surface,
+        fillColor: AppColors.surface,
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: _border, width: 1),
+          borderSide: const BorderSide(color: AppColors.border, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: _borderFocus, width: 1.5),
+          borderSide: const BorderSide(color: AppColors.borderFocus, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: _error, width: 1),
+          borderSide: const BorderSide(color: AppColors.error, width: 1),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: _error, width: 1.5),
+          borderSide: const BorderSide(color: AppColors.error, width: 1.5),
         ),
-      ),
-    );
-  }
-}
-
-/// Full-width primary action button
-class _PrimaryButton extends StatelessWidget {
-  final String label;
-  final bool isLoading;
-  final VoidCallback? onPressed;
-
-  const _PrimaryButton({
-    required this.label,
-    required this.isLoading,
-    this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 52,
-      child: FilledButton(
-        onPressed: isLoading ? null : onPressed,
-        style: FilledButton.styleFrom(
-          backgroundColor: _primary,
-          disabledBackgroundColor: _primary.withValues(alpha: 0.5),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        child: isLoading
-            ? const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                    strokeWidth: 2, color: Colors.white),
-              )
-            : Text(
-                label,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                  letterSpacing: 0.2,
-                ),
-              ),
       ),
     );
   }
@@ -596,16 +542,15 @@ class _OrDivider extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Expanded(child: Container(height: 1, color: _border)),
+        Expanded(child: Container(height: 1, color: AppColors.border)),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
             'atau',
-            style: GoogleFonts.plusJakartaSans(
-                fontSize: 12, color: _textSecondary),
+            style: AppText.ui(size: 12, color: AppColors.textSecondary),
           ),
         ),
-        Expanded(child: Container(height: 1, color: _border)),
+        Expanded(child: Container(height: 1, color: AppColors.border)),
       ],
     );
   }
@@ -625,8 +570,8 @@ class _GoogleButton extends StatelessWidget {
       child: OutlinedButton(
         onPressed: isLoading ? null : onPressed,
         style: OutlinedButton.styleFrom(
-          backgroundColor: _surface,
-          side: const BorderSide(color: _border, width: 1),
+          backgroundColor: AppColors.surface,
+          side: const BorderSide(color: AppColors.border, width: 1),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -649,10 +594,10 @@ class _GoogleButton extends StatelessWidget {
             const SizedBox(width: 10),
             Text(
               'Masuk dengan Google',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: _textPrimary,
+              style: AppText.ui(
+                size: 14,
+                weight: FontWeight.w500,
+                color: AppColors.textPrimary,
               ),
             ),
           ],

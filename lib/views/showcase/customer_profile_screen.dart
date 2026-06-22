@@ -202,9 +202,25 @@ class _ProfileHeader extends StatelessWidget {
           AppSpacing.screenH, topPad + AppSpacing.lg, AppSpacing.screenH, AppSpacing.xl),
       child: Column(
         children: [
-          // Page label
+          // Back button and Page label
           Row(
             children: [
+              GestureDetector(
+                onTap: () => Navigator.maybePop(context),
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.arrow_back_rounded,
+                    color: Colors.white,
+                    size: 18,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
               Text(
                 'Profil Saya',
                 style: AppText.ui(

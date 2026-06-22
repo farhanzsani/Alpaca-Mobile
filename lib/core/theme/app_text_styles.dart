@@ -1,214 +1,215 @@
 /// Text style definitions for the ALPACA application.
 ///
-/// Follows Material 3 type scale with custom font configurations.
+/// Follows Material 3 type scale with custom Google Font configurations.
 library;
 
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'app_colors.dart';
 
 /// Application text styles based on Material 3 type scale.
 ///
-/// Uses the default Material font (Roboto on Android, SF Pro on iOS)
-/// with customized weights and sizes for the ALPACA brand.
+/// Brand Display: DM Serif Display
+/// Functional Interface: Plus Jakarta Sans
 abstract final class AppTextStyles {
-  // ─── Display Styles ──────────────────────────────────────────────────
+  // ─── Display Styles (DM Serif Display) ───────────────────────────────────
 
-  /// Display large - used for hero text and large headings.
-  static const TextStyle displayLarge = TextStyle(
-    fontSize: 57,
-    fontWeight: FontWeight.w400,
-    letterSpacing: -0.25,
-    height: 1.12,
-    color: AppColors.onSurface,
-  );
+  /// Display large - used for brand display.
+  static TextStyle get displayLarge => GoogleFonts.dmSerifDisplay(
+        fontSize: 52,
+        fontWeight: FontWeight.w400,
+        letterSpacing: -0.25,
+        height: 1.12,
+        color: AppColors.onSurface,
+      );
 
   /// Display medium.
-  static const TextStyle displayMedium = TextStyle(
-    fontSize: 45,
-    fontWeight: FontWeight.w400,
-    letterSpacing: 0,
-    height: 1.16,
-    color: AppColors.onSurface,
-  );
+  static TextStyle get displayMedium => GoogleFonts.dmSerifDisplay(
+        fontSize: 40,
+        fontWeight: FontWeight.w400,
+        letterSpacing: 0,
+        height: 1.16,
+        color: AppColors.onSurface,
+      );
 
   /// Display small.
-  static const TextStyle displaySmall = TextStyle(
-    fontSize: 36,
-    fontWeight: FontWeight.w400,
-    letterSpacing: 0,
-    height: 1.22,
-    color: AppColors.onSurface,
-  );
+  static TextStyle get displaySmall => GoogleFonts.dmSerifDisplay(
+        fontSize: 32,
+        fontWeight: FontWeight.w400,
+        letterSpacing: 0,
+        height: 1.22,
+        color: AppColors.onSurface,
+      );
 
-  // ─── Headline Styles ─────────────────────────────────────────────────
+  // ─── Headline Styles (DM Serif Display) ──────────────────────────────────
 
   /// Headline large - section headers.
-  static const TextStyle headlineLarge = TextStyle(
-    fontSize: 32,
-    fontWeight: FontWeight.w600,
-    letterSpacing: 0,
-    height: 1.25,
-    color: AppColors.onSurface,
-  );
+  static TextStyle get headlineLarge => GoogleFonts.dmSerifDisplay(
+        fontSize: 28,
+        fontWeight: FontWeight.w400,
+        letterSpacing: 0,
+        height: 1.25,
+        color: AppColors.onSurface,
+      );
 
   /// Headline medium.
-  static const TextStyle headlineMedium = TextStyle(
-    fontSize: 28,
-    fontWeight: FontWeight.w600,
-    letterSpacing: 0,
-    height: 1.29,
-    color: AppColors.onSurface,
-  );
+  static TextStyle get headlineMedium => GoogleFonts.dmSerifDisplay(
+        fontSize: 24,
+        fontWeight: FontWeight.w400,
+        letterSpacing: 0,
+        height: 1.29,
+        color: AppColors.onSurface,
+      );
 
   /// Headline small.
-  static const TextStyle headlineSmall = TextStyle(
-    fontSize: 24,
-    fontWeight: FontWeight.w600,
-    letterSpacing: 0,
-    height: 1.33,
-    color: AppColors.onSurface,
-  );
+  static TextStyle get headlineSmall => GoogleFonts.dmSerifDisplay(
+        fontSize: 20,
+        fontWeight: FontWeight.w400,
+        letterSpacing: 0,
+        height: 1.33,
+        color: AppColors.onSurface,
+      );
 
-  // ─── Title Styles ────────────────────────────────────────────────────
+  // ─── Title Styles (Inter) ────────────────────────────────────
 
   /// Title large - card titles, dialog titles.
-  static const TextStyle titleLarge = TextStyle(
-    fontSize: 22,
-    fontWeight: FontWeight.w500,
-    letterSpacing: 0,
-    height: 1.27,
-    color: AppColors.onSurface,
-  );
+  static TextStyle get titleLarge => GoogleFonts.inter(
+        fontSize: 19,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0,
+        height: 1.27,
+        color: AppColors.onSurface,
+      );
 
   /// Title medium.
-  static const TextStyle titleMedium = TextStyle(
-    fontSize: 16,
-    fontWeight: FontWeight.w500,
-    letterSpacing: 0.15,
-    height: 1.50,
-    color: AppColors.onSurface,
-  );
+  static TextStyle get titleMedium => GoogleFonts.inter(
+        fontSize: 15,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.15,
+        height: 1.50,
+        color: AppColors.onSurface,
+      );
 
   /// Title small.
-  static const TextStyle titleSmall = TextStyle(
-    fontSize: 14,
-    fontWeight: FontWeight.w500,
-    letterSpacing: 0.1,
-    height: 1.43,
-    color: AppColors.onSurface,
-  );
+  static TextStyle get titleSmall => GoogleFonts.inter(
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.1,
+        height: 1.43,
+        color: AppColors.onSurface,
+      );
 
-  // ─── Body Styles ─────────────────────────────────────────────────────
+  // ─── Body Styles (Inter) ─────────────────────────────────────
 
   /// Body large - primary body text.
-  static const TextStyle bodyLarge = TextStyle(
-    fontSize: 16,
-    fontWeight: FontWeight.w400,
-    letterSpacing: 0.5,
-    height: 1.50,
-    color: AppColors.onSurface,
-  );
+  static TextStyle get bodyLarge => GoogleFonts.inter(
+        fontSize: 15,
+        fontWeight: FontWeight.w400,
+        letterSpacing: 0.2,
+        height: 1.50,
+        color: AppColors.onSurface,
+      );
 
   /// Body medium - default body text.
-  static const TextStyle bodyMedium = TextStyle(
-    fontSize: 14,
-    fontWeight: FontWeight.w400,
-    letterSpacing: 0.25,
-    height: 1.43,
-    color: AppColors.onSurface,
-  );
+  static TextStyle get bodyMedium => GoogleFonts.inter(
+        fontSize: 14,
+        fontWeight: FontWeight.w400,
+        letterSpacing: 0.1,
+        height: 1.43,
+        color: AppColors.onSurface,
+      );
 
   /// Body small - secondary body text.
-  static const TextStyle bodySmall = TextStyle(
-    fontSize: 12,
-    fontWeight: FontWeight.w400,
-    letterSpacing: 0.4,
-    height: 1.33,
-    color: AppColors.onSurfaceVariant,
-  );
+  static TextStyle get bodySmall => GoogleFonts.inter(
+        fontSize: 12,
+        fontWeight: FontWeight.w400,
+        letterSpacing: 0.1,
+        height: 1.33,
+        color: AppColors.onSurfaceVariant,
+      );
 
-  // ─── Label Styles ────────────────────────────────────────────────────
+  // ─── Label Styles (Inter) ────────────────────────────────────
 
   /// Label large - button text, prominent labels.
-  static const TextStyle labelLarge = TextStyle(
-    fontSize: 14,
-    fontWeight: FontWeight.w500,
-    letterSpacing: 0.1,
-    height: 1.43,
-    color: AppColors.onSurface,
-  );
+  static TextStyle get labelLarge => GoogleFonts.inter(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.1,
+        height: 1.43,
+        color: AppColors.onSurface,
+      );
 
   /// Label medium - form labels, tabs.
-  static const TextStyle labelMedium = TextStyle(
-    fontSize: 12,
-    fontWeight: FontWeight.w500,
-    letterSpacing: 0.5,
-    height: 1.33,
-    color: AppColors.onSurface,
-  );
+  static TextStyle get labelMedium => GoogleFonts.inter(
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.2,
+        height: 1.33,
+        color: AppColors.onSurface,
+      );
 
   /// Label small - captions, timestamps.
-  static const TextStyle labelSmall = TextStyle(
-    fontSize: 11,
-    fontWeight: FontWeight.w500,
-    letterSpacing: 0.5,
-    height: 1.45,
-    color: AppColors.onSurfaceVariant,
-  );
+  static TextStyle get labelSmall => GoogleFonts.inter(
+        fontSize: 10,
+        fontWeight: FontWeight.w500,
+        letterSpacing: 0.2,
+        height: 1.45,
+        color: AppColors.onSurfaceVariant,
+      );
 
-  // ─── Custom Styles ───────────────────────────────────────────────────
+  // ─── Custom Styles (Inter / DM Serif Display) ────────────────
 
   /// Price text style - used for displaying prices.
-  static const TextStyle price = TextStyle(
-    fontSize: 18,
-    fontWeight: FontWeight.w700,
-    letterSpacing: 0,
-    height: 1.33,
-    color: AppColors.primary,
-  );
+  static TextStyle get price => GoogleFonts.inter(
+        fontSize: 16,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0,
+        height: 1.33,
+        color: AppColors.secondary,
+      );
 
   /// Price large - used for prominent price displays.
-  static const TextStyle priceLarge = TextStyle(
-    fontSize: 24,
-    fontWeight: FontWeight.w700,
-    letterSpacing: 0,
-    height: 1.25,
-    color: AppColors.primary,
-  );
+  static TextStyle get priceLarge => GoogleFonts.inter(
+        fontSize: 22,
+        fontWeight: FontWeight.w800,
+        letterSpacing: 0,
+        height: 1.25,
+        color: AppColors.secondary,
+      );
 
   /// Badge text style.
-  static const TextStyle badge = TextStyle(
-    fontSize: 10,
-    fontWeight: FontWeight.w600,
-    letterSpacing: 0.5,
-    height: 1.2,
-    color: Colors.white,
-  );
+  static TextStyle get badge => GoogleFonts.inter(
+        fontSize: 10,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0.5,
+        height: 1.2,
+        color: Colors.white,
+      );
 
   /// Button text style.
-  static const TextStyle button = TextStyle(
-    fontSize: 14,
-    fontWeight: FontWeight.w600,
-    letterSpacing: 0.5,
-    height: 1.43,
-  );
+  static TextStyle get button => GoogleFonts.inter(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.2,
+        height: 1.43,
+      );
 
   /// Input text style for form fields.
-  static const TextStyle input = TextStyle(
-    fontSize: 16,
-    fontWeight: FontWeight.w400,
-    letterSpacing: 0.15,
-    height: 1.50,
-    color: AppColors.onSurface,
-  );
+  static TextStyle get input => GoogleFonts.inter(
+        fontSize: 14,
+        fontWeight: FontWeight.w400,
+        letterSpacing: 0.1,
+        height: 1.50,
+        color: AppColors.onSurface,
+      );
 
   /// Hint text style for form fields.
-  static const TextStyle hint = TextStyle(
-    fontSize: 16,
-    fontWeight: FontWeight.w400,
-    letterSpacing: 0.15,
-    height: 1.50,
-    color: AppColors.onSurfaceVariant,
-  );
+  static TextStyle get hint => GoogleFonts.inter(
+        fontSize: 14,
+        fontWeight: FontWeight.w400,
+        letterSpacing: 0.1,
+        height: 1.50,
+        color: AppColors.onSurfaceVariant,
+      );
 }

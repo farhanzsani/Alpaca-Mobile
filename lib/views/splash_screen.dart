@@ -15,12 +15,8 @@ import 'package:alpaca_mobile/viewmodels/auth_view_model.dart';
 import 'package:alpaca_mobile/viewmodels/location_view_model.dart';
 import 'package:alpaca_mobile/models/user_model.dart';
 
-// ─── Design Tokens ──────────────────────────────────────────────────────────
-const _bgColor = Color(0xFF1E3A2F);       // Deep forest green
-const _surfaceGreen = Color(0xFF2A5C45);  // Primary brand green
-const _accentGreen = Color(0xFF4A8C6A);   // Lighter green accent
-const _white = Color(0xFFFAF9F6);         // Warm off-white
-const _subtleWhite = Color(0x80FAF9F6);   // 50% white for tagline
+import 'package:alpaca_mobile/core/theme/app_colors.dart';
+import 'package:alpaca_mobile/core/theme/app_text_styles.dart';
 
 /// Splash screen shown on app launch.
 class SplashScreen extends StatefulWidget {
@@ -132,7 +128,7 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _bgColor,
+      backgroundColor: AppColors.primaryDark,
       body: Stack(
         children: [
           // ── Subtle texture overlay (top-right radial highlight) ──────────
@@ -144,7 +140,7 @@ class _SplashScreenState extends State<SplashScreen>
               height: 280,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: _surfaceGreen.withValues(alpha: 0.35),
+                color: AppColors.primary.withValues(alpha: 0.35),
               ),
             ),
           ),
@@ -156,7 +152,7 @@ class _SplashScreenState extends State<SplashScreen>
               height: 320,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: _accentGreen.withValues(alpha: 0.12),
+                color: AppColors.primaryLight.withValues(alpha: 0.12),
               ),
             ),
           ),
@@ -180,10 +176,10 @@ class _SplashScreenState extends State<SplashScreen>
                           width: 56,
                           height: 56,
                           decoration: BoxDecoration(
-                            color: _white.withValues(alpha: 0.10),
+                            color: Colors.white.withValues(alpha: 0.10),
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: _white.withValues(alpha: 0.18),
+                              color: Colors.white.withValues(alpha: 0.18),
                               width: 1,
                             ),
                           ),
@@ -192,7 +188,7 @@ class _SplashScreenState extends State<SplashScreen>
                               'α',
                               style: GoogleFonts.dmSerifDisplay(
                                 fontSize: 32,
-                                color: _white,
+                                color: Colors.white,
                                 height: 1.1,
                               ),
                             ),
@@ -205,7 +201,7 @@ class _SplashScreenState extends State<SplashScreen>
                           'ALPACA',
                           style: GoogleFonts.dmSerifDisplay(
                             fontSize: 52,
-                            color: _white,
+                            color: Colors.white,
                             letterSpacing: 6,
                             height: 1.0,
                           ),
@@ -222,9 +218,9 @@ class _SplashScreenState extends State<SplashScreen>
                   opacity: _taglineFade,
                   child: Text(
                     'Platform UMKM Agraris Indonesia',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.inter(
                       fontSize: 13,
-                      color: _subtleWhite,
+                      color: Colors.white.withValues(alpha: 0.50),
                       fontWeight: FontWeight.w400,
                       letterSpacing: 0.5,
                     ),
@@ -278,7 +274,7 @@ class _LoadingDots extends StatelessWidget {
                   height: 5,
                   decoration: const BoxDecoration(
                     shape: BoxShape.circle,
-                    color: _white,
+                    color: Colors.white,
                   ),
                 ),
               ),
